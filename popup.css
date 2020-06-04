@@ -4,7 +4,7 @@ html
 	padding: 0;
 }
 body {
-	background-color: #EEE;
+	background-color: #F8FCEE;
 	color: #000;
 	font-family: Arial, sans-serif;
 	overflow-y: auto;
@@ -12,4 +12,31 @@ body {
 	width: 680px;
 	height: 584px; 
 	margin: 0;
+}
+header {
+	text-align: center;
+	background-color: #EFF4E2;
+	font-size: 200%;
+}
+main {
+	min-height: calc(100% - 54px);
+}
+main>div {
+	color: #0C8F59;
+	margin: 1px 4px;
+}
+main>div>span {
+	display: inline-block;
+	width: 4ex;
+	background-color: #0C8F59;
+	color: #FFF;
+	border-radius: 6px;
+	margin-right: 1ex;
+	text-align: center;
+}
+
+footer {
+	text-align: center;
+	background-color: #EFF4E2;
+	font-size: 80%;
 }

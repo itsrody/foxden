@@ -29,7 +29,6 @@ const cdnDomains = [
 //	'pagecdn.io/lib/',
 //	'sdn.geekzu.org/ajax/ajax/libs/',
 //	'stackpath.bootstrapcdn.com/',
-//	'unpkg.com/',
 //	'upcdn.b0.upaiyun.com/libs/',
 //	'use.fontawesome.com/releases/v',
 //	'yandex.st/',
@@ -43,6 +42,7 @@ const cdnDomainAlias = {
 };
 const abbr = {'script':'js','stylesheet':'css','font':'fnt'};
 let stats = {};
+let tabStats = {};
 let asciiDecoder = new TextDecoder('ASCII');//windows-1252
 
 
@@ -59,7 +59,10 @@ async function redirectRequestCDN(req)
 	}
 	let { uid: storKey, version: versi } = getUID(new URL(url));
 	stats[storKey] = stats[storKey] ? stats[storKey] + 1 : 1;
-	chrome.browserAction.setBadgeText({text:"" + Object.values(stats).reduce((a, b) => a + b, 0)});
+	tabStats[req.tabId] = tabStats[req.tabId] || 0;
+	tabStats[req.tabId]++;
+	//chrome.browserAction.setBadgeText({text: "" + Object.values(stats).reduce((a, b) => a + b, 0)});
+	chrome.browserAction.setBadgeText({text: "" + tabStats[req.tabId], tabId: req.tabId});
 	let item = await browser.storage.local.get(storKey);
 	let itemExists = storKey in item;
 	if (!itemExists || isNewerPointVersion(versi, item[storKey].version))
