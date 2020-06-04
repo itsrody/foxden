@@ -1,0 +1,10 @@
+{
+	"name": {
+		"message": "JSLibCache",
+		"description": "Name of the extension."
+	},
+	"description": {
+		"message": "A more dynamic version of Decentraleyes / LocalCDN where the Javascript libraries (and CSS / fonts) are downloaded once from the CDN and then stored forever",
+		"description": "Description of the extension."
+	}
+}
