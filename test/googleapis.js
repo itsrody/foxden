@@ -409,4 +409,6 @@ https://ajax.googleapis.com/ajax/libs/webfont/1.5.6/webfont.js
 https://ajax.googleapis.com/ajax/libs/webfont/1.5.3/webfont.js
 https://ajax.googleapis.com/ajax/libs/webfont/1.5.2/webfont.js
 https://ajax.googleapis.com/ajax/libs/webfont/1.5.0/webfont.js
+https://ajax.googleapis.com/ajax/libs/yui/2.9.0/build/yuiloader-dom-event/yuiloader-dom-event.js
+https://ajax.googleapis.com/ajax/libs/yui/2.9.0/build/connection/connection-min.js
 `;

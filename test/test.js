@@ -73,14 +73,16 @@ describe("urls", function() {
 	describe("googleapis", function() {
 		describe("version, name, ext", function() {
 			for (let line of [
-				["/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css", "1.12.1", "themes/smoothness/jqueryui", "css"],
-				["/ajax/libs/shaka-player/2.3.8/shaka-player.compiled.js", "2.3.8", "shakaplayer", "js"],
+				["/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css", "1.12.1", "themes/smoothness/jquery/ui", "css"],
+				["/ajax/libs/shaka-player/2.3.8/shaka-player.compiled.js", "2.3.8", "shaka/player", "js"],
 				["/ajax/libs/d3js/5.15.1/d3.min.js", "5.15.1", "d3", "js"],
-				["/ajax/libs/jquerymobile/1.4.1/jquery.mobile.min.css", "1.4.1", "jquerymobile", "css"],
+				["/ajax/libs/jquerymobile/1.4.1/jquery.mobile.min.css", "1.4.1", "jquery/mobile", "css"],
 				["/ajax/libs/dojo/1.13.0/dojo/dojo.js", "1.13.0", "dojo", "js"],
-				["/ajax/libs/myanmar-tools/1.0.1/zawgyi_detector.min.js", "1.0.1", "zawgyidetector", "js"],
-				["/ajax/libs/shaka-player/2.5.0-beta2/shaka-player.compiled.js", "2.5.0-beta2", "shakaplayer", "js"],
-				["/ajax/libs/threejs/r84/three.min.js", "r84", "three", "js"]])
+				["/ajax/libs/myanmar-tools/1.0.1/zawgyi_detector.min.js", "1.0.1", "zawgyi/detector", "js"],
+				["/ajax/libs/shaka-player/2.5.0-beta2/shaka-player.compiled.js", "2.5.0-beta2", "shaka/player", "js"],
+				["/ajax/libs/threejs/r84/three.min.js", "r84", "three", "js"],
+				["/ajax/libs/yui/2.9.0/build/yuiloader-dom-event/yuiloader-dom-event.js", "2.9.0", "yui/yuiloader/dom/event", "js"],
+			])
 			{
 				it(line[0] + ' ⟹ ' + line[2] + ' ' + line[1] + ' ' + line[3], function() {
 					let { version, name, ext } = getVersionNameExt("ajax.googleapis.com", line[0]);

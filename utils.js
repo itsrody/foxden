@@ -23,7 +23,7 @@ async function getCacheSize()
 
 function canonicalizeName(name)
 {
-	return name.replace(/[_\.-]+/g, '');
+	return name.replace(/[_\.-]+/g, '/');
 }
 function canonicalizeVersion(versi)
 {
@@ -54,6 +54,9 @@ function getVersionNameExt(hostname, pathname)
 		// /ajax/libs/threejs/r84/three.min.js
 		if (mtch = pathname.match(/^\/ajax\/libs\/[^\/]+\/([\d\.-]+(?:beta\d*)?|r\d+)\/(?:dojo\/)?([a-zA-Z0-9_\.-]+?)(\.compiled|\.min)?\.(js|css|map|png|eot|svg|ttf|woff2|woff)$/i))
 			return { version: mtch[1], name: canonicalizeName(mtch[2]), ext: mtch[4] };
+		// /ajax/libs/yui/2.9.0/build/yuiloader-dom-event/yuiloader-dom-event.js
+		if (mtch = pathname.match(/^\/ajax\/libs\/([a-zA-Z0-9\.-]+)\/([\d\.-]+)\/build\/([a-zA-Z0-9_\.-]+?)\/\3(-min|\.min)?\.(js|css)$/i))
+			return { version: mtch[2], name: canonicalizeName(mtch[1] + "/" + mtch[3]), ext: mtch[5] };
 		// /ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css
 		if (mtch = pathname.match(/^\/ajax\/libs\/([a-zA-Z0-9\.-]+)\/([\d\.-]+)\/(.+?)\.(css)$/i))
 			return { version: mtch[2], name: canonicalizeName(mtch[3]), ext: mtch[4] };
