@@ -15,6 +15,22 @@ describe("utils", function() {
 			});
 		}
 	});
+	describe("getUID equivalency", function() {
+		for (let line of [
+				["https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js", "https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.js"],
+				["https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js", "https://code.jquery.com/jquery-1.12.4.min.js"],
+				["https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css", "https://code.jquery.com/ui/1.12.1/themes/smoothness/jquery-ui.css"],
+			])
+		{
+			it(line[0] + ' == ' + line[1], function() {
+				let { uid: uid1, version: version1 } = getUID(new URL(line[0]));
+				let { uid: uid2, version: version2 } = getUID(new URL(line[1]));
+				//expect(getUID(new URL(line[0]))).to.deep.equal(getUID(new URL(line[1])));
+				expect(uid1).to.equal(uid2);
+				expect(version1).to.equal(version2);
+			});
+		}
+	});
 	describe("isNewerPointVersion", function() {
 		for (let line of [
 				["3.5.1", "3.5.0", true],
@@ -70,8 +86,36 @@ describe("utils", function() {
 	});
 });
 describe("urls", function() {
-	describe("googleapis", function() {
-		describe("version, name, ext", function() {
+	describe("version, name, ext", function() {
+		describe("jquery", function() {
+			for (let line of [
+				["/jquery-3.5.1.min.js", "3.5.1", "jquery", "js"],
+				["/jquery-3.5.1.slim.js", "3.5.1", "jquery/slim", "js"],
+				["/jquery-3.x-git.slim.min.js", "3.x-git", "jquery/slim", "js"],
+				["/ui/1.12.1/jquery-ui.min.js", "1.12.1", "jquery/ui", "js"],
+				["/ui/1.12.1/themes/smoothness/jquery-ui.css", "1.12.1", "themes/smoothness/jquery/ui", "css"],
+				["/pep/0.4.3/pep.js", "0.4.3", "pep", "js"],
+				["/mobile/1.4.5/jquery.mobile-1.4.5.min.js", "1.4.5", "jquery/mobile", "js"],
+				["/mobile/1.4.5/jquery.mobile.structure-1.4.5.min.css", "1.4.5", "jquery/mobile/structure", "css"],
+				["/mobile/1.0a4/jquery.mobile-1.0a4.min.css", "1.0a4", "jquery/mobile", "css"],
+				["/mobile/1.1.0-rc.1/jquery.mobile.structure-1.1.0-rc.1.min.css", "1.1.0-rc.1", "jquery/mobile/structure", "css"],
+				["/color/jquery.color-2.2.0.js", "2.2.0", "jquery/color", "js"],
+				["/color/jquery.color-2.2.0.min.js", "2.2.0", "jquery/color", "js"],
+				["/color/jquery.color.svg-names-2.2.0.js", "2.2.0", "jquery/color/svg/names", "js"],
+				["/color/jquery.color.plus-names-2.2.0.js", "2.2.0", "jquery/color/plus/names", "js"],
+				["/qunit/qunit-2.10.0.js", "2.10.0", "qunit", "js"],
+
+			])
+			{
+				it(line[0] + ' ⟹ ' + line[2] + ' ' + line[1] + ' ' + line[3], function() {
+					let { version, name, ext } = getVersionNameExt("code.jquery.com", line[0]);
+					expect(version).to.equal(line[1]);
+					expect(name).to.equal(line[2]);
+					expect(ext).to.equal(line[3]);
+				});
+			}
+		});
+		describe("googleapis", function() {
 			for (let line of [
 				["/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css", "1.12.1", "themes/smoothness/jquery/ui", "css"],
 				["/ajax/libs/shaka-player/2.3.8/shaka-player.compiled.js", "2.3.8", "shaka/player", "js"],
@@ -92,18 +136,23 @@ describe("urls", function() {
 				});
 			}
 		});
-		describe("not null", function() {
-			for (let line of urls.googleapis.split(/\r?\n/))
-			{
-				if (line)
+	});
+	describe("not null", function() {
+		for (let domain in urls)
+		{
+			describe(domain, function() {
+				for (let line of urls[domain].split(/\r?\n/))
 				{
-					it(line, function() {
-						let url = new URL(line);
-						let { version, name, ext } = getVersionNameExt(url.hostname, url.pathname);
-						expect(name, 'Cannot parse ' + line).to.not.be.null;
-					});
+					if (line)
+					{
+						it(line, function() {
+							let url = new URL(line);
+							let { version, name, ext } = getVersionNameExt(url.hostname, url.pathname);
+							expect(name, 'Cannot parse ' + line).to.not.be.null;
+						});
+					}
 				}
-			}
-		});
+			});
+		}
 	});
 });

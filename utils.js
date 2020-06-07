@@ -43,7 +43,7 @@ function isNewerPointVersion(v1, v2)
 function getVersionNameExt(hostname, pathname)
 {
 	let mtch;
-	if (hostname == "ajax.googleapis.com")
+	if (hostname == "ajax.googleapis.com" || hostname == "ajax.proxy.ustclug.org" || hostname == "sdn.geekzu.org")
 	{
 		// /ajax/libs/shaka-player/2.3.8/shaka-player.compiled.js
 		// /ajax/libs/d3js/5.15.1/d3.min.js
@@ -60,6 +60,31 @@ function getVersionNameExt(hostname, pathname)
 		// /ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css
 		if (mtch = pathname.match(/^\/ajax\/libs\/([a-zA-Z0-9\.-]+)\/([\d\.-]+)\/(.+?)\.(css)$/i))
 			return { version: mtch[2], name: canonicalizeName(mtch[3]), ext: mtch[4] };
+	}
+	else if (hostname == "code.jquery.com")
+	{
+		// /jquery-3.5.1.min.js
+		// /jquery-3.x-git.slim.min.js 
+		if (mtch = pathname.match(/^\/(jquery-migrate|jquery)-([\d\.]+|[\d\.x-]*git)(\.slim)?(\.min|\.pack)?\.(js|css)$/i))
+			return { version: mtch[2], name: canonicalizeName(mtch[1] + (mtch[3]||"")), ext: mtch[5] };
+		// /ui/1.12.1/jquery-ui.min.js
+		// /ui/1.12.1/themes/smoothness/jquery-ui.css
+		// /pep/0.4.3/pep.js
+		if (mtch = pathname.match(/^\/[a-z]+\/(\d[\d\.abcehlprt-]+)\/([a-z\/-]+?)(\.min|\.pack)?\.(js|css)$/i))
+			return { version: mtch[1], name: canonicalizeName(mtch[2]), ext: mtch[4] };
+		// /mobile/1.4.5/jquery.mobile-1.4.5.min.js
+		// /mobile/1.4.5/jquery.mobile.structure-1.4.5.min.css
+		// /mobile/1.0a4/jquery.mobile-1.0a4.min.css 
+		// /mobile/1.1.0-rc.1/jquery.mobile.structure-1.1.0-rc.1.min.css
+		if (mtch = pathname.match(/^\/[a-z]+\/(\d[\d\.abcehlprt-]+|git)\/([a-z\/\.-]+?)-\1(\.min|\.pack)?\.(js|css)$/i))
+			return { version: mtch[1], name: canonicalizeName(mtch[2]), ext: mtch[4] };
+		// /color/jquery.color-2.2.0.js
+		// /color/jquery.color-2.2.0.min.js
+		// /color/jquery.color.svg-names-2.2.0.js
+		// /color/jquery.color.plus-names-2.2.0.js
+		// /qunit/qunit-2.10.0.js
+		if (mtch = pathname.match(/^\/[a-z]+\/([a-z\.-]+?)-([\d\.]+|git)(\.min)?\.(js|css)$/i))
+			return { version: mtch[2], name: canonicalizeName(mtch[1]), ext: mtch[4] };
 	}
 	return { version: null, name: null, ext: null};
 }

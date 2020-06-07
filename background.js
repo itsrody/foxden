@@ -6,7 +6,7 @@ const cdnDomains = [
 //	'ajax.cloudflare.com/',
 	'ajax.googleapis.com/ajax/libs/',
 //	'ajax.microsoft.com/ajax/',
-//	'ajax.proxy.ustclug.org/ajax/libs/',
+	'ajax.proxy.ustclug.org/ajax/libs/',
 //	'akamai-webcdn.kgstatic.net/',
 //	'apps.bdimg.com/libs/',
 //	'cdn.ampproject.org/',
@@ -16,7 +16,7 @@ const cdnDomains = [
 //	'cdn.staticfile.org/',
 //	'cdnjs.cloudflare.com/ajax/libs/',
 //	'code.createjs.com/',
-//	'code.jquery.com/',
+	'code.jquery.com/',
 //	'fonts.googleapis.com/',
 //	'fonts.gstatic.com/',
 //	'lib.baomitu.com/',
@@ -27,19 +27,16 @@ const cdnDomains = [
 //	'netdna.bootstrapcdn.com/bootstrap/',
 //	'netdna.bootstrapcdn.com/font-awesome/',
 //	'pagecdn.io/lib/',
-//	'sdn.geekzu.org/ajax/ajax/libs/',
+	'sdn.geekzu.org/ajax/ajax/libs/',
 //	'stackpath.bootstrapcdn.com/',
+//	'unpkg.com/', // alias for 'cdn.jsdelivr.net/npm/
 //	'upcdn.b0.upaiyun.com/libs/',
 //	'use.fontawesome.com/releases/v',
 //	'yandex.st/',
 //	'yastatic.net/',
 ];
 const cdnDomainsRE = new RegExp('//(' + cdnDomains.map(m => m.replace(/\W/g, '\\$&')).join('|') + ')');
-const cdnDomainAlias = {
-	'ajax.proxy.ustclug.org/ajax/libs/':	'ajax.googleapis.com/ajax/libs/',
-	'sdn.geekzu.org/ajax/ajax/libs/':	'ajax.googleapis.com/ajax/libs/',
-//	'unpkg.com/':				'cdn.jsdelivr.net/npm/',
-};
+//const cdnDomainAlias = {'unpkg.com/':'cdn.jsdelivr.net/npm/' };
 const abbr = {'script':'js','stylesheet':'css','font':'fnt'};
 let stats = {};
 let tabStats = {};
@@ -49,6 +46,7 @@ let asciiDecoder = new TextDecoder('ASCII');//windows-1252
 async function redirectRequestCDN(req)
 {
 	let url = req.url;
+	/*
 	for (let alia in cdnDomainAlias)
 	{
 		if (url.indexOf('//' + alia) > -1)
@@ -57,6 +55,7 @@ async function redirectRequestCDN(req)
 			url = url.replace(alia, cdnDomainAlias[alia]);
 		}
 	}
+	*/
 	let { uid: storKey, version: versi } = getUID(new URL(url));
 	stats[storKey] = stats[storKey] ? stats[storKey] + 1 : 1;
 	tabStats[req.tabId] = tabStats[req.tabId] || 0;
@@ -125,13 +124,15 @@ function removeIntegrityCrossoriginHtml(details)
 					if (!charset) //content-type has no charset declared
 					{
 						//<meta http-equiv="Content-Type" content="text/html; charset=gb2312">
+						//<meta http-equiv="content-type" content="text/html;charset=shift_jis">
 						//<meta charset="ISO-8859-1"> 
 						let htmlHead = asciiDecoder.decode(evt.data, {stream: false});
 						let charsetMatch = htmlHead.match(/<meta\s+charset=["']?([^>"'\/]+)["'>\/]/i);
 						if (!charsetMatch)
-							charsetMatch = htmlHead.match(/<meta\s+http-equiv=["']?content-type["']?\s+content=["']?text\/html;\s+charset=([^>"'\/]+)["'>\/]/i);
+							charsetMatch = htmlHead.match(/<meta\s+http-equiv=["']?content-type["']?\s+content=["']?text\/html;\s*charset=([^>"'\/]+)["'>\/]/i);
 						charset = charsetMatch ? charsetMatch[1] : "UTF-8";
 					}
+					console.log(`%cJSLibCache: charset ${charset}`, logStyle);
 					decoder = new TextDecoder(charset);
 				}
 				//remove crossorigin and integrity attributes
@@ -164,6 +165,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 // init
 chrome.browserAction.setBadgeBackgroundColor({color:"green"});
 getCacheSize();
-chrome.webRequest.onHeadersReceived.addListener(redirectRequestCDN, {'types': ['script','stylesheet'], 'urls': cdnDomains.map(host => '*://' + host + '*')}, ['blocking']); //types 'font' //FIXME: cdnDomainAlias-ses
+chrome.webRequest.onHeadersReceived.addListener(redirectRequestCDN, {'types': ['script','stylesheet'], 'urls': cdnDomains.map(host => '*://' + host + '*')}, ['blocking']); //types 'font'
 chrome.webRequest.onHeadersReceived.addListener(removeIntegrityCrossoriginHtml, {'types': ['main_frame', 'sub_frame'], 'urls': ['*://*/*']}, ['blocking', 'responseHeaders']);
 }
