@@ -1,4 +1,3 @@
-var urls = urls || {};
 urls.googleapis = `
 http://ajax.googleapis.com/ajax/libs/angularjs/1.2.0/angular-resource.min.js
 http://ajax.googleapis.com/ajax/libs/angularjs/1.2.0/angular-route.min.js

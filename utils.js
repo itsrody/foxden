@@ -86,6 +86,22 @@ function getVersionNameExt(hostname, pathname)
 		if (mtch = pathname.match(/^\/[a-z]+\/([a-z\.-]+?)-([\d\.]+|git)(\.min)?\.(js|css)$/i))
 			return { version: mtch[2], name: canonicalizeName(mtch[1]), ext: mtch[4] };
 	}
+	else if (hostname == "cdnjs.cloudflare.com")
+	{
+		// /ajax/libs/1140/2.0/1140.min.css
+		// /ajax/libs/jqueryui/1.12.1/jquery-ui.min.js
+		// /ajax/libs/Embetty/4.0.0-beta.5/embetty.js
+		if (mtch = pathname.match(/^\/ajax\/libs\/[^\/]+\/([\d\.-]+(?:(?:alpha|beta|dev|rc|pre|build|unstable|final|next|release|M|preview)[\.\d-]*)?|r\d+)\/(?:lib\/|js\/|css\/|scripts\/|bootstrap\/|min\/|umd\/)?([a-zA-Z0-9_\.-]+?)(?:\.development|\.production)?(\.compiled|\.min)?\.(js|css|map|png|eot|svg|ttf|woff2|woff)$/i))
+			return { version: mtch[1], name: canonicalizeName(mtch[2]), ext: mtch[4] };
+		// /ajax/libs/react-dom/16.13.1/umd/react-dom.production.min.js
+		// /ajax/libs/angulartics2/9.1.0/adobeanalytics/bundles/angulartics2-adobeanalytics.umd.min.js
+		if (mtch = pathname.match(/^\/ajax\/libs\/([a-zA-Z0-9\.-]+)\/([\d\.-]+)\/(.+?)(?:\.compiled|\.min)?\.(css|js|svg)$/i))
+		{
+			if (mtch[3].replace(/[_\.-]+/g, '').indexOf(mtch[1]) > -1)
+				return { version: mtch[2], name: canonicalizeName(mtch[3]), ext: mtch[4] };
+			return { version: mtch[2], name: canonicalizeName(mtch[1] + "/" + mtch[3]), ext: mtch[4] };
+		}
+	}
 	return { version: null, name: null, ext: null};
 }
 function getUID(url)
@@ -95,4 +111,14 @@ function getUID(url)
 		return { uid: name + " " + ext + " " + canonicalizeVersion(version), version: version };
 	return { uid: "//" + url.host + url.pathname, version: "0" };
 }
+
+
+
+
+
+
+
+
+
+
 

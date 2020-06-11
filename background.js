@@ -2,38 +2,37 @@
 'use strict';
 
 const cdnDomains = [
-//	'ajax.aspnetcdn.com/ajax/',
-//	'ajax.cloudflare.com/',
-	'ajax.googleapis.com/ajax/libs/',
-//	'ajax.microsoft.com/ajax/',
-	'ajax.proxy.ustclug.org/ajax/libs/',
-//	'akamai-webcdn.kgstatic.net/',
-//	'apps.bdimg.com/libs/',
-//	'cdn.ampproject.org/',
-//	'cdn.bootcss.com/',
-//	'cdn.jsdelivr.net/',
-//	'cdn.sstatic.net/',
-//	'cdn.staticfile.org/',
-//	'cdnjs.cloudflare.com/ajax/libs/',
-//	'code.createjs.com/',
-	'code.jquery.com/',
-//	'fonts.googleapis.com/',
-//	'fonts.gstatic.com/',
-//	'lib.baomitu.com/',
-//	'lib.sinaapp.com/js/',
-//	'libs.baidu.com/',
-//	'mat1.gtimg.com/libs/',
-//	'maxcdn.bootstrapcdn.com/',
-//	'netdna.bootstrapcdn.com/bootstrap/',
-//	'netdna.bootstrapcdn.com/font-awesome/',
-//	'pagecdn.io/lib/',
+//	'fonts.googleapis.com/',		// 1000k+ / 362
+	'ajax.googleapis.com/ajax/libs/',	// 1000k+ / 637
+	'cdnjs.cloudflare.com/ajax/libs/',	// 1000k+ / 670
+//	'cdn.jsdelivr.net/',			// 1000k+ / 975
+	'code.jquery.com/',			// 1000k+ /1276
+//	'maxcdn.bootstrapcdn.com/',		// 1000k+ /1475
+//	'fonts.gstatic.com/',			// 923k
+//	'stackpath.bootstrapcdn.com/',		// 828k
+//	'netdna.bootstrapcdn.com/',		// 649k
+//	'use.fontawesome.com/releases/v',	// 573k
+//	'cdn.bootcss.com/',			// 443k
+//	'unpkg.com/',				// 390k	alias for 'cdn.jsdelivr.net/npm/
+//	'libs.baidu.com/',			// 280k
+//	'apps.bdimg.com/libs/',			// 239k
+//	'ajax.aspnetcdn.com/ajax/',		// 203k
+//	'cdn.staticfile.org/',			// 179k
+//	'ajax.cloudflare.com/',			// 150k
+//	'yastatic.net/',			// 104k
+//	'cdn.ampproject.org/',			// 73k
+//	'yandex.st/',				// 64k
+//	'code.createjs.com/',			// 9k
+//	'lib.baomitu.com/',			// 9k
+//	'ajax.microsoft.com/ajax/',		// 8k
+//	'lib.sinaapp.com/js/',			// 6k
+//	'cdn.sstatic.net/',			// 2k
+//	'mat1.gtimg.com/libs/',			// 1k
+//	'upcdn.b0.upaiyun.com/libs/',		// 0.5k
+//	'pagecdn.io/lib/',			// 0.2k	alias for 'cdnjs.cloudflare.com/ajax/libs/'
+//	'akamai-webcdn.kgstatic.net/',		// 0
+	'ajax.proxy.ustclug.org/ajax/libs/',	// 0
 	'sdn.geekzu.org/ajax/ajax/libs/',
-//	'stackpath.bootstrapcdn.com/',
-//	'unpkg.com/', // alias for 'cdn.jsdelivr.net/npm/
-//	'upcdn.b0.upaiyun.com/libs/',
-//	'use.fontawesome.com/releases/v',
-//	'yandex.st/',
-//	'yastatic.net/',
 ];
 const cdnDomainsRE = new RegExp('//(' + cdnDomains.map(m => m.replace(/\W/g, '\\$&')).join('|') + ')');
 //const cdnDomainAlias = {'unpkg.com/':'cdn.jsdelivr.net/npm/' };
@@ -95,7 +94,7 @@ async function redirectRequestCDN(req)
 	{
 		console.log("%cJSLibCache: " + storKey + " retrieved from local storage", logStyle);
 	}
-	let dataURI = 'data:' + item[storKey].contentType + ',' + escape(item[storKey].data);
+	let dataURI = 'data:' + item[storKey].contentType + ',' + escape('/*JSLC*/' + item[storKey].data);
 	return { redirectUrl: dataURI };
 }
 
@@ -165,6 +164,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 // init
 chrome.browserAction.setBadgeBackgroundColor({color:"green"});
 getCacheSize();
-chrome.webRequest.onHeadersReceived.addListener(redirectRequestCDN, {'types': ['script','stylesheet'], 'urls': cdnDomains.map(host => '*://' + host + '*')}, ['blocking']); //types 'font'
+chrome.webRequest.onHeadersReceived.addListener(redirectRequestCDN, {'types': ['script','stylesheet'], 'urls': cdnDomains.map(host => '*://' + host + '*')}, ['blocking']); //types 'font', 'image', 'other' (for svg?)
 chrome.webRequest.onHeadersReceived.addListener(removeIntegrityCrossoriginHtml, {'types': ['main_frame', 'sub_frame'], 'urls': ['*://*/*']}, ['blocking', 'responseHeaders']);
 }

@@ -17,17 +17,22 @@ describe("utils", function() {
 	});
 	describe("getUID equivalency", function() {
 		for (let line of [
-				["https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js", "https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.js"],
-				["https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js", "https://code.jquery.com/jquery-1.12.4.min.js"],
-				["https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css", "https://code.jquery.com/ui/1.12.1/themes/smoothness/jquery-ui.css"],
+				["https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js", "https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.js", "https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js"],
+				["https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js", "https://code.jquery.com/jquery-1.12.4.min.js", "https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js"],
+				["https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css", "https://code.jquery.com/ui/1.12.1/themes/smoothness/jquery-ui.css", "https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.min.css"],
+				["https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js", "https://code.jquery.com/ui/1.12.1/jquery-ui.js", "https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"],
 			])
 		{
+			let { uid: uid1, version: version1 } = getUID(new URL(line[0]));
 			it(line[0] + ' == ' + line[1], function() {
-				let { uid: uid1, version: version1 } = getUID(new URL(line[0]));
 				let { uid: uid2, version: version2 } = getUID(new URL(line[1]));
-				//expect(getUID(new URL(line[0]))).to.deep.equal(getUID(new URL(line[1])));
 				expect(uid1).to.equal(uid2);
 				expect(version1).to.equal(version2);
+			});
+			it(line[0] + ' == ' + line[2], function() {
+				let { uid: uid3, version: version3 } = getUID(new URL(line[2]));
+				expect(uid1).to.equal(uid3);
+				expect(version1).to.equal(version3);
 			});
 		}
 	});
@@ -87,6 +92,22 @@ describe("utils", function() {
 });
 describe("urls", function() {
 	describe("version, name, ext", function() {
+		describe("cloudflare", function() {
+			for (let line of [
+				["/ajax/libs/react-dom/16.13.1/umd/react-dom.production.min.js", "16.13.1", "react/dom", "js"],
+				["/ajax/libs/bootswatch/4.5.0/united/bootstrap.min.css", "4.5.0", "bootswatch/united/bootstrap", "css"],
+				["/ajax/libs/pace/1.0.2/themes/orange/pace-theme-minimal.min.css", "1.0.2", "themes/orange/pace/theme/minimal", "css"],
+				["/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.min.css", "1.12.1", "themes/smoothness/jquery/ui", "css"],
+			])
+			{
+				it(line[0] + ' ⟹ ' + line[2] + ' ' + line[1] + ' ' + line[3], function() {
+					let { version, name, ext } = getVersionNameExt("cdnjs.cloudflare.com", line[0]);
+					expect(version).to.equal(line[1]);
+					expect(name).to.equal(line[2]);
+					expect(ext).to.equal(line[3]);
+				});
+			}
+		});
 		describe("jquery", function() {
 			for (let line of [
 				["/jquery-3.5.1.min.js", "3.5.1", "jquery", "js"],
@@ -104,7 +125,6 @@ describe("urls", function() {
 				["/color/jquery.color.svg-names-2.2.0.js", "2.2.0", "jquery/color/svg/names", "js"],
 				["/color/jquery.color.plus-names-2.2.0.js", "2.2.0", "jquery/color/plus/names", "js"],
 				["/qunit/qunit-2.10.0.js", "2.10.0", "qunit", "js"],
-
 			])
 			{
 				it(line[0] + ' ⟹ ' + line[2] + ' ' + line[1] + ' ' + line[3], function() {
@@ -138,12 +158,18 @@ describe("urls", function() {
 		});
 	});
 	describe("not null", function() {
+		describe("url keys", function() {
+			let keys = ['cloudflare', 'googleapis', 'jquery'];
+			it(keys.join(", "), function() {
+				expect(urls).to.have.all.keys(...keys);
+			});
+		});
 		for (let domain in urls)
 		{
 			describe(domain, function() {
 				for (let line of urls[domain].split(/\r?\n/))
 				{
-					if (line)
+					if (line && line.charAt(0) != '#')
 					{
 						it(line, function() {
 							let url = new URL(line);
