@@ -3,6 +3,38 @@
 var expect = chai.expect;
 chai.config.truncateThreshold = 0;
 describe("utils", function() {
+	describe("isMimeTextual", function() {
+		for (let line of [
+				["text/html", true],
+				["application/json", true],
+				["text/css", true],
+				["text/xml", true],
+				["application/xml", true],
+				["text/javascript", true],
+				["image/svg+xml", true],
+				["image/jpeg", false],
+				["audio/wav", false],
+				["font/woff2", false],
+			])
+		{
+			it(line[0] + ' ⟹ ' + line[1], function() {
+				expect(isMimeTextual(line[0])).to.equal(line[1]);
+			});
+		}
+	});
+	describe("canonicalizeGoogleFontCSSURL", function() {
+		for (let line of [
+				["https://fonts.googleapis.com/css2?family=Noto+Sans+HK&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap", ["Noto Sans HK", "Roboto"]],
+				["https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,200;0,300;0,400;0,500;0,700;0,900;1,100;1,200;1,300;1,400;1,500;1,700;1,900", ["Roboto"]],
+				["https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700", ["Open Sans"]],
+				["https://fonts.googleapis.com/css?family=Droid+Sans:700,regular|Droid+Serif:italic,regular&subset=latin", ["Droid Sans", "Droid Serif"]],
+			])
+		{
+			it(line[0] + ' ⟹ ' + line[1], function() {
+				expect(getFamiliesFromGoogleFontCSSURL(new URL(line[0]))).to.deep.equal(line[1]);
+			});
+		}
+	});
 	describe("getUID", function() {
 		for (let line of [
 				["https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js", "jquery js 1.12.x", "1.12.4"],
@@ -92,16 +124,14 @@ describe("utils", function() {
 });
 describe("urls", function() {
 	describe("version, name, ext", function() {
-		describe("cloudflare", function() {
+		describe("fontsgstatic", function() {
 			for (let line of [
-				["/ajax/libs/react-dom/16.13.1/umd/react-dom.production.min.js", "16.13.1", "react/dom", "js"],
-				["/ajax/libs/bootswatch/4.5.0/united/bootstrap.min.css", "4.5.0", "bootswatch/united/bootstrap", "css"],
-				["/ajax/libs/pace/1.0.2/themes/orange/pace-theme-minimal.min.css", "1.0.2", "themes/orange/pace/theme/minimal", "css"],
-				["/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.min.css", "1.12.1", "themes/smoothness/jquery/ui", "css"],
+				["/s/amaticsc/v13/TUZ3zwprpvBS1izr_vOMscGKfLUC_2fi-Q.woff2", "", "fontgstatic/TUZ3zwprpvBS1izr_vOMscGKfLUC_2fi-Q", "woff2"],
+				["/s/notosanshk/v5/nKKQ-GM_FYFRJvXzVXaAPe9hMXBxEu-8JKJiwNdTve7W4-fhxjn5P_4rrgJoi8PfTdpQKp8.0.woff2", "", "fontgstatic/nKKQ-GM_FYFRJvXzVXaAPe9hMXBxEu-8JKJiwNdTve7W4-fhxjn5P_4rrgJoi8PfTdpQKp8.0", "woff2"],
 			])
 			{
 				it(line[0] + ' ⟹ ' + line[2] + ' ' + line[1] + ' ' + line[3], function() {
-					let { version, name, ext } = getVersionNameExt("cdnjs.cloudflare.com", line[0]);
+					let { version, name, ext } = getVersionNameExt("fonts.gstatic.com", line[0]);
 					expect(version).to.equal(line[1]);
 					expect(name).to.equal(line[2]);
 					expect(ext).to.equal(line[3]);
@@ -159,7 +189,7 @@ describe("urls", function() {
 	});
 	describe("not null", function() {
 		describe("url keys", function() {
-			let keys = ['cloudflare', 'googleapis', 'jquery'];
+			let keys = ['fontsgstatic', 'cloudflare', 'googleapis', 'jquery'];
 			it(keys.join(", "), function() {
 				expect(urls).to.have.all.keys(...keys);
 			});

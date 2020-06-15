@@ -10,40 +10,47 @@ const typeSizes = {
 };
 const versionRE = /^(\d+\.\d+\.)(\d+)$/;
 
-function sizeOf(value)
+function getFamiliesFromGoogleFontCSSURL(url)
 {
-	return typeSizes[typeof value](value);
-}
-async function getCacheSize()
-{
-	let strg = await browser.storage.local.get(null);
-	let size = Math.round(sizeOf(strg) / 1024).toLocaleString() + 'kB';
-	console.log("%cJSLibCache: cache has " + Object.keys(strg).length + " files, total size is " + size, logStyle);
-}
-
-function canonicalizeName(name)
-{
-	return name.replace(/[_\.-]+/g, '/');
-}
-function canonicalizeVersion(versi)
-{
-	return versi.replace(versionRE, '$1x');
-}
-function isNewerPointVersion(v1, v2)
-{
-	let m1 = v1.match(versionRE);
-	if (m1)
+	//https://fonts.googleapis.com/css2?family=Noto+Sans+HK&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap
+	//https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,200;0,300;0,400;0,500;0,700;0,900;1,100;1,200;1,300;1,400;1,500;1,700;1,900
+	//https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700
+	//https://fonts.googleapis.com/css?family=Droid+Sans:700,regular|Droid+Serif:italic,regular&subset=latin
+	//https://fonts.googleapis.com/css?family=Lato&text=ABC
+	//https://fonts.googleapis.com/icon?family=Material+Icons
+	//https://fonts.googleapis.com/icon?family=Material+Icons&ver=5.4.1
+	//let url = new URL('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,200;0,300;0,400;0,500;0,700;0,900;1,100;1,200;1,300;1,400;1,500;1,700;1,900');
+	let params = new URLSearchParams(url.search);
+	let result = [];
+	if (url.pathname == "/css2" || url.pathname == "/icon")
 	{
-		let m2 = v2.match(versionRE);
-		if (m2 && m1[1] == m2[1])
-			return parseInt(m1[2]) > parseInt(m2[2]);
+		for (let family of params.getAll('family'))
+		{
+			let i = family.indexOf(':');
+			result.push(i == -1 ? family : family.substr(0,i));
+		}
 	}
-	return false;
+	else if (url.pathname == "/css" && params.has('family'))
+	{
+		for (let family of params.get('family').split('|'))
+		{
+			let i = family.indexOf(':');
+			result.push(i == -1 ? family : family.substr(0,i));
+		}
+	}
+	return result;
 }
 function getVersionNameExt(hostname, pathname)
 {
 	let mtch;
-	if (hostname == "ajax.googleapis.com" || hostname == "ajax.proxy.ustclug.org" || hostname == "sdn.geekzu.org")
+	if (hostname == "fonts.gstatic.com")
+	{
+		// /s/amaticsc/v13/TUZ3zwprpvBS1izr_vOMscGKfLUC_2fi-Q.woff2
+		// /s/notosanshk/v5/nKKQ-GM_FYFRJvXzVXaAPe9hMXBxEu-8JKJiwNdTve7W4-fhxjn5P_4rrgJoi8PfTdpQKp8.0.woff2
+		if (mtch = pathname.match(/^\/s\/[a-z]+\/v\d+\/([a-z0-9_-]+(?:\.\d+)?)\.(woff2|woff|ttf|eot|svg)$/i))
+			return { version: "", name: "fontgstatic/" + mtch[1], ext: mtch[2] };
+	}
+	else if (hostname == "ajax.googleapis.com" || hostname == "ajax.proxy.ustclug.org" || hostname == "sdn.geekzu.org")
 	{
 		// /ajax/libs/shaka-player/2.3.8/shaka-player.compiled.js
 		// /ajax/libs/d3js/5.15.1/d3.min.js
@@ -107,11 +114,49 @@ function getVersionNameExt(hostname, pathname)
 function getUID(url)
 {
 	let { version, name, ext } = getVersionNameExt(url.hostname, url.pathname);
-	if (name && version)
+	if (name && version != null)
 		return { uid: name + " " + ext + " " + canonicalizeVersion(version), version: version };
 	return { uid: "//" + url.host + url.pathname, version: "0" };
 }
 
+function isMimeTextual(contentType)
+{
+	let textuals = ["text/", "application/javascript", "application/atom+xml", "application/rss+xml", "image/svg+xml", "application/json", "application/vnd.google-earth.kml+xml", "application/x-perl", "application/xhtml+xml", "application/xspf+xml", "application/xml", "application/ld+json", "message/"];
+	for (let textual of textuals)
+		if (contentType.startsWith(textual))
+			return true;
+	return false;
+}
+function sizeOf(value)
+{
+	return typeSizes[typeof value](value);
+}
+async function getCacheSize() //FIXME: use browser.storage.local.getBytesInUse() when Fx supports it
+{
+	let strg = await browser.storage.local.get(null);
+	let size = Math.round(sizeOf(strg) / 1024).toLocaleString() + 'kB';
+	console.log("%cJSLibCache: cache has " + Object.keys(strg).length + " files, total size is " + size, logStyle);
+}
+
+function canonicalizeName(name)
+{
+	return name.replace(/[_\.-]+/g, '/');
+}
+function canonicalizeVersion(versi)
+{
+	return versi.replace(versionRE, '$1x');
+}
+function isNewerPointVersion(v1, v2)
+{
+	let m1 = v1.match(versionRE);
+	if (m1)
+	{
+		let m2 = v2.match(versionRE);
+		if (m2 && m1[1] == m2[1])
+			return parseInt(m1[2]) > parseInt(m2[2]);
+	}
+	return false;
+}
 
 
 
