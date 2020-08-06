@@ -118,6 +118,18 @@ function getUID(url)
 		return { uid: name + " " + ext + " " + canonicalizeVersion(version), version: version };
 	return { uid: "//" + url.host + url.pathname, version: "0" };
 }
+/*
+function getFontUrlsFromCSS(css)
+{
+	let doc = document.implementation.createHTMLDocument(""),
+	styleElem = document.createElement("style");
+	styleElem.textContent = css;
+	doc.body.appendChild(styleElem);
+
+	var urls = [];
+	let styles = [...styleElem.sheet.cssRules].filter(r => r.type == 5).map(r => r.style);
+};
+*/
 
 function isMimeTextual(contentType)
 {
@@ -157,13 +169,10 @@ function isNewerPointVersion(v1, v2)
 	}
 	return false;
 }
-
-
-
-
-
-
-
+function getOptionsDefault()
+{
+	return {"replacegooglefonts": true, "replacegooglemaps": false};
+}
 
 
 

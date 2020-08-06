@@ -8,6 +8,7 @@ const cdnDomains = [
 //	'cdn.jsdelivr.net/',			// 1000k+ / 975
 	'code.jquery.com/',			// 1000k+ /1276
 //	'maxcdn.bootstrapcdn.com/',		// 1000k+ /1475
+	'maps.googleapis.com/',			// 963k
 	'fonts.gstatic.com/',			// 923k
 //	'stackpath.bootstrapcdn.com/',		// 828k
 //	'netdna.bootstrapcdn.com/',		// 649k
@@ -40,6 +41,7 @@ const abbr = {'script':'js','stylesheet':'css','font':'fnt'};
 let stats = {};
 let tabStats = {};
 let asciiDecoder = new TextDecoder('ASCII');//windows-1252
+let settings = getOptionsDefault();//{"replacegooglefonts": true, "replacegooglemaps": false}
 
 
 function blockRequestCDN(req)
@@ -47,10 +49,31 @@ function blockRequestCDN(req)
 	console.log(`%cJSLibCache: blocking CSP report to ${req.url}`, logStyle);
 	return { cancel: true };
 }
+function handleGoogleMaps(url, req)
+{
+	let params = new URLSearchParams(url.search);
+	console.log("%cJSLibCache: redirecting googlemaps url " + url + " to openlayers", logStyle, req, params);
+	let storKey = 'Google Maps';
+	stats[storKey] = stats[storKey] ? stats[storKey] + 1 : 1;
+	addTabStats(req.tabId, 1);
+	/*
+	if (false && params.has('callback') && params.get('callback') != '')
+	{
+		let tabId = req.tabId;
+		let callback = params.get('callback') + '();';
+		setTimeout(() => {
+			browser.tabs.executeScript(tabId, { "code": callback });
+		}, 100);
+	}
+	*/
+	return { redirectUrl: browser.runtime.getURL("resources/openlayers-6.3.1.js") };
+}
 async function handleGoogleFontsCss(url, req)
 {
 	let families = getFamiliesFromGoogleFontCSSURL(url);
 	let storKeys = families.map(family => 'Font CSS ' + family);
+	storKeys.forEach(storKey => { stats[storKey] = stats[storKey] ? stats[storKey] + 1 : 1});
+	addTabStats(req.tabId, storKeys.length);
 	let items = await browser.storage.local.get(storKeys);
 	let unknownStorKeys = storKeys.filter(storKey => !(storKey in items));
 	let newItems = {};
@@ -66,7 +89,7 @@ async function handleGoogleFontsCss(url, req)
 		for (let i = 0; i < unknownStorKeys.length; i++)
 		{
 			if (!responses[i].ok)
-				console.warn('fetching failed 2', responses[i]);
+				console.warn("%cfetching failed 2", logStyle, responses[i]);
 			let now = new Date().getTime();
 			newItems[unknownStorKeys[i]] = { 'created': now, 'axsd': now, 'hits': 0, 'data': responseTexts[i] || "/* ERRGF001 */" };
 		}
@@ -81,16 +104,21 @@ async function handleGoogleFontsCss(url, req)
 	let dataURI = 'data:text/css;charset=utf-8,' + escape('/*JSLC*/' + storKeys.map(storKey => items[storKey] ? items[storKey].data : newItems[storKey].data).join("\n"));
 	return { redirectUrl: dataURI };
 }
+function addTabStats(tabId, n)
+{
+	tabStats[tabId, tabId] = tabStats[tabId] ? tabStats[tabId] + n : n;
+	chrome.browserAction.setBadgeText({text: "" + tabStats[tabId], tabId: tabId});
+}
 async function redirectRequestCDN(req)
 {
 	let url = new URL(req.url)
 	if (url.hostname == "fonts.googleapis.com")
-		return handleGoogleFontsCss(url, req);
+		return settings.replacegooglefonts ? handleGoogleFontsCss(url, req) : {};
+	if (url.hostname == "maps.googleapis.com")
+		return settings.replacegooglemaps ? handleGoogleMaps(url, req) : {};
 	let { uid: storKey, version: versi } = getUID(url);
 	stats[storKey] = stats[storKey] ? stats[storKey] + 1 : 1;
-	tabStats[req.tabId] = tabStats[req.tabId] || 0;
-	tabStats[req.tabId]++;
-	chrome.browserAction.setBadgeText({text: "" + tabStats[req.tabId], tabId: req.tabId});
+	addTabStats(req.tabId, 1);
 	let item = await browser.storage.local.get(storKey);
 	let itemExists = storKey in item;
 	if (!itemExists || isNewerPointVersion(versi, item[storKey].v))
@@ -105,7 +133,7 @@ async function redirectRequestCDN(req)
 		});
 		let contentType = resp.headers.get('content-type');
 		if (!resp.ok)
-			console.warn('fetching failed 1', req.url, contentType, resp);
+			console.warn("%cfetching failed 1", logStyle, req.url, contentType, resp);
 
 		item = {};
 		let now = new Date().getTime();
@@ -118,7 +146,7 @@ async function redirectRequestCDN(req)
 		item[storKey] = { 'created': now, 'axsd': now, 'hits': 0, 'v': versi, 'contentType': contentType, 'b64': isTextual?0:1, 'data': data };
 		await browser.storage.local.set(item);//FIXME?
 		if (chrome.runtime.lastError)
-			console.error("Error on storage.set", chrome.runtime.lastError);
+			console.error("%cError on storage.set", logStyle, chrome.runtime.lastError);
 	}
 	else
 	{
@@ -165,6 +193,7 @@ function removeIntegrityCrossoriginHtml(req)
 				}
 				//remove crossorigin and integrity attributes
 				let str = decoder.decode(evt.data, {stream: true}).replace(/<(link|script)[^>]+>/ig, m => {
+						//console.log(`%cJSLibCache: found link|script ${m}`, logStyle);
 						if (cdnDomainsRE.test(m))
 							return m.replace(/\s+(integrity|crossorigin)(="[^"]*"|='[^']*'|=[^"'`=\s]+|)/ig, '');
 						return m;
@@ -174,8 +203,11 @@ function removeIntegrityCrossoriginHtml(req)
 			}
 
 			filter.onstop = evt => {
-				let str = decoder.decode(); //end-of-stream
-				filter.write(encoder.encode(str));
+				if (encoder)
+				{
+					let str = decoder.decode(); //end-of-stream
+					filter.write(encoder.encode(str));
+				}
 				filter.close();
 			}
 			return { responseHeaders: req.responseHeaders }; //headers with modified charset in content-type
@@ -196,7 +228,15 @@ browser.runtime.onSuspend.addListener(() => {
 });
 */
 
+
 // init
+function getSyncSettings()
+{
+	browser.storage.sync.get({"settings": getOptionsDefault()}).then(sett => { settings = sett.settings; });
+}
+browser.storage.onChanged.addListener((changes, area) => { if (area == "sync") { getSyncSettings(); } });
+getSyncSettings();
+
 getCacheSize();
 chrome.browserAction.setBadgeBackgroundColor({color:"green"});
 
@@ -204,4 +244,6 @@ chrome.webRequest.onHeadersReceived.addListener(blockRequestCDN, {'types': ['csp
 //chrome.webRequest.onHeadersReceived.addListener(redirectRequestCDN, {'types': ['script','stylesheet','font'], 'urls': cdnDomains.map(host => '*://' + host + '*')}, ['blocking']); //types 'font', 'image', 'other' (for svg?)
 chrome.webRequest.onHeadersReceived.addListener(redirectRequestCDN, {'types': ['script','stylesheet'], 'urls': cdnDomains.map(host => '*://' + host + '*')}, ['blocking']); //types 'font', 'image', 'other' (for svg?)
 chrome.webRequest.onHeadersReceived.addListener(removeIntegrityCrossoriginHtml, {'types': ['main_frame', 'sub_frame'], 'urls': ['*://*/*']}, ['blocking', 'responseHeaders']);
+
+
 }

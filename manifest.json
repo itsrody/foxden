@@ -3,11 +3,7 @@
 	"name": "JSLibCache",
 	"version": "0.0.4",
 	"default_locale": "en",
-	"browser_specific_settings": {
-		"gecko": {
-			"id": "jslibcache@pass.dog"
-		}
-	},
+	"browser_specific_settings": { "gecko": { "id": "jslibcache@pass.dog" } },
 	"description": "__MSG_description__",
 	"icons": { "128": "icon256.png" },
 	"permissions": [
@@ -17,11 +13,8 @@
 		"webRequest",
 		"webRequestBlocking"
 	],
-	"background": {
-		"scripts": ["utils.js", "background.js"]
-	},
-	"browser_action": {
-		"default_popup": "popup.html",
-		"browser_style": false
-	}
+	"background": { "scripts": ["utils.js", "background.js"] },
+	"browser_action": { "default_popup": "popup.html", "browser_style": false },
+	"options_ui": { "page": "options.html", "browser_style": false },
+	"web_accessible_resources": ["resources/*"]
 }
