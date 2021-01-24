@@ -19,7 +19,7 @@ const cdnDomains = [
 //	'apps.bdimg.com/libs/',			// 239k
 //	'ajax.aspnetcdn.com/ajax/',		// 203k
 //	'cdn.staticfile.org/',			// 179k
-//	'ajax.cloudflare.com/',			// 150k
+	'ajax.cloudflare.com/',			// 150k
 //	'yastatic.net/',			// 104k
 //	'cdn.ampproject.org/',			// 73k
 //	'yandex.st/',				// 64k

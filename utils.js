@@ -109,6 +109,12 @@ function getVersionNameExt(hostname, pathname)
 			return { version: mtch[2], name: canonicalizeName(mtch[1] + "/" + mtch[3]), ext: mtch[4] };
 		}
 	}
+	else if (hostname == "ajax.cloudflare.com")
+	{
+		//https://ajax.cloudflare.com/cdn-cgi/scripts/7089c43e/cloudflare-static/rocket-loader.min.js
+		if (mtch = pathname.match(/^\/cdn-cgi\/scripts\/([0-9a-f]+)\/cloudflare-static\/(rocket-loader)\.min\.(js)$/i))
+			return { version: mtch[1], name: canonicalizeName(mtch[2]), ext: mtch[3] };
+	}
 	return { version: null, name: null, ext: null};
 }
 function getUID(url)

@@ -237,7 +237,6 @@ JQL.ajax = function(options)
 				//for statistics
 				if (window.toggleUpdate)
 					toggleUpdate(null, false);
-				showLoginForm();
 				if (options.error)
 					options.error(xhr, "AuthorizationRequired", xhr.status);
 			}
@@ -399,25 +398,6 @@ function onLoginFormSubmit(evt)
 		}
 	})
 }
-var showLoginForm = function()
-{
-	$.ajax({
-		'url': config.rootUrl + "login?ajax=true",
-		'dataType': 'html',
-		'success': showLoginForm2
-	})
-}
-function showLoginForm2(data)
-{
-	var div = document.createElement("div");
-	document.body.appendChild(div);
-	div.innerHTML = data;
-	var $se = $(div.querySelector('div#sessionExpired'));
-	$se.find('h3').removeClass("wait").removeClass("warn");
-	$se.find('form.login').submit(onLoginFormSubmit);
-	$se.find('input[name="username"]')[0].focus();
-	$(document).keydown(function(evt) { if (evt.which == 27) { $('#sessionExpired').hide() } } ); //Esc
-};
 
 /*
 //run only once
