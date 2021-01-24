@@ -174,5 +174,12 @@ function getOptionsDefault()
 	return {"replacegooglefonts": true, "replacegooglemaps": false};
 }
 
-
-
+function parseCspHeader(policy)
+{
+	return policy.split(';').reduce((result, directive) => {
+		const [directiveKey, ...directiveValue] = directive.trim().split(/\s+/g);
+		if (!directiveKey || Object.prototype.hasOwnProperty.call(result, directiveKey))
+			return result;
+		return Object.assign(Object.assign({}, result), { [directiveKey]: directiveValue });
+	}, {});
+}

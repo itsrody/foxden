@@ -158,11 +158,34 @@ async function redirectRequestCDN(req)
 
 function removeIntegrityCrossoriginHtml(req)
 {
-	let header = req.responseHeaders.find(h => h.name.toLowerCase() == 'content-type');
-	if (header)
+	let headerIdx = req.responseHeaders.findIndex(h => h.name.toLowerCase() == 'content-security-policy');//TODO FIXME: report-only?
+	if (headerIdx > -1)
 	{
-		let mimeType = header.value.replace(/;.*/, '').toLowerCase();
-		let charset = /charset\s*=/.test(header.value) && header.value.replace(/^.*?charset\s*=\s*/, '').replace(/["']/g, '');
+		let headerCSP = req.responseHeaders[headerIdx];
+		let parsedCSP = parseCspHeader(headerCSP.value);
+		let hasCspChange = false;
+		if (parsedCSP["script-src"] && !parsedCSP["script-src"].includes("data:"))
+		{
+			hasCspChange = true;
+			parsedCSP["script-src"].unshift("data:");
+		}
+		if (parsedCSP["style-src"] && !parsedCSP["style-src"].includes("data:"))
+		{
+			hasCspChange = true;
+			parsedCSP["style-src"].unshift("data:");
+		}
+		if (hasCspChange)
+		{
+			console.log(`%cJSLibCache: adding data: to CSP header ${req.url}`, logStyle);
+			req.responseHeaders.splice(headerIdx, 1);//Remove CSP header, see https://github.com/gorhill/uMatrix/issues/967
+			req.responseHeaders.push({ name: 'Content-Security-Policy', value: Object.keys(parsedCSP).map(k => k + " " + parsedCSP[k].join(" ")).join(";") });
+		}
+	}
+	let headerCT = req.responseHeaders.find(h => h.name.toLowerCase() == 'content-type');
+	if (headerCT)
+	{
+		let mimeType = headerCT.value.replace(/;.*/, '').toLowerCase();
+		let charset = /charset\s*=/.test(headerCT.value) && headerCT.value.replace(/^.*?charset\s*=\s*/, '').replace(/["']/g, '');
 
 		if (mimeType == 'text/html')
 		{
@@ -170,7 +193,7 @@ function removeIntegrityCrossoriginHtml(req)
 			console.log(`%cJSLibCache: removing integrity|crossorigin from ${req.url} ${mimeType}`, logStyle);
 			let isFirstData = true;
 			let encoder = new TextEncoder();
-			header.value = 'text/html; charset=UTF-8';
+			headerCT.value = 'text/html; charset=UTF-8';
 			let decoder;
 
 			//Note that this will not work if the '<script crossorigin="anonymous" src="dfgsfgd.com">' string is divided into two chunks, but we want to flush this data asap.
@@ -210,9 +233,9 @@ function removeIntegrityCrossoriginHtml(req)
 				}
 				filter.close();
 			}
-			return { responseHeaders: req.responseHeaders }; //headers with modified charset in content-type
 		}
 	}
+	return { responseHeaders: req.responseHeaders }; //headers with modified content-security-policy or content-type
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
