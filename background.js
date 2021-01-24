@@ -8,8 +8,8 @@ const cdnDomains = [
 //	'cdn.jsdelivr.net/',			// 1000k+ / 975
 	'code.jquery.com/',			// 1000k+ /1276
 //	'maxcdn.bootstrapcdn.com/',		// 1000k+ /1475
-	'maps.googleapis.com/',			// 963k
-	'fonts.gstatic.com/',			// 923k
+//	'maps.googleapis.com/',			// 963k
+//	'fonts.gstatic.com/',			// 923k
 //	'stackpath.bootstrapcdn.com/',		// 828k
 //	'netdna.bootstrapcdn.com/',		// 649k
 //	'use.fontawesome.com/releases/v',	// 573k
@@ -41,32 +41,13 @@ const abbr = {'script':'js','stylesheet':'css','font':'fnt'};
 let stats = {};
 let tabStats = {};
 let asciiDecoder = new TextDecoder('ASCII');//windows-1252
-let settings = getOptionsDefault();//{"replacegooglefonts": true, "replacegooglemaps": false}
+let settings = getOptionsDefault();//{"replacegooglefonts": true}
 
 
 function blockRequestCDN(req)
 {
 	console.log(`%cJSLibCache: blocking CSP report to ${req.url}`, logStyle);
 	return { cancel: true };
-}
-function handleGoogleMaps(url, req)
-{
-	let params = new URLSearchParams(url.search);
-	console.log("%cJSLibCache: redirecting googlemaps url " + url + " to openlayers", logStyle, req, params);
-	let storKey = 'Google Maps';
-	stats[storKey] = stats[storKey] ? stats[storKey] + 1 : 1;
-	addTabStats(req.tabId, 1);
-	/*
-	if (false && params.has('callback') && params.get('callback') != '')
-	{
-		let tabId = req.tabId;
-		let callback = params.get('callback') + '();';
-		setTimeout(() => {
-			browser.tabs.executeScript(tabId, { "code": callback });
-		}, 100);
-	}
-	*/
-	return { redirectUrl: browser.runtime.getURL("resources/openlayers-6.3.1.js") };
 }
 async function handleGoogleFontsCss(url, req)
 {
@@ -114,8 +95,6 @@ async function redirectRequestCDN(req)
 	let url = new URL(req.url)
 	if (url.hostname == "fonts.googleapis.com")
 		return settings.replacegooglefonts ? handleGoogleFontsCss(url, req) : {};
-	if (url.hostname == "maps.googleapis.com")
-		return settings.replacegooglemaps ? handleGoogleMaps(url, req) : {};
 	let { uid: storKey, version: versi } = getUID(url);
 	stats[storKey] = stats[storKey] ? stats[storKey] + 1 : 1;
 	addTabStats(req.tabId, 1);
@@ -152,7 +131,8 @@ async function redirectRequestCDN(req)
 	{
 		console.log("%cJSLibCache: " + storKey + " retrieved from local storage", logStyle);
 	}
-	return { redirectUrl: 'data:' + item[storKey].contentType + (item[storKey].b64 ? ';base64,' + item[storKey].data : ',/*JSLC*/' + escape(item[storKey].data)) };
+	//return { redirectUrl: 'data:' + item[storKey].contentType + (item[storKey].b64 ? ';base64,' + item[storKey].data : ',/*JSLC*/' + escape(item[storKey].data)) };
+	return { redirectUrl: 'data:' + item[storKey].contentType + (item[storKey].b64 ? ';base64,' + item[storKey].data : ',' + escape(item[storKey].data)) };
 }
 
 
@@ -190,7 +170,7 @@ function removeIntegrityCrossoriginHtml(req)
 		if (mimeType == 'text/html')
 		{
 			let filter = browser.webRequest.filterResponseData(req.requestId);
-			console.log(`%cJSLibCache: removing integrity|crossorigin from ${req.url} ${mimeType}`, logStyle);
+			console.log(`%cJSLibCache: checking integrity|crossorigin attributes in ${req.url} html`, logStyle);
 			let isFirstData = true;
 			let encoder = new TextEncoder();
 			headerCT.value = 'text/html; charset=UTF-8';
@@ -204,7 +184,7 @@ function removeIntegrityCrossoriginHtml(req)
 					{
 						//<meta http-equiv="Content-Type" content="text/html; charset=gb2312">
 						//<meta http-equiv="content-type" content="text/html;charset=shift_jis">
-						//<meta charset="ISO-8859-1"> 
+						//<meta charset="ISO-8859-1">
 						let htmlHead = asciiDecoder.decode(evt.data, {stream: false});
 						let charsetMatch = htmlHead.match(/<meta\s+charset=["']?([^>"'\/]+)["'>\/]/i);
 						if (!charsetMatch)
@@ -216,9 +196,11 @@ function removeIntegrityCrossoriginHtml(req)
 				}
 				//remove crossorigin and integrity attributes
 				let str = decoder.decode(evt.data, {stream: true}).replace(/<(link|script)[^>]+>/ig, m => {
-						//console.log(`%cJSLibCache: found link|script ${m}`, logStyle);
 						if (cdnDomainsRE.test(m))
+						{
+							console.log(`%cJSLibCache: removing any integrity|crossorigin attributes from ${m}`, logStyle);
 							return m.replace(/\s+(integrity|crossorigin)(="[^"]*"|='[^']*'|=[^"'`=\s]+|)/ig, '');
+						}
 						return m;
 					});
 				filter.write(encoder.encode(str));
@@ -264,7 +246,6 @@ getCacheSize();
 chrome.browserAction.setBadgeBackgroundColor({color:"green"});
 
 chrome.webRequest.onHeadersReceived.addListener(blockRequestCDN, {'types': ['csp_report'], 'urls': cdnDomains.map(host => '*://' + host + '*')}, ['blocking']);
-//chrome.webRequest.onHeadersReceived.addListener(redirectRequestCDN, {'types': ['script','stylesheet','font'], 'urls': cdnDomains.map(host => '*://' + host + '*')}, ['blocking']); //types 'font', 'image', 'other' (for svg?)
 chrome.webRequest.onHeadersReceived.addListener(redirectRequestCDN, {'types': ['script','stylesheet'], 'urls': cdnDomains.map(host => '*://' + host + '*')}, ['blocking']); //types 'font', 'image', 'other' (for svg?)
 chrome.webRequest.onHeadersReceived.addListener(removeIntegrityCrossoriginHtml, {'types': ['main_frame', 'sub_frame'], 'urls': ['*://*/*']}, ['blocking', 'responseHeaders']);
 

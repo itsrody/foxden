@@ -55,8 +55,18 @@ input[type="checkbox"]:checked { background-image: url("chrome://global/skin/ico
 <h1>Preferences</h1>
 <form>
 <h2>Global Settings</h2>
-<label><input type="checkbox" id="replacegooglefonts" checked>Replace Google Fonts</label><br/>
-<label><input type="checkbox" id="replacegooglemaps">Replace Google Maps with OpenStreeMap <small>(experimental)</small></label><br/>
+<label><input type="checkbox" id="replacegooglefonts" checked>Replace Google Fonts <small>CSS only for now, see <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1645683">Bugzilla</a></small></label><br/>
+
+<h2>uBlock Origin Rules</h2>
+<pre>
+* ajax.googleapis.com * noop
+* fonts.googleapis.com * noop
+* ajax.googleapis.com * noop
+* cdnjs.cloudflare.com * noop
+* code.jquery.com * noop
+* ajax.proxy.ustclug.org * noop
+* sdn.geekzu.org * noop
+</pre>
 </form>
 </main>
 </body>
