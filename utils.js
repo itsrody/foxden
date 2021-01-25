@@ -115,6 +115,23 @@ function getVersionNameExt(hostname, pathname)
 		if (mtch = pathname.match(/^\/cdn-cgi\/scripts\/([0-9a-f]+)\/cloudflare-static\/(rocket-loader)\.min\.(js)$/i))
 			return { version: mtch[1], name: canonicalizeName(mtch[2]), ext: mtch[3] };
 	}
+	else if (hostname == "cdn.ampproject.org")
+	{
+		/*
+		https://cdn.ampproject.org/v0.js
+		https://cdn.ampproject.org/v0.js?ver=4.9.9
+		https://cdn.ampproject.org/v0/amp-ad-0.1.js
+		https://cdn.ampproject.org/v0/amp-auto-ads-0.1.js
+		https://cdn.ampproject.org/v0/amp-lightbox-0.1.js
+		https://cdn.ampproject.org/v0/amp-sticky-ad-1.0.js
+		https://cdn.ampproject.org/v0/amp-timeago-0.1.js
+		https://cdn.ampproject.org/rtv/012101212155000/v0/amp-loader-0.1.js
+		*/
+		if (mtch = pathname.match(/^\/v0\.js(\?ver=([\d\.]*))?$/i))
+			return { version: mtch[2]||"1.0.0", name: "amp", ext: "js" };
+		if (mtch = pathname.match(/^\/(rtv\/[0-9]+\/)?v0\/(amp-[a-zA-Z-]+)-([0-9\.]+)\.js$/i))
+			return { version: mtch[3], name: canonicalizeName(mtch[2]), ext: "js" };
+	}
 	return { version: null, name: null, ext: null};
 }
 function getUID(url)

@@ -21,7 +21,7 @@ const cdnDomains = [
 //	'cdn.staticfile.org/',			// 179k
 	'ajax.cloudflare.com/',			// 150k
 //	'yastatic.net/',			// 104k
-//	'cdn.ampproject.org/',			// 73k
+	'cdn.ampproject.org/',			// 73k
 //	'yandex.st/',				// 64k
 //	'code.createjs.com/',			// 9k
 //	'lib.baomitu.com/',			// 9k

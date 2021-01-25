@@ -189,7 +189,7 @@ describe("urls", function() {
 	});
 	describe("not null", function() {
 		describe("url keys", function() {
-			let keys = ['fontsgstatic', 'cloudflare', 'googleapis', 'jquery'];
+			let keys = ['fontsgstatic', 'cloudflare', 'cloudflareajax', 'googleapis', 'jquery', 'ampproject'];
 			it(keys.join(", "), function() {
 				expect(urls).to.have.all.keys(...keys);
 			});
