@@ -1,42 +1,37 @@
-html
-{
-	background: #FFF;
-	padding: 0;
-}
-body {
-	background-color: #F8FCEE;
-	color: #000;
-	font-family: Arial, sans-serif;
-	overflow-y: auto;
-	overflow-x: hidden;
-	width: 680px;
-	height: 584px; 
-	margin: 0;
-}
-header {
-	text-align: center;
-	background-color: #EFF4E2;
-	font-size: 200%;
-}
-main {
-	min-height: calc(100% - 54px);
-}
-main>div {
-	color: #0C8F59;
-	margin: 1px 4px;
-}
-main>div>span {
-	display: inline-block;
-	width: 4ex;
-	background-color: #0C8F59;
-	color: #FFF;
-	border-radius: 6px;
-	margin-right: 1ex;
-	text-align: center;
-}
+:root { --text: #0C8F59; --back: #F8FCEE; --backdarker: #EFF4E2; --border: #333; --grey: #CCC; }
+* { box-sizing: border-box; }
+html,body { display: flex; margin: 0; flex-direction: column; }
+body,label { font-size: 17px; }
+/* Fx mac: 784w x 584h */
+body { font-family: Verdana, Helvetica, Arial, Sans-serif; width: 680px; height: 584px; }
 
-footer {
-	text-align: center;
-	background-color: #EFF4E2;
-	font-size: 80%;
+main { height: 100%; margin: 4px; background-color: var(--back); color: var(--text); border-radius: 4px; }
+h1 { margin: 0; font-size: 30px; line-height: 40px; border-radius: 4px 4px 0 0; background-color: var(--backdarker); text-align: center; }
+h1>img { float: right; width: 39px; height: 39px; vertical-align: top; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 0 4px var(--border); }
+
+
+main>div { position: absolute; top: 47px; left: 4px; width: 668px; height: 528px; }
+div>input[type="radio"] { display: none; }
+div>input[type="radio"]+label { display: block; width: 120px; padding-left: 8px; cursor: pointer; }
+div>input[type="radio"]:not(:disabled)+label:hover { background-color: var(--grey); }
+div>input[type="radio"]:disabled+label { color: var(--grey); cursor: default; }
+div>input[type="radio"]:checked+label { background-color: var(--border); color: var(--back); }
+div>input[type="radio"]~div { position: absolute; top: 0; left: 120px; right: 0; bottom: 0; overflow-y: auto; border: 1px solid var(--border); display: none; padding: 8px; border-bottom-right-radius: 2px }
+div>input[type="radio"]:checked~div { display: block; }
+
+table { table-layout: fixed; width: 100%; border-collapse: collapse; }
+col.name { width: 53%; }
+col.version { width: 20%; }
+col.stat { width: 9%; }
+thead>tr,tr:nth-child(even) { background-color: var(--backdarker); }
+td,th {
+	padding: 1px 4px;
+	font-size: 15px;
 }
+th {
+	font-weight: normal;
+	text-align: right;
+}
+tbody>tr>th:nth-child(3) { color: var(--grey); }
+th[title] { text-decoration: underline dotted; }
+thead>tr>td,thead>tr>th { font-weight: bold; }

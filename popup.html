@@ -8,8 +8,37 @@
 		<script src="popup.js" defer></script>
 	</head>
 	<body>
-		<header>JSLibCache: JavaScript Library Cache</header>
-		<main></main>
-		<footer>Icons made by <a href="http://www.freepik.com/" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></footer>
+		<main>
+			<h1>JSLibCache: JavaScript Library Cache</h1>
+			<div>
+				<div>
+					<input type="radio" name="tab" value="1" id="tab1" checked/><label for="tab1">Statistics</label>
+					<div>
+						<table>
+							<colgroup>
+								<col class="name"/>
+								<col class="version"/>
+								<col class="stat"/>
+								<col class="stat"/>
+								<col class="stat"/>
+							</colgroup>
+							<thead>
+								<tr><td>Library Name</td><th>Version</th><th title="Globally
+(Not yet implemented)">Glo</th><th title="This browsing session">Ses</th><th title="This tab">Tab</th></tr>
+							</thead>
+							<tbody>
+							</tbody>
+						</table>
+					</div>
+				</div>
+				<div>
+					<input type="radio" name="tab" value="2" id="tab2"/><label for="tab2">Credits</label>
+					<div>
+						Version <b id="version">0.0.0</b><br/>
+						Icons made by <a href="http://www.freepik.com/" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a>
+					</div>
+				</div>
+			</div>
+		</main>
 	</body>
 </html>

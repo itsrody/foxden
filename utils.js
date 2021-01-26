@@ -166,12 +166,6 @@ function sizeOf(value)
 {
 	return typeSizes[typeof value](value);
 }
-async function getCacheSize() //FIXME: use browser.storage.local.getBytesInUse() when Fx supports it
-{
-	let strg = await browser.storage.local.get(null);
-	let size = Math.round(sizeOf(strg) / 1024).toLocaleString() + 'kB';
-	console.log("%cJSLibCache: cache has " + Object.keys(strg).length + " files, total size is " + size, logStyle);
-}
 
 function canonicalizeName(name)
 {

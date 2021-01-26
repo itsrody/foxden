@@ -52,9 +52,9 @@ function blockRequestCDN(req)
 async function handleGoogleFontsCss(url, req)
 {
 	let families = getFamiliesFromGoogleFontCSSURL(url);
-	let storKeys = families.map(family => 'Font CSS ' + family);
+	let storKeys = families.map(family => 'font/' + family.toLowerCase() + ' css');
 	storKeys.forEach(storKey => { stats[storKey] = stats[storKey] ? stats[storKey] + 1 : 1});
-	addTabStats(req.tabId, storKeys.length);
+	addTabStats(req.tabId, storKeys);
 	let items = await browser.storage.local.get(storKeys);
 	let unknownStorKeys = storKeys.filter(storKey => !(storKey in items));
 	let newItems = {};
@@ -85,10 +85,14 @@ async function handleGoogleFontsCss(url, req)
 	let dataURI = 'data:text/css;charset=utf-8,' + escape('/*JSLC*/' + storKeys.map(storKey => items[storKey] ? items[storKey].data : newItems[storKey].data).join("\n"));
 	return { redirectUrl: dataURI };
 }
-function addTabStats(tabId, n)
+function addTabStats(tabId, storKeys)
 {
-	tabStats[tabId, tabId] = tabStats[tabId] ? tabStats[tabId] + n : n;
-	chrome.browserAction.setBadgeText({text: "" + tabStats[tabId], tabId: tabId});
+	if (!tabStats[tabId])
+		tabStats[tabId] = {};
+	storKeys.forEach(storKey => {
+		tabStats[tabId][storKey] = tabStats[tabId][storKey] ? tabStats[tabId][storKey] + 1 : 1;
+	});
+	chrome.browserAction.setBadgeText({text: "" + Object.keys(tabStats[tabId]).length, tabId: tabId});
 }
 async function redirectRequestCDN(req)
 {
@@ -97,7 +101,7 @@ async function redirectRequestCDN(req)
 		return settings.replacegooglefonts ? handleGoogleFontsCss(url, req) : {};
 	let { uid: storKey, version: versi } = getUID(url);
 	stats[storKey] = stats[storKey] ? stats[storKey] + 1 : 1;
-	addTabStats(req.tabId, 1);
+	addTabStats(req.tabId, [storKey]);
 	let item = await browser.storage.local.get(storKey);
 	let itemExists = storKey in item;
 	if (!itemExists || isNewerPointVersion(versi, item[storKey].v))
@@ -223,7 +227,15 @@ function removeIntegrityCrossoriginHtml(req)
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 	if (request.action === "getStats")//from popup.js
 	{
-		sendResponse({"success": true, "stats": stats});
+		chrome.tabs.query({'active': true, 'currentWindow': true}, tabsResp => {
+			let tabId = 0;
+			if (tabsResp != null && tabsResp.length)
+			{
+				tabId = tabsResp[0].id;
+			}
+			sendResponse({"success": true, "stats": stats, "tabStats": tabStats[tabId]});
+		});
+		return true; //for async sendResponse
 	}
 });
 /* not supported by Fx
@@ -242,12 +254,17 @@ function getSyncSettings()
 browser.storage.onChanged.addListener((changes, area) => { if (area == "sync") { getSyncSettings(); } });
 getSyncSettings();
 
-getCacheSize();
 chrome.browserAction.setBadgeBackgroundColor({color:"green"});
 
 chrome.webRequest.onHeadersReceived.addListener(blockRequestCDN, {'types': ['csp_report'], 'urls': cdnDomains.map(host => '*://' + host + '*')}, ['blocking']);
 chrome.webRequest.onHeadersReceived.addListener(redirectRequestCDN, {'types': ['script','stylesheet'], 'urls': cdnDomains.map(host => '*://' + host + '*')}, ['blocking']); //types 'font', 'image', 'other' (for svg?)
 chrome.webRequest.onHeadersReceived.addListener(removeIntegrityCrossoriginHtml, {'types': ['main_frame', 'sub_frame'], 'urls': ['*://*/*']}, ['blocking', 'responseHeaders']);
 
+
+browser.storage.local.get(null).then(stor => {
+	let size = Math.round(sizeOf(stor) / 1024).toLocaleString() + 'kB';
+	console.log("%cJSLibCache: cache has " + Object.keys(stor).length + " files, total size is " + size, logStyle);
+	Object.keys(stor).forEach(storKey => { stats[storKey] = 0; });
+});
 
 }
