@@ -1,4 +1,4 @@
-:root { --text: #0C8F59; --back: #F8FCEE; --backdarker: #EFF4E2; --border: #2F4858; --grey: #CCC; }
+:root { --text: #0C8F59; --back: #F8FCEE; --backdarker: #EFF4E2; --border: #0C8F59; --grey: #CCC; }
 * { box-sizing: border-box; }
 html,body { display: flex; margin: 0; flex-direction: column; }
 body,label { font-size: 17px; }
@@ -10,11 +10,10 @@ h1 { margin: 0; font-size: 30px; line-height: 40px; border-radius: 4px 4px 0 0; 
 h1>img { float: right; width: 39px; height: 39px; vertical-align: top; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 0 4px var(--border); }
 
 
-main>div { position: absolute; top: 47px; left: 4px; width: 668px; height: 528px; }
+main>div { position: absolute; top: 44px; left: 4px; width: 668px; height: 533px; }
 div>input[type="radio"] { display: none; }
-div>input[type="radio"]+label { display: block; width: 120px; padding-left: 8px; cursor: pointer; }
-div>input[type="radio"]:not(:disabled)+label:hover { background-color: var(--grey); }
-div>input[type="radio"]:disabled+label { color: var(--grey); cursor: default; }
+div>input[type="radio"]+label { display: block; width: 120px; padding: 0 0 2px 8px; cursor: pointer; }
+div>input[type="radio"]+label:hover { background-color: var(--backdarker); }
 div>input[type="radio"]:checked+label { background-color: var(--border); color: var(--back); }
 div>input[type="radio"]~div { position: absolute; top: 0; left: 120px; right: 0; bottom: 0; overflow-y: auto; border: 1px solid var(--border); display: none; padding: 8px; border-bottom-right-radius: 2px }
 div>input[type="radio"]:checked~div { display: block; }
