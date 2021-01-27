@@ -233,9 +233,24 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 			{
 				tabId = tabsResp[0].id;
 			}
-			sendResponse({"success": true, "stats": stats, "tabStats": tabStats[tabId]});
+			sendResponse({"success": true, "stats": stats, "tabStats": tabStats[tabId], "cdnDomains": cdnDomains.map(href => href.replace(/\/.*/,""))});
 		});
 		return true; //for async sendResponse
+	}
+	else if (request.action === "clearCache")//from popup.js
+	{
+		//FIXME
+		browser.storage.local.clear().then(
+			//Success
+			() => {
+				console.log("%cJSLibCache: browser.storage.local cleared", logStyle),
+				stats = {};
+				sendResponse({"success": true});
+			},
+			//Error
+			msg => console.warn("%cJSLibCache: error clearing browser.storage.local: " + msg, logStyle),
+		);
+		return true;
 	}
 });
 /* not supported by Fx

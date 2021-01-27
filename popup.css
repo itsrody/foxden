@@ -1,4 +1,4 @@
-:root { --text: #0C8F59; --back: #F8FCEE; --backdarker: #EFF4E2; --border: #333; --grey: #CCC; }
+:root { --text: #0C8F59; --back: #F8FCEE; --backdarker: #EFF4E2; --border: #2F4858; --grey: #CCC; }
 * { box-sizing: border-box; }
 html,body { display: flex; margin: 0; flex-direction: column; }
 body,label { font-size: 17px; }
@@ -35,3 +35,5 @@ th {
 tbody>tr>th:nth-child(3) { color: var(--grey); }
 th[title] { text-decoration: underline dotted; }
 thead>tr>td,thead>tr>th { font-weight: bold; }
+
+div.form>div>span,div.form>label>span { display: inline-block; width: 200px; }
