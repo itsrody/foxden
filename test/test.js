@@ -165,6 +165,19 @@ describe("urls", function() {
 				});
 			}
 		});
+		describe("cloudflare", function() {
+			for (let line of [
+				["/ajax/libs/flexslider/2.7.2/jquery.flexslider.min.js", "2.7.2", "jquery/flexslider", "js"],
+			])
+			{
+				it(line[0] + ' ⟹ ' + line[2] + ' ' + line[1] + ' ' + line[3], function() {
+					let { version, name, ext } = getVersionNameExt("cdnjs.cloudflare.com", line[0]);
+					expect(version).to.equal(line[1]);
+					expect(name).to.equal(line[2]);
+					expect(ext).to.equal(line[3]);
+				});
+			}
+		});
 		describe("googleapis", function() {
 			for (let line of [
 				["/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css", "1.12.1", "themes/smoothness/jquery/ui", "css"],

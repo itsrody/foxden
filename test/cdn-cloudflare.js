@@ -2249,6 +2249,7 @@ https://cdnjs.cloudflare.com/ajax/libs/flexiblegs-css/5.6.0/flexiblegs-css.min.c
 https://cdnjs.cloudflare.com/ajax/libs/flexie/1.0.3/flexie.min.js
 https://cdnjs.cloudflare.com/ajax/libs/flexisel/2.2.2/js/jquery.flexisel.min.js
 https://cdnjs.cloudflare.com/ajax/libs/flexslider/2.7.2/flexslider.min.css
+https://cdnjs.cloudflare.com/ajax/libs/flexslider/2.7.2/jquery.flexslider.min.js
 https://cdnjs.cloudflare.com/ajax/libs/flickity/2.2.1/flickity.pkgd.min.js
 https://cdnjs.cloudflare.com/ajax/libs/flight/1.1.4/flight.min.js
 https://cdnjs.cloudflare.com/ajax/libs/flipCounter/1.2/jquery.flipCounter.pack.min.js

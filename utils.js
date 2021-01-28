@@ -102,6 +102,7 @@ function getVersionNameExt(hostname, pathname)
 			return { version: mtch[1], name: canonicalizeName(mtch[2]), ext: mtch[4] };
 		// /ajax/libs/react-dom/16.13.1/umd/react-dom.production.min.js
 		// /ajax/libs/angulartics2/9.1.0/adobeanalytics/bundles/angulartics2-adobeanalytics.umd.min.js
+		// /ajax/libs/flexslider/2.7.2/jquery.flexslider.min.js
 		if (mtch = pathname.match(/^\/ajax\/libs\/([a-zA-Z0-9\.-]+)\/([\d\.-]+)\/(.+?)(?:\.compiled|\.min)?\.(css|js|svg)$/i))
 		{
 			if (mtch[3].replace(/[_\.-]+/g, '').indexOf(mtch[1]) > -1)
