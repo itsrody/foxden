@@ -62,10 +62,11 @@ function getVersionNameExt(hostname, pathname)
 		if (mtch = pathname.match(/^\/ajax\/libs\/[^\/]+\/([\d\.-]+(?:beta\d*)?|r\d+)\/(?:dojo\/)?([a-zA-Z0-9_\.-]+?)(\.compiled|\.min)?\.(js|css|map|png|eot|svg|ttf|woff2|woff)$/i))
 			return { version: mtch[1], name: canonicalizeName(mtch[2]), ext: mtch[4] };
 		// /ajax/libs/yui/2.9.0/build/yuiloader-dom-event/yuiloader-dom-event.js
-		if (mtch = pathname.match(/^\/ajax\/libs\/([a-zA-Z0-9\.-]+)\/([\d\.-]+)\/build\/([a-zA-Z0-9_\.-]+?)\/\3(-min|\.min)?\.(js|css)$/i))
+		// /ajax/libs/yui/2.8.0r4/build/json/json-min.js
+		if (mtch = pathname.match(/^\/ajax\/libs\/([a-zA-Z0-9\.-]+)\/([r\d\.-]+)\/build\/([a-zA-Z0-9_\.-]+?)\/\3(-min|\.min)?\.(js|css)$/i))
 			return { version: mtch[2], name: canonicalizeName(mtch[1] + "/" + mtch[3]), ext: mtch[5] };
 		// /ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css
-		if (mtch = pathname.match(/^\/ajax\/libs\/([a-zA-Z0-9\.-]+)\/([\d\.-]+)\/(.+?)\.(css)$/i))
+		if (mtch = pathname.match(/^\/ajax\/libs\/([a-zA-Z0-9\.-]+)\/([r\d\.-]+)\/(.+?)\.(css)$/i))
 			return { version: mtch[2], name: canonicalizeName(mtch[3]), ext: mtch[4] };
 	}
 	else if (hostname == "code.jquery.com")
@@ -113,8 +114,11 @@ function getVersionNameExt(hostname, pathname)
 	else if (hostname == "ajax.cloudflare.com")
 	{
 		//https://ajax.cloudflare.com/cdn-cgi/scripts/7089c43e/cloudflare-static/rocket-loader.min.js
-		if (mtch = pathname.match(/^\/cdn-cgi\/scripts\/([0-9a-f]+)\/cloudflare-static\/(rocket-loader)\.min\.(js)$/i))
+		if (mtch = pathname.match(/^\/cdn-cgi\/scripts\/([0-9a-f]+)\/cloudflare-static\/(rocket-loader)(?:\.min)?\.(js)$/i))
 			return { version: mtch[1], name: canonicalizeName(mtch[2]), ext: mtch[3] };
+		//https://ajax.cloudflare.com/cdn-cgi/nexp/cloudflare.js 
+		if (mtch = pathname.match(/^\/cdn-cgi\/([0-9a-z]+)\/([0-9a-z]+)(?:\.min)?\.(js)$/i))
+			return { version: "", name: canonicalizeName(mtch[1] + "/" + mtch[2]), ext: mtch[3] };
 	}
 	else if (hostname == "cdn.ampproject.org")
 	{
@@ -187,9 +191,9 @@ function isNewerPointVersion(v1, v2)
 	}
 	return false;
 }
-function getOptionsDefault()
+function getDefaultSettings()
 {
-	return {"replacegooglefonts": true, "replacegooglemaps": false};
+	return {"otherCspWebExt": true};
 }
 
 function parseCspHeader(policy)

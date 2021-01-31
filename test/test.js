@@ -168,6 +168,7 @@ describe("urls", function() {
 		describe("cloudflare", function() {
 			for (let line of [
 				["/ajax/libs/flexslider/2.7.2/jquery.flexslider.min.js", "2.7.2", "jquery/flexslider", "js"],
+				["/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js", "3.3.7", "bootstrap", "js"],
 			])
 			{
 				it(line[0] + ' ⟹ ' + line[2] + ' ' + line[1] + ' ' + line[3], function() {
@@ -189,6 +190,8 @@ describe("urls", function() {
 				["/ajax/libs/shaka-player/2.5.0-beta2/shaka-player.compiled.js", "2.5.0-beta2", "shaka/player", "js"],
 				["/ajax/libs/threejs/r84/three.min.js", "r84", "three", "js"],
 				["/ajax/libs/yui/2.9.0/build/yuiloader-dom-event/yuiloader-dom-event.js", "2.9.0", "yui/yuiloader/dom/event", "js"],
+				["/ajax/libs/yui/2.8.0r4/build/json/json-min.js", "2.8.0r4", "yui/json", "js"],
+				["/ajax/libs/yui/2.8.0r4/build/yahoo/yahoo-min.js", "2.8.0r4", "yui/yahoo", "js"],
 			])
 			{
 				it(line[0] + ' ⟹ ' + line[2] + ' ' + line[1] + ' ' + line[3], function() {
@@ -209,6 +212,7 @@ describe("urls", function() {
 		});
 		for (let domain in urls)
 		{
+			if (domain != 'cloudflare')
 			describe(domain, function() {
 				for (let line of urls[domain].split(/\r?\n/))
 				{

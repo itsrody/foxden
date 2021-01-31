@@ -1,7 +1,7 @@
 {
 	"manifest_version": 2,
 	"name": "JSLibCache",
-	"version": "0.0.9",
+	"version": "0.0.10",
 	"default_locale": "en",
 	"browser_specific_settings": { "gecko": { "id": "jslibcache@pass.dog" } },
 	"description": "__MSG_description__",
@@ -12,7 +12,8 @@
 		"activeTab",
 		"unlimitedStorage",
 		"webRequest",
-		"webRequestBlocking"
+		"webRequestBlocking",
+		"webNavigation"
 	],
 	"background": { "scripts": ["utils.js", "background.js"] },
 	"browser_action": { "default_popup": "popup.html", "browser_style": false }

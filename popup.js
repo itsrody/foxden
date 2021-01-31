@@ -1,6 +1,20 @@
 {
 'use strict';
+let settings = getDefaultSettings();
 
+function onSettingChange(evt)
+{
+	evt.preventDefault();
+	let input = evt.target;
+	settings[input.id] = input.checked;
+	browser.storage.sync.set({settings}).then(
+		//Success
+		() => console.log("JSLibCache.popup: Settings saved", settings, JSON.stringify(settings)),
+		//Error
+		msg => console.warn("JSLibCache.popup: Error saving settings to browser.storage.sync: " + msg)
+	);
+
+}
 function onClearcacheButtonClick(evt)
 {
 	let btn = evt.target;
@@ -18,6 +32,18 @@ function init()
 {
 	if ("chrome" in window && "runtime" in chrome)
 	{
+		browser.storage.sync.get({"settings": getDefaultSettings()}).then(
+			//Success
+			sett => {
+				settings = sett.settings;
+				console.log("JSLibCache.popup: settings retrieved", sett);
+				for (let id in settings)
+					document.getElementById(id).checked = settings[id];
+			},
+			//Error
+			msg => console.warn("JSLibCache.popup: Error getting settings from browser.storage.sync: " + msg)
+		);
+
 		chrome.runtime.sendMessage({'action': 'getStats' }, result => {
 			if (result)
 			{
@@ -59,11 +85,12 @@ function init()
 				}
 				if (result.cdnDomains)
 				{
-					document.querySelector('#ublock').textContent = result.cdnDomains.map(host => `* ${host} * noop`).join("\n");
+					document.querySelector('#ublockrules').textContent = result.cdnDomains.map(host => `* ${host} * noop`).join("\n");
 				}
 			}
 		});
-		document.querySelector('#clearcache').addEventListener("click", onClearcacheButtonClick);
+		document.querySelector('form#settings').addEventListener("change", onSettingChange);
+		document.querySelector('button#clearcache').addEventListener("click", onClearcacheButtonClick);
 		document.querySelector('#version').textContent = chrome.runtime.getManifest().version;
 	}
 }

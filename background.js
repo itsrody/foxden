@@ -37,11 +37,11 @@ const cdnDomains = [
 ];
 const cdnDomainsRE = new RegExp('//(' + cdnDomains.map(m => m.replace(/\W/g, '\\$&')).join('|') + ')');
 //const cdnDomainAlias = {'unpkg.com/':'cdn.jsdelivr.net/npm/' };
-const abbr = {'script':'js','stylesheet':'css','font':'fnt'};
+//const abbr = {'script':'js','stylesheet':'css','font':'fnt'};
 let stats = {};
 let tabStats = {};
 let asciiDecoder = new TextDecoder('ASCII');//windows-1252
-let settings = getOptionsDefault();//{"replacegooglefonts": true}
+let settings = getDefaultSettings();
 
 
 function blockRequestCDN(req)
@@ -72,7 +72,7 @@ async function handleGoogleFontsCss(url, req)
 			if (!responses[i].ok)
 				console.warn("%cfetching failed 2", logStyle, responses[i]);
 			let now = new Date().getTime();
-			newItems[unknownStorKeys[i]] = { 'created': now, 'axsd': now, 'hits': 0, 'data': responseTexts[i] || "/* ERRGF001 */" };
+			newItems[unknownStorKeys[i]] = { 'created': now, 'url': req.url, 'data': responseTexts[i] || "/* ERRGF001 */" };
 		}
 		browser.storage.local.set(newItems).then(
 			//Success
@@ -92,13 +92,14 @@ function addTabStats(tabId, storKeys)
 	storKeys.forEach(storKey => {
 		tabStats[tabId][storKey] = tabStats[tabId][storKey] ? tabStats[tabId][storKey] + 1 : 1;
 	});
+	//FIXME: the keys are for the entire tab sesion
 	chrome.browserAction.setBadgeText({text: "" + Object.keys(tabStats[tabId]).length, tabId: tabId});
 }
 async function redirectRequestCDN(req)
 {
 	let url = new URL(req.url)
 	if (url.hostname == "fonts.googleapis.com")
-		return settings.replacegooglefonts ? handleGoogleFontsCss(url, req) : {};
+		return handleGoogleFontsCss(url, req);
 	let { uid: storKey, version: versi } = getUID(url);
 	stats[storKey] = stats[storKey] ? stats[storKey] + 1 : 1;
 	addTabStats(req.tabId, [storKey]);
@@ -126,10 +127,13 @@ async function redirectRequestCDN(req)
 			data = await resp.text();
 		else
 			data = btoa(String.fromCharCode(...new Uint8Array(await resp.arrayBuffer())));
-		item[storKey] = { 'created': now, 'axsd': now, 'hits': 0, 'v': versi, 'contentType': contentType, 'b64': isTextual?0:1, 'data': data };
-		await browser.storage.local.set(item);//FIXME?
-		if (chrome.runtime.lastError)
-			console.error("%cError on storage.set", logStyle, chrome.runtime.lastError);
+		item[storKey] = { 'created': now, 'url': req.url, 'v': versi, 'contentType': contentType, 'b64': isTextual?0:1, 'data': data };
+		browser.storage.local.set(item).then(
+			//Success
+			() => {},
+			//Error
+			msg => console.error("%cError on storage.set", logStyle, msg)
+		);
 	}
 	else
 	{
@@ -143,11 +147,11 @@ async function redirectRequestCDN(req)
 function removeIntegrityCrossoriginHtml(req)
 {
 	let headerIdx = req.responseHeaders.findIndex(h => h.name.toLowerCase() == 'content-security-policy');//TODO FIXME: report-only?
+	let hasCspChange = false;
 	if (headerIdx > -1)
 	{
 		let headerCSP = req.responseHeaders[headerIdx];
 		let parsedCSP = parseCspHeader(headerCSP.value);
-		let hasCspChange = false;
 		if (parsedCSP["script-src"] && !parsedCSP["script-src"].includes("data:"))
 		{
 			hasCspChange = true;
@@ -158,7 +162,7 @@ function removeIntegrityCrossoriginHtml(req)
 			hasCspChange = true;
 			parsedCSP["style-src"].unshift("data:");
 		}
-		if (hasCspChange)
+		if (hasCspChange && !settings.otherCspWebExt)
 		{
 			console.log(`%cJSLibCache: adding data: to CSP header ${req.url}`, logStyle);
 			req.responseHeaders.splice(headerIdx, 1);//Remove CSP header, see https://github.com/gorhill/uMatrix/issues/967
@@ -221,8 +225,21 @@ function removeIntegrityCrossoriginHtml(req)
 			}
 		}
 	}
-	return { responseHeaders: req.responseHeaders }; //headers with modified content-security-policy or content-type
+	// https://developer.chrome.com/docs/extensions/reference/webRequest/
+	// Only return responseHeaders if you really want to modify the headers in order to limit the number of conflicts (only one extension may modify responseHeaders for each request)
+	if (hasCspChange)
+		return { responseHeaders: req.responseHeaders }; //headers with modified content-security-policy or content-type
 }
+function onBeforeNavigate(details)
+{
+	//console.log(`%cJSLibCache: onBeforeNavigate`, logStyle, details);
+	//clear tab's stats
+	if (details.frameId == 0) //main page, not inner iframe
+		tabStats[details.tabId] = {};
+}
+
+
+/********* EVENT HANDLERS ***************/
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 	if (request.action === "getStats")//from popup.js
@@ -243,7 +260,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 		browser.storage.local.clear().then(
 			//Success
 			() => {
-				console.log("%cJSLibCache: browser.storage.local cleared", logStyle),
+				console.log("%cJSLibCache: browser.storage.local cleared", logStyle);
 				stats = {};
 				sendResponse({"success": true});
 			},
@@ -255,7 +272,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 /* not supported by Fx
 browser.runtime.onSuspend.addListener(() => {
-	//TODO, FIXME: save stats, googleFontsCSS and resources to storage.local
+	//TODO, FIXME: save stats to storage.local
 	console.log(`%cJSLibCache: background suspended`, logStyle);
 });
 */
@@ -264,7 +281,7 @@ browser.runtime.onSuspend.addListener(() => {
 // init
 function getSyncSettings()
 {
-	browser.storage.sync.get({"settings": getOptionsDefault()}).then(sett => { settings = sett.settings; });
+	browser.storage.sync.get({"settings": getDefaultSettings()}).then(sett => { settings = sett.settings; });
 }
 browser.storage.onChanged.addListener((changes, area) => { if (area == "sync") { getSyncSettings(); } });
 getSyncSettings();
@@ -274,6 +291,7 @@ chrome.browserAction.setBadgeBackgroundColor({color:"green"});
 chrome.webRequest.onHeadersReceived.addListener(blockRequestCDN, {'types': ['csp_report'], 'urls': cdnDomains.map(host => '*://' + host + '*')}, ['blocking']);
 chrome.webRequest.onHeadersReceived.addListener(redirectRequestCDN, {'types': ['script','stylesheet'], 'urls': cdnDomains.map(host => '*://' + host + '*')}, ['blocking']); //types 'font', 'image', 'other' (for svg?)
 chrome.webRequest.onHeadersReceived.addListener(removeIntegrityCrossoriginHtml, {'types': ['main_frame', 'sub_frame'], 'urls': ['*://*/*']}, ['blocking', 'responseHeaders']);
+chrome.webNavigation.onBeforeNavigate.addListener(onBeforeNavigate);
 
 
 browser.storage.local.get(null).then(stor => {

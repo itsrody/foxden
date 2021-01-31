@@ -6,7 +6,10 @@ body,label { font-size: 17px; }
 body { font-family: Verdana, Helvetica, Arial, Sans-serif; width: 680px; height: 584px; }
 
 main { height: 100%; margin: 4px; background-color: var(--back); color: var(--text); border-radius: 4px; }
-h1 { margin: 0; font-size: 30px; line-height: 40px; border-radius: 4px 4px 0 0; background-color: var(--backdarker); text-align: center; }
+h1,h2,h3 { margin: 0; border-radius: 4px 4px 0 0; background-color: var(--backdarker); color: #000; }
+h1 { font-size: 30px; line-height: 40px; text-align: center; }
+h3 { font-size: 80%; margin: 0 -4px; padding: 0 4px; }
+h3:not(:first-child) { margin-top: 1.5em; }
 h1>img { float: right; width: 39px; height: 39px; vertical-align: top; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 0 4px var(--border); }
 
 
@@ -35,4 +38,4 @@ tbody>tr>th:nth-child(3) { color: var(--grey); }
 th[title] { text-decoration: underline dotted; }
 thead>tr>td,thead>tr>th { font-weight: bold; }
 
-div.form>div>span,div.form>label>span { display: inline-block; width: 200px; }
+div>form>div>span,div>form>label>span { display: inline-block; width: 300px; }

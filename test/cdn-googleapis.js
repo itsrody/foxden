@@ -467,4 +467,5 @@ http://ajax.googleapis.com/ajax/libs/yui/2.7.0/build/reset-fonts-grids/reset-fon
 http://ajax.googleapis.com/ajax/libs/yui/2.9.0/build/connection/connection-min.js
 http://ajax.googleapis.com/ajax/libs/yui/2.9.0/build/connection/connection-min.js?v=423
 http://ajax.googleapis.com/ajax/libs/yui/2.9.0/build/yuiloader-dom-event/yuiloader-dom-event.js
+http://ajax.googleapis.com/ajax/libs/yui/2.8.0r4/build/json/json-min.js
 `;
