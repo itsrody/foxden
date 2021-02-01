@@ -42,6 +42,7 @@ let stats = {};
 let tabStats = {};
 let asciiDecoder = new TextDecoder('ASCII');//windows-1252
 let settings = getDefaultSettings();
+let knownGoogleFonts = [];
 
 
 function blockRequestCDN(req)
@@ -49,10 +50,16 @@ function blockRequestCDN(req)
 	console.log(`%cJSLibCache: blocking CSP report to ${req.url}`, logStyle);
 	return { cancel: true };
 }
+function replaceFontsGstaticURLs(css)
+{
+	//src: url(https://fonts.gstatic.com/s/roboto/v20/KFOiCnqEu92Fr1Mu51QrEz0dL-vwnYh2eg.woff2) format('woff2');
+	//FIXME: check knownGoogleFonts for font name
+	return css.replace(/https?:\/\/fonts.gstatic.com\/s\/([a-z0-9]+)\/v\d+/g, chrome.extension.getURL("resources/fonts/") + "$1");
+}
 async function handleGoogleFontsCss(url, req)
 {
 	let families = getFamiliesFromGoogleFontCSSURL(url);
-	let storKeys = families.map(family => 'font/' + family.toLowerCase() + ' css');
+	let storKeys = families.map(family => 'font/' + family + ' css');
 	storKeys.forEach(storKey => { stats[storKey] = stats[storKey] ? stats[storKey] + 1 : 1});
 	addTabStats(req.tabId, storKeys);
 	let items = await browser.storage.local.get(storKeys);
@@ -60,7 +67,7 @@ async function handleGoogleFontsCss(url, req)
 	let newItems = {};
 	if (unknownStorKeys.length)
 	{
-		let unknownFamilies = unknownStorKeys.map(storKey => storKey.substr(9));
+		let unknownFamilies = unknownStorKeys.map(storKey => storKey.substring(5, storKey.length - 4));
 		console.log("%cJSLibCache: fetching CSS for these font families from googlefonts: " + unknownFamilies.join(", "), logStyle);
 		let responses = await Promise.all(unknownFamilies.map(family => fetch(
 			'https://fonts.googleapis.com/css2?family=' + encodeURIComponent(family) + ':ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap',
@@ -72,7 +79,7 @@ async function handleGoogleFontsCss(url, req)
 			if (!responses[i].ok)
 				console.warn("%cfetching failed 2", logStyle, responses[i]);
 			let now = new Date().getTime();
-			newItems[unknownStorKeys[i]] = { 'created': now, 'url': req.url, 'data': responseTexts[i] || "/* ERRGF001 */" };
+			newItems[unknownStorKeys[i]] = { 'created': now, 'data': responseTexts[i] || "/* ERRGF001 */" };
 		}
 		browser.storage.local.set(newItems).then(
 			//Success
@@ -82,7 +89,7 @@ async function handleGoogleFontsCss(url, req)
 		);
 	}
 	console.log("%cJSLibCache: serving CSS for these font families from googlefonts: " + families.join(", "), logStyle);
-	let dataURI = 'data:text/css;charset=utf-8,' + escape('/*JSLC*/' + storKeys.map(storKey => items[storKey] ? items[storKey].data : newItems[storKey].data).join("\n"));
+	let dataURI = 'data:text/css;charset=utf-8,' + escape('/*JSLC*/' + replaceFontsGstaticURLs(storKeys.map(storKey => items[storKey] ? items[storKey].data : newItems[storKey].data).join("\n")));
 	return { redirectUrl: dataURI };
 }
 function addTabStats(tabId, storKeys)
@@ -162,7 +169,7 @@ function removeIntegrityCrossoriginHtml(req)
 			hasCspChange = true;
 			parsedCSP["style-src"].unshift("data:");
 		}
-		if (hasCspChange && !settings.otherCspWebExt)
+		if (hasCspChange && settings.allowModifyHeaders)
 		{
 			console.log(`%cJSLibCache: adding data: to CSP header ${req.url}`, logStyle);
 			req.responseHeaders.splice(headerIdx, 1);//Remove CSP header, see https://github.com/gorhill/uMatrix/issues/967
@@ -285,6 +292,11 @@ function getSyncSettings()
 }
 browser.storage.onChanged.addListener((changes, area) => { if (area == "sync") { getSyncSettings(); } });
 getSyncSettings();
+
+fetch(chrome.extension.getURL("resources/fonts/")).then(resp => resp.text()).then(txt => {
+	knownGoogleFonts = txt.split(/\n/).filter(line => line.startsWith("201: ") && line.endsWith(" DIRECTORY")).map(line => line.replace(/^201: (\w+)\/ .*$/, "$1"));
+	console.log("%cJSLibCache: knownGoogleFonts", logStyle, knownGoogleFonts);
+});
 
 chrome.browserAction.setBadgeBackgroundColor({color:"green"});
 

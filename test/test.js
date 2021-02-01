@@ -2,6 +2,16 @@
 
 var expect = chai.expect;
 chai.config.truncateThreshold = 0;
+
+let fontFamilies = {};
+for (let line of urls.googleapisfonts.split(/\r?\n/))
+	if (line && line.charAt(0) != '#')
+		for (let fam of getFamiliesFromGoogleFontCSSURL(new URL(line)))
+			fontFamilies[fam] = fontFamilies[fam] ? fontFamilies[fam] + 1 : 1;
+console.log(JSON.stringify(Object.keys(fontFamilies).sort((a,b) => fontFamilies[b] - fontFamilies[a])));
+/*
+*/
+
 describe("utils", function() {
 	describe("isMimeTextual", function() {
 		for (let line of [
@@ -140,6 +150,7 @@ describe("urls", function() {
 		});
 		describe("jquery", function() {
 			for (let line of [
+				["/jquery-latest.min.js", "1.11.1", "jquery", "js"],
 				["/jquery-3.5.1.min.js", "3.5.1", "jquery", "js"],
 				["/jquery-3.5.1.slim.js", "3.5.1", "jquery/slim", "js"],
 				["/jquery-3.x-git.slim.min.js", "3.x-git", "jquery/slim", "js"],
@@ -169,6 +180,7 @@ describe("urls", function() {
 			for (let line of [
 				["/ajax/libs/flexslider/2.7.2/jquery.flexslider.min.js", "2.7.2", "jquery/flexslider", "js"],
 				["/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js", "3.3.7", "bootstrap", "js"],
+				["/ajax/libs/toastr.js/latest/toastr.min.css", "2.1.3", "toastr", "css"],
 			])
 			{
 				it(line[0] + ' ⟹ ' + line[2] + ' ' + line[1] + ' ' + line[3], function() {
@@ -206,13 +218,16 @@ describe("urls", function() {
 	describe("not null", function() {
 		describe("url keys", function() {
 			let keys = ['fontsgstatic', 'cloudflare', 'cloudflareajax', 'googleapis', 'jquery', 'ampproject'];
-			it(keys.join(", "), function() {
-				expect(urls).to.have.all.keys(...keys);
-			});
+			for (let key of keys)
+			{
+				it(key, function() {
+					expect(Object.keys(urls)).to.contain(key);
+				});
+			}
 		});
 		for (let domain in urls)
 		{
-			if (domain != 'cloudflare')
+			if (domain != 'cloudflare' && domain != 'googleapisfonts') // cloudflare takes lots of time, googleapisfonts is different, not parseable by getVersionNameExt()
 			describe(domain, function() {
 				for (let line of urls[domain].split(/\r?\n/))
 				{

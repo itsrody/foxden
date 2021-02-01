@@ -72,7 +72,7 @@ function getVersionNameExt(hostname, pathname)
 	else if (hostname == "code.jquery.com")
 	{
 		// /jquery-3.5.1.min.js
-		// /jquery-3.x-git.slim.min.js 
+		// /jquery-3.x-git.slim.min.js
 		if (mtch = pathname.match(/^\/(jquery-migrate|jquery)-([\d\.]+|[\d\.x-]*git)(\.slim)?(\.min|\.pack)?\.(js|css)$/i))
 			return { version: mtch[2], name: canonicalizeName(mtch[1] + (mtch[3]||"")), ext: mtch[5] };
 		// /ui/1.12.1/jquery-ui.min.js
@@ -82,7 +82,7 @@ function getVersionNameExt(hostname, pathname)
 			return { version: mtch[1], name: canonicalizeName(mtch[2]), ext: mtch[4] };
 		// /mobile/1.4.5/jquery.mobile-1.4.5.min.js
 		// /mobile/1.4.5/jquery.mobile.structure-1.4.5.min.css
-		// /mobile/1.0a4/jquery.mobile-1.0a4.min.css 
+		// /mobile/1.0a4/jquery.mobile-1.0a4.min.css
 		// /mobile/1.1.0-rc.1/jquery.mobile.structure-1.1.0-rc.1.min.css
 		if (mtch = pathname.match(/^\/[a-z]+\/(\d[\d\.abcehlprt-]+|git)\/([a-z\/\.-]+?)-\1(\.min|\.pack)?\.(js|css)$/i))
 			return { version: mtch[1], name: canonicalizeName(mtch[2]), ext: mtch[4] };
@@ -93,6 +93,9 @@ function getVersionNameExt(hostname, pathname)
 		// /qunit/qunit-2.10.0.js
 		if (mtch = pathname.match(/^\/[a-z]+\/([a-z\.-]+?)-([\d\.]+|git)(\.min)?\.(js|css)$/i))
 			return { version: mtch[2], name: canonicalizeName(mtch[1]), ext: mtch[4] };
+		// /jquery-latest.min.js => 1.11.1
+		if (mtch = pathname.match(/^\/(jquery-migrate|jquery)-latest(\.slim)?(\.min|\.pack)?\.(js|css)$/i))
+			return { version: "1.11.1", name: canonicalizeName(mtch[1] + (mtch[2]||"")), ext: mtch[4] };
 	}
 	else if (hostname == "cdnjs.cloudflare.com")
 	{
@@ -110,13 +113,16 @@ function getVersionNameExt(hostname, pathname)
 				return { version: mtch[2], name: canonicalizeName(mtch[3]), ext: mtch[4] };
 			return { version: mtch[2], name: canonicalizeName(mtch[1] + "/" + mtch[3]), ext: mtch[4] };
 		}
+		// /ajax/libs/toastr.js/latest/toastr.min.css => 2.1.3
+		if (mtch = pathname.match(/^\/ajax\/libs\/toastr.js\/latest\/toastr(\.min)?\.(js|css)$/i))
+			return { version: "2.1.3", name: "toastr", ext: mtch[2] };
 	}
 	else if (hostname == "ajax.cloudflare.com")
 	{
 		//https://ajax.cloudflare.com/cdn-cgi/scripts/7089c43e/cloudflare-static/rocket-loader.min.js
 		if (mtch = pathname.match(/^\/cdn-cgi\/scripts\/([0-9a-f]+)\/cloudflare-static\/(rocket-loader)(?:\.min)?\.(js)$/i))
 			return { version: mtch[1], name: canonicalizeName(mtch[2]), ext: mtch[3] };
-		//https://ajax.cloudflare.com/cdn-cgi/nexp/cloudflare.js 
+		//https://ajax.cloudflare.com/cdn-cgi/nexp/cloudflare.js
 		if (mtch = pathname.match(/^\/cdn-cgi\/([0-9a-z]+)\/([0-9a-z]+)(?:\.min)?\.(js)$/i))
 			return { version: "", name: canonicalizeName(mtch[1] + "/" + mtch[2]), ext: mtch[3] };
 	}
@@ -193,7 +199,7 @@ function isNewerPointVersion(v1, v2)
 }
 function getDefaultSettings()
 {
-	return {"otherCspWebExt": true};
+	return { allowModifyHeaders: true, blockUnknownGoogleFonts: true };
 }
 
 function parseCspHeader(policy)

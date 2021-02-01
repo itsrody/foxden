@@ -38,8 +38,10 @@
 					<label for="tabsetti">Settings</label>
 					<div>
 						<form id="settings">
-							<h3>Do you have other content-blocking WebExtensions installed in this browser, like AdBlock / uBlock / uMatrix?</h3>
-							<label><span>Other addons installed</span><input type="checkbox" id="otherCspWebExt"/></label>
+							<h3>Block unknown Google fonts (enhances privacy)</h3>
+							<label><span>Block unknown Google fonts</span><input type="checkbox" id="blockUnknownGoogleFonts"/></label>
+							<h3>Allow header modification (uncheck this if you have problems with uBlock / AdBock / uMatrix modification of CSP headers)</h3>
+							<label><span>Allow header modification</span><input type="checkbox" id="allowModifyHeaders"/></label>
 							<h3>Clear all of the locally cached Javascript libraries, CSS and Fonts and reset Statistics</h3>
 							<div><span>Clear cache</span><button type="button" id="clearcache">Clear Cache</button></div>
 						</form>

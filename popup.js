@@ -38,7 +38,13 @@ function init()
 				settings = sett.settings;
 				console.log("JSLibCache.popup: settings retrieved", sett);
 				for (let id in settings)
-					document.getElementById(id).checked = settings[id];
+				{
+					let input = document.getElementById(id);
+					if (input)
+						input.checked = settings[id];
+					else
+						console.warn("JSLibCache.popup: unable to find setting with id " + id);
+				}
 			},
 			//Error
 			msg => console.warn("JSLibCache.popup: Error getting settings from browser.storage.sync: " + msg)
