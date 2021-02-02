@@ -36,8 +36,6 @@ const cdnDomains = [
 	'sdn.geekzu.org/ajax/ajax/libs/',
 ];
 const cdnDomainsRE = new RegExp('//(' + cdnDomains.map(m => m.replace(/\W/g, '\\$&')).join('|') + ')');
-//const cdnDomainAlias = {'unpkg.com/':'cdn.jsdelivr.net/npm/' };
-//const abbr = {'script':'js','stylesheet':'css','font':'fnt'};
 let stats = {};
 let tabStats = {};
 let asciiDecoder = new TextDecoder('ASCII');//windows-1252
@@ -45,7 +43,7 @@ let settings = getDefaultSettings();
 let knownGoogleFonts = [];
 
 
-function blockRequestCDN(req)
+function blockRequest(req)
 {
 	console.log(`%cJSLibCache: blocking CSP report to ${req.url}`, logStyle);
 	return { cancel: true };
@@ -53,8 +51,9 @@ function blockRequestCDN(req)
 function replaceFontsGstaticURLs(css)
 {
 	//src: url(https://fonts.gstatic.com/s/roboto/v20/KFOiCnqEu92Fr1Mu51QrEz0dL-vwnYh2eg.woff2) format('woff2');
-	//FIXME: check knownGoogleFonts for font name
-	return css.replace(/https?:\/\/fonts.gstatic.com\/s\/([a-z0-9]+)\/v\d+/g, chrome.extension.getURL("resources/fonts/") + "$1");
+	if (settings.blockUnknownGoogleFonts)
+		return css.replace(/https?:\/\/fonts\.gstatic\.com\/s\/([a-z0-9]+)\/v\d+/g, chrome.extension.getURL("resources/fonts/") + "$1");
+	return css.replace(new RegExp("https?://fonts\\.gstatic\\.com/s/(" + knownGoogleFonts.join("|") + ")/v\\d+", "g"), chrome.extension.getURL("resources/fonts/") + "$1");
 }
 async function handleGoogleFontsCss(url, req)
 {
@@ -300,7 +299,7 @@ fetch(chrome.extension.getURL("resources/fonts/")).then(resp => resp.text()).the
 
 chrome.browserAction.setBadgeBackgroundColor({color:"green"});
 
-chrome.webRequest.onHeadersReceived.addListener(blockRequestCDN, {'types': ['csp_report'], 'urls': cdnDomains.map(host => '*://' + host + '*')}, ['blocking']);
+chrome.webRequest.onHeadersReceived.addListener(blockRequest, {'types': ['csp_report'], 'urls': cdnDomains.map(host => '*://' + host + '*')}, ['blocking']);
 chrome.webRequest.onHeadersReceived.addListener(redirectRequestCDN, {'types': ['script','stylesheet'], 'urls': cdnDomains.map(host => '*://' + host + '*')}, ['blocking']); //types 'font', 'image', 'other' (for svg?)
 chrome.webRequest.onHeadersReceived.addListener(removeIntegrityCrossoriginHtml, {'types': ['main_frame', 'sub_frame'], 'urls': ['*://*/*']}, ['blocking', 'responseHeaders']);
 chrome.webNavigation.onBeforeNavigate.addListener(onBeforeNavigate);
