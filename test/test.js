@@ -1,7 +1,8 @@
 "use strict";
 
 var expect = chai.expect;
-chai.config.truncateThreshold = 0;
+chai.config.truncateThreshold = 2;
+chai.config.includeStack = false;
 
 let fontFamilies = {};
 for (let line of urls.googleapisfonts.split(/\r?\n/))
@@ -217,7 +218,7 @@ describe("urls", function() {
 	});
 	describe("not null", function() {
 		describe("url keys", function() {
-			let keys = ['fontsgstatic', 'cloudflare', 'cloudflareajax', 'googleapis', 'jquery', 'ampproject'];
+			let keys = ['fontsgstatic', 'cloudflare', 'cloudflareajax', 'googleapis', 'jquery', 'ampproject', 'jsdelivr'];
 			for (let key of keys)
 			{
 				it(key, function() {

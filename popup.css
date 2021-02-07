@@ -29,12 +29,14 @@ thead>tr,tr:nth-child(even) { background-color: var(--backdarker); }
 td,th {
 	padding: 1px 4px;
 	font-size: 15px;
-}
-th {
-	font-weight: normal;
 	text-align: right;
 }
-tbody>tr>th:nth-child(3) { color: var(--grey); }
+td:first-child {
+	text-align: left;
+}
+th { font-weight: normal; }
+tbody>tr>th:empty::after { content: '0'; color: var(--grey); }
+tbody>tr>th:nth-child(3)::after { content: '?'; }
 th[title] { text-decoration: underline dotted; }
 thead>tr>td,thead>tr>th { font-weight: bold; }
 

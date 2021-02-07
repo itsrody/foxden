@@ -34,6 +34,16 @@ const cdnDomains = [
 //	'akamai-webcdn.kgstatic.net/',		// 0
 	'ajax.proxy.ustclug.org/ajax/libs/',	// 0
 	'sdn.geekzu.org/ajax/ajax/libs/',
+//	"gitcdn.github.io",
+//	"vjs.zencdn.net",
+//	"cdn.plyr.io",
+//	"www.gstatic.com",
+//	"cdn.materialdesignicons.com",
+//	"cdn.ravenjs.com",
+//	"cdn.css.net",
+//	"cdnjs.loli.net",
+//	"ajax.loli.net",
+//	"fonts.loli.net",
 ];
 const cdnDomainsRE = new RegExp('//(' + cdnDomains.map(m => m.replace(/\W/g, '\\$&')).join('|') + ')');
 let stats = {};
@@ -153,7 +163,7 @@ async function redirectRequestCDN(req)
 function removeIntegrityCrossoriginHtml(req)
 {
 	let headerIdx = req.responseHeaders.findIndex(h => h.name.toLowerCase() == 'content-security-policy');//TODO FIXME: report-only?
-	let hasCspChange = false;
+	let hasCspChange = false, hasCTChange = false;
 	if (headerIdx > -1)
 	{
 		let headerCSP = req.responseHeaders[headerIdx];
@@ -175,7 +185,8 @@ function removeIntegrityCrossoriginHtml(req)
 			req.responseHeaders.push({ name: 'Content-Security-Policy', value: Object.keys(parsedCSP).map(k => k + " " + parsedCSP[k].join(" ")).join(";") });
 		}
 	}
-	let headerCT = req.responseHeaders.find(h => h.name.toLowerCase() == 'content-type');
+	headerIdx = req.responseHeaders.findIndex(h => h.name.toLowerCase() == 'content-type');
+	let headerCT = req.responseHeaders[headerIdx];//.find(h => h.name.toLowerCase() == 'content-type');
 	if (headerCT)
 	{
 		let mimeType = headerCT.value.replace(/;.*/, '').toLowerCase();
@@ -183,11 +194,18 @@ function removeIntegrityCrossoriginHtml(req)
 
 		if (mimeType == 'text/html')
 		{
+			if (charset && charset != "utf-8")
+			{
+				hasCTChange = true;
+				console.log(`%cJSLibCache: changing ContentType from "${headerCT.value}" to "text/html;charset=UTF-8"`, logStyle);
+				req.responseHeaders.splice(headerIdx, 1);//Remove CT header, see https://github.com/gorhill/uMatrix/issues/967
+				req.responseHeaders.push({ name: 'Content-Type', value: 'text/html;charset=UTF-8'});
+			}
 			let filter = browser.webRequest.filterResponseData(req.requestId);
 			console.log(`%cJSLibCache: checking integrity|crossorigin attributes in ${req.url} html`, logStyle);
 			let isFirstData = true;
 			let encoder = new TextEncoder();
-			headerCT.value = 'text/html; charset=UTF-8';
+			//headerCT.value = 'text/html; charset=UTF-8';
 			let decoder;
 
 			//Note that this will not work if the '<script crossorigin="anonymous" src="dfgsfgd.com">' string is divided into two chunks, but we want to flush this data asap.
@@ -199,11 +217,13 @@ function removeIntegrityCrossoriginHtml(req)
 						//<meta http-equiv="Content-Type" content="text/html; charset=gb2312">
 						//<meta http-equiv="content-type" content="text/html;charset=shift_jis">
 						//<meta charset="ISO-8859-1">
+						//<?xml version="1.0" encoding="iso-8859-1"?><
 						let htmlHead = asciiDecoder.decode(evt.data, {stream: false});
 						let charsetMatch = htmlHead.match(/<meta\s+charset=["']?([^>"'\/]+)["'>\/]/i);
 						if (!charsetMatch)
 							charsetMatch = htmlHead.match(/<meta\s+http-equiv=["']?content-type["']?\s+content=["']?text\/html;\s*charset=([^>"'\/]+)["'>\/]/i);
 						charset = charsetMatch ? charsetMatch[1] : "UTF-8";
+						//TODO: change charsets in HTML?
 					}
 					console.log(`%cJSLibCache: charset ${charset}`, logStyle);
 					decoder = new TextDecoder(charset);
@@ -233,7 +253,7 @@ function removeIntegrityCrossoriginHtml(req)
 	}
 	// https://developer.chrome.com/docs/extensions/reference/webRequest/
 	// Only return responseHeaders if you really want to modify the headers in order to limit the number of conflicts (only one extension may modify responseHeaders for each request)
-	if (hasCspChange)
+	if (hasCspChange || hasCTChange)
 		return { responseHeaders: req.responseHeaders }; //headers with modified content-security-policy or content-type
 }
 function onBeforeNavigate(details)

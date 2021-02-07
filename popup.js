@@ -71,15 +71,15 @@ function init()
 						}
 						let tr = document.createElement("tr");
 						let td = document.createElement("td");
-						let th1 = document.createElement("th");
+						let th1 = document.createElement("td");
 						let th2 = document.createElement("th");
 						let th3 = document.createElement("th");
 						let th4 = document.createElement("th");
 						td.appendChild(document.createTextNode(name));
 						th1.appendChild(document.createTextNode(version));
-						th2.appendChild(document.createTextNode("?"));
-						th3.appendChild(document.createTextNode(result.stats[storKey]));
-						th4.appendChild(document.createTextNode(tabStats[storKey] || 0));
+						//th2.appendChild(document.createTextNode("?"));
+						th3.appendChild(document.createTextNode(result.stats[storKey] || ""));
+						th4.appendChild(document.createTextNode(tabStats[storKey] || ""));
 						tr.appendChild(td);
 						tr.appendChild(th1);
 						tr.appendChild(th2);

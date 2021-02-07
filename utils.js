@@ -59,7 +59,7 @@ function getVersionNameExt(hostname, pathname)
 		// /ajax/libs/myanmar-tools/1.0.1/zawgyi_detector.min.js
 		// /ajax/libs/shaka-player/2.5.0-beta2/shaka-player.compiled.js
 		// /ajax/libs/threejs/r84/three.min.js
-		if (mtch = pathname.match(/^\/ajax\/libs\/[^\/]+\/([\d\.-]+(?:beta\d*)?|r\d+)\/(?:dojo\/)?([a-zA-Z0-9_\.-]+?)(\.compiled|\.min)?\.(js|css|map|png|eot|svg|ttf|woff2|woff)$/i))
+		if (mtch = pathname.match(/^\/ajax\/libs\/[^\/]+\/([\d\.-]+(?:beta\d*)?|r\d+)\/(?:dojo\/)?([a-zA-Z0-9_\.-]+?)(\.compiled|\.min)?\.(js|css|map|png|eot|svg)$/i))
 			return { version: mtch[1], name: canonicalizeName(mtch[2]), ext: mtch[4] };
 		// /ajax/libs/yui/2.9.0/build/yuiloader-dom-event/yuiloader-dom-event.js
 		// /ajax/libs/yui/2.8.0r4/build/json/json-min.js
@@ -119,29 +119,79 @@ function getVersionNameExt(hostname, pathname)
 	}
 	else if (hostname == "ajax.cloudflare.com")
 	{
-		//https://ajax.cloudflare.com/cdn-cgi/scripts/7089c43e/cloudflare-static/rocket-loader.min.js
+		// /cdn-cgi/scripts/7089c43e/cloudflare-static/rocket-loader.min.js
 		if (mtch = pathname.match(/^\/cdn-cgi\/scripts\/([0-9a-f]+)\/cloudflare-static\/(rocket-loader)(?:\.min)?\.(js)$/i))
 			return { version: mtch[1], name: canonicalizeName(mtch[2]), ext: mtch[3] };
-		//https://ajax.cloudflare.com/cdn-cgi/nexp/cloudflare.js
+		// /cdn-cgi/nexp/cloudflare.js
 		if (mtch = pathname.match(/^\/cdn-cgi\/([0-9a-z]+)\/([0-9a-z]+)(?:\.min)?\.(js)$/i))
 			return { version: "", name: canonicalizeName(mtch[1] + "/" + mtch[2]), ext: mtch[3] };
 	}
 	else if (hostname == "cdn.ampproject.org")
 	{
 		/*
-		https://cdn.ampproject.org/v0.js
-		https://cdn.ampproject.org/v0.js?ver=4.9.9
-		https://cdn.ampproject.org/v0/amp-ad-0.1.js
-		https://cdn.ampproject.org/v0/amp-auto-ads-0.1.js
-		https://cdn.ampproject.org/v0/amp-lightbox-0.1.js
-		https://cdn.ampproject.org/v0/amp-sticky-ad-1.0.js
-		https://cdn.ampproject.org/v0/amp-timeago-0.1.js
-		https://cdn.ampproject.org/rtv/012101212155000/v0/amp-loader-0.1.js
+		/v0.js
+		/v0.js?ver=4.9.9
+		/v0/amp-ad-0.1.js
+		/v0/amp-auto-ads-0.1.js
+		/v0/amp-lightbox-0.1.js
+		/v0/amp-sticky-ad-1.0.js
+		/v0/amp-timeago-0.1.js
+		/rtv/012101212155000/v0/amp-loader-0.1.js
 		*/
 		if (mtch = pathname.match(/^\/v0\.js(\?ver=([\d\.]*))?$/i))
 			return { version: mtch[2]||"1.0.0", name: "amp", ext: "js" };
 		if (mtch = pathname.match(/^\/(rtv\/[0-9]+\/)?v0\/(amp-[a-zA-Z-]+)-([0-9\.]+)\.js$/i))
 			return { version: mtch[3], name: canonicalizeName(mtch[2]), ext: "js" };
+	}
+	else if (hostname == "cdn.jsdelivr.net")
+	{
+		// /npm/chartjs-plugin-zoom@0.7.0
+		if (mtch = pathname.match(/^\/npm\/([a-z\._-]+2?)@([0-9\.]+x?)$/i))
+			return { version: mtch[2], name: mtch[1], ext: "js" };
+		/*
+		/npm/jquery@3.2.1/dist/jquery.min.js
+		/npm/jquery@3.2/dist/jquery.min.js
+			FIXME: change 3.2 to 3.2.x
+		/npm/jquery@3/dist/jquery.min.js
+		/algoliasearch/3.25.1/algoliasearch.min.js
+		/jssor.slider/20.0.0/jssor.slider.mini.js
+		*/
+		// name before .js$ is equal to name after ^/
+		if (mtch = pathname.match(/^\/(?:npm\/)?([a-z\.-]+?)(?:\.js|js|\.css|css)?[@\/]([0-9\.]+)\/(?:dist\/cdn\/|dist\/js\/|dist\/|css\/|js\/)?\1(?:\.mini|\.min|-min)?\.(js|css)$/i))
+			return { version: mtch[2], name: canonicalizeName(mtch[1]), ext: mtch[3] };
+
+		// algoliasearch/3/algoliasearch.angular.js?v=1.2
+		// name before .js$ starts with name after ^/
+		if (mtch = pathname.match(/^\/(?:npm\/)?([a-z\.-]+?)(?:\.js|js|\.css|css)?[@\/]([0-9\.]+)\/(?:dist\/cdn\/|dist\/js\/|dist\/|css\/|js\/)?\1([a-z\.-]+?)(?:\.mini|\.min|-min)?\.(js|css)$/i))
+			return { version: mtch[2], name: canonicalizeName(mtch[3]), ext: mtch[4] };
+
+		// bxslider/4.2.12/jquery.bxslider.js
+		// name before .js$ ends with name after ^/
+		if (mtch = pathname.match(/^\/(?:npm\/)?([a-z\.-]+?)(?:\.js|js|\.css|css)?[@\/]([0-9\.]+)\/(?:dist\/cdn\/|dist\/js\/|dist\/|css\/|js\/)?([a-z\.-]+?)\1(?:\.mini|\.min|-min)?\.(js|css)$/i))
+			return { version: mtch[2], name: canonicalizeName(mtch[3]), ext: mtch[4] };
+
+		// /npm/fomantic-ui@2.8.6/dist/components/icon.min.css
+		// /crypto-js/3.1.2/components/enc-base64-min.js
+		// /npm/@unicorn-fail/drupal-bootstrap-styles@0.0.2/dist/3.4.0/8.x-3.x/drupal-bootstrap.css
+		// /npm/@elastic/app-search-javascript@7.7.0/dist/elastic_app_search.umd.js
+		if (mtch = pathname.match(/^\/(?:npm\/@[a-z-]+\/|npm\/)?([a-z0-9\.-]+?)[@\/]([0-9\.]+(?:-beta\.\d|-beta\d*|-rc\.\d+)?)\/(?:dist\/cdn\/|dist\/components\/|components\/|dist\/)?([a-z0-9\/\._-]+?)(?:\.min|-min)?\.(js|css|gif|png|jpg|svg|json)$/i))
+			return { version: mtch[2], name: canonicalizeName(mtch[1] + "/" + mtch[3]), ext: mtch[4] };
+
+		// /gh/ractoon/jQuery-Text-Counter@0.8.0/textcounter.min.js
+		if (mtch = pathname.match(/^\/gh\/([a-z0-9\.@\/_-]*?)(?:\.min|-min)?\.(js|css|gif|png|jpg|svg|json)$/i))
+			return { version: "", name: "GitHub/" + mtch[1], ext: mtch[2] };
+
+		// /wp/wp-editormd/tags/10.2.1/assets/Prism.js/plugins/line-numbers/prism-line-numbers.css?ver=1.15.0
+		// /wp/wp-slimstat/tags/4.8.8.1/wp-slimstat.min.js
+		// /wp/plugins/lightbox-photoswipe/tags/3.1.3/lib/photoswipe.css
+		if (mtch = pathname.match(/^\/wp\/(plugins\/|themes\/)?([a-z0-9\.-]+?)\/tags\/([0-9\.]+)\/([a-z0-9\.@\/_-]*?)(?:\.min|-min)?\.(js|css|gif|png|jpg|svg|json)$/i))
+			return { version: mtch[3], name: "WordPress/" + mtch[1] + mtch[2] + "/" + mtch[4], ext: mtch[5] };
+
+		//FIXME: ugly catch-alls. Disable this when you are fixing the rules above
+		if (mtch = pathname.match(/^\/(g|combine)\/([a-z0-9+(),\.@\/_-]*)$/i))
+			return { version: "", name: "Combine/" + mtch[1], ext: "" };
+		if (mtch = pathname.match(/^\/([a-z0-9+,\.@\/_-]*?)(?:\.min|-min)?\.(js|css|gif|png|jpg|svg|json)$/i))
+			return { version: "", name: mtch[1], ext: mtch[2] };
 	}
 	return { version: null, name: null, ext: null};
 }
