@@ -5,7 +5,7 @@ const cdnDomains = [
 	'fonts.googleapis.com/',		// 1000k+ / 362
 	'ajax.googleapis.com/ajax/libs/',	// 1000k+ / 637
 	'cdnjs.cloudflare.com/ajax/libs/',	// 1000k+ / 670
-//	'cdn.jsdelivr.net/',			// 1000k+ / 975
+	'cdn.jsdelivr.net/',			// 1000k+ / 975
 	'code.jquery.com/',			// 1000k+ /1276
 //	'maxcdn.bootstrapcdn.com/',		// 1000k+ /1475
 //	'maps.googleapis.com/',			// 963k
@@ -133,7 +133,10 @@ async function redirectRequestCDN(req)
 		});
 		let contentType = resp.headers.get('content-type');
 		if (!resp.ok)
+		{
 			console.warn("%cfetching failed 1", logStyle, req.url, contentType, resp);
+			return;
+		}
 
 		item = {};
 		let now = new Date().getTime();

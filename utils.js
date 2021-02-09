@@ -174,7 +174,7 @@ function getVersionNameExt(hostname, pathname)
 		// /crypto-js/3.1.2/components/enc-base64-min.js
 		// /npm/@unicorn-fail/drupal-bootstrap-styles@0.0.2/dist/3.4.0/8.x-3.x/drupal-bootstrap.css
 		// /npm/@elastic/app-search-javascript@7.7.0/dist/elastic_app_search.umd.js
-		if (mtch = pathname.match(/^\/(?:npm\/@[a-z-]+\/|npm\/)?([a-z0-9\.-]+?)[@\/]([0-9\.]+(?:-beta\.\d|-beta\d*|-rc\.\d+)?)\/(?:dist\/cdn\/|dist\/components\/|components\/|dist\/)?([a-z0-9\/\._-]+?)(?:\.min|-min)?\.(js|css|gif|png|jpg|svg|json)$/i))
+		if (mtch = pathname.match(/^\/(?:npm\/@[a-z-]+\/|npm\/)?([a-z0-9\.-]+?)[@\/]([0-9\.]+(?:-beta\.\d|-beta\d*|-rc\.\d+)?)\/(?:dist\/cdn\/|dist\/components\/|components\/|dist\/)?([a-z0-9\/\._-]+?)(?:\.min|-min)?\.(js|css|gif|png|jpg|svg|json|ttf|woff2|woff|eot|ico|xap|swf)$/i))
 			return { version: mtch[2], name: canonicalizeName(mtch[1] + "/" + mtch[3]), ext: mtch[4] };
 
 		// /gh/ractoon/jQuery-Text-Counter@0.8.0/textcounter.min.js
@@ -190,8 +190,10 @@ function getVersionNameExt(hostname, pathname)
 		//FIXME: ugly catch-alls. Disable this when you are fixing the rules above
 		if (mtch = pathname.match(/^\/(g|combine)\/([a-z0-9+(),\.@\/_-]*)$/i))
 			return { version: "", name: "Combine/" + mtch[1], ext: "" };
-		if (mtch = pathname.match(/^\/([a-z0-9+,\.@\/_-]*?)(?:\.min|-min)?\.(js|css|gif|png|jpg|svg|json)$/i))
+		if (mtch = pathname.match(/^\/(?:npm\/)?([a-z0-9+,\.@\/_-]*?)(?:\.min|-min)?\.(js|css|gif|png|jpg|svg|json|ttf|woff2|woff|eot|ico|xap|swf)$/i))
 			return { version: "", name: mtch[1], ext: mtch[2] };
+		if (mtch = pathname.match(/^\/(?:npm\/)?([a-z0-9+,\.@\/_-]*)$/i))
+			return { version: "", name: mtch[1], ext: "" };
 	}
 	return { version: null, name: null, ext: null};
 }
