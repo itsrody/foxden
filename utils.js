@@ -1,6 +1,6 @@
 "use strict";
 
-const logStyle = 'color:#3F3';
+const logStyle = 'color:#093';
 const typeSizes = {
 	"undefined": () => 0,
 	"boolean": () => 4,
@@ -8,7 +8,6 @@ const typeSizes = {
 	"string": item => 2 * item.length,
 	"object": item => !item ? 0 : Object.keys(item).reduce((total, key) => sizeOf(key) + sizeOf(item[key]) + total, 0)
 };
-const versionRE = /^(\d+\.\d+\.)(\d+)$/;
 
 function getFamiliesFromGoogleFontCSSURL(url)
 {
@@ -40,9 +39,16 @@ function getFamiliesFromGoogleFontCSSURL(url)
 	}
 	return result;
 }
+
 function getVersionNameExt(hostname, pathname)
 {
 	let mtch;
+	if (hostname == "cdn.jsdelivr.net" && pathname.startsWith("/npm/"))
+	{
+		hostname = "unpkg.com";
+		pathname = pathname.substr(4);
+	}
+
 	if (hostname == "fonts.gstatic.com")
 	{
 		// /s/amaticsc/v13/TUZ3zwprpvBS1izr_vOMscGKfLUC_2fi-Q.woff2
@@ -102,7 +108,7 @@ function getVersionNameExt(hostname, pathname)
 		// /ajax/libs/1140/2.0/1140.min.css
 		// /ajax/libs/jqueryui/1.12.1/jquery-ui.min.js
 		// /ajax/libs/Embetty/4.0.0-beta.5/embetty.js
-		if (mtch = pathname.match(/^\/ajax\/libs\/[^\/]+\/([\d\.-]+(?:(?:alpha|beta|dev|rc|pre|build|unstable|final|next|release|M|preview)[\.\d-]*)?|r\d+)\/(?:lib\/|js\/|css\/|scripts\/|bootstrap\/|min\/|umd\/)?([a-zA-Z0-9_\.-]+?)(?:\.development|\.production)?(\.compiled|\.min)?\.(js|css|map|png|eot|svg|ttf|woff2|woff)$/i))
+		if (mtch = pathname.match(/^\/ajax\/libs\/[^\/]+\/([\d\.-]+(?:(?:alpha|beta|dev|rc|pre|build|unstable|final|next|release|M|preview)[\.\d-]*)?|r\d+)\/(?:lib\/|js\/|css\/|scripts\/|bootstrap\/|min\/|umd\/)?([a-zA-Z0-9_\.-]+?)(?:\.development|\.production|\.bundle)?(\.compiled|\.min)?\.(js|css|map|png|eot|svg|ttf|woff2|woff)$/i))
 			return { version: mtch[1], name: canonicalizeName(mtch[2]), ext: mtch[4] };
 		// /ajax/libs/react-dom/16.13.1/umd/react-dom.production.min.js
 		// /ajax/libs/angulartics2/9.1.0/adobeanalytics/bundles/angulartics2-adobeanalytics.umd.min.js
@@ -145,19 +151,10 @@ function getVersionNameExt(hostname, pathname)
 	}
 	else if (hostname == "cdn.jsdelivr.net")
 	{
-		// /npm/chartjs-plugin-zoom@0.7.0
-		if (mtch = pathname.match(/^\/npm\/([a-z\._-]+2?)@([0-9\.]+x?)$/i))
-			return { version: mtch[2], name: mtch[1], ext: "js" };
-		/*
-		/npm/jquery@3.2.1/dist/jquery.min.js
-		/npm/jquery@3.2/dist/jquery.min.js
-			FIXME: change 3.2 to 3.2.x
-		/npm/jquery@3/dist/jquery.min.js
-		/algoliasearch/3.25.1/algoliasearch.min.js
-		/jssor.slider/20.0.0/jssor.slider.mini.js
-		*/
+		// /algoliasearch/3.25.1/algoliasearch.min.js
+		// /jssor.slider/20.0.0/jssor.slider.mini.js
 		// name before .js$ is equal to name after ^/
-		if (mtch = pathname.match(/^\/(?:npm\/)?([a-z\.-]+?)(?:\.js|js|\.css|css)?[@\/]([0-9\.]+)\/(?:dist\/cdn\/|dist\/js\/|dist\/|css\/|js\/)?\1(?:\.mini|\.min|-min)?\.(js|css)$/i))
+		if (mtch = pathname.match(/^\/([a-z\.-]+?)(?:\.js|js|\.css|css)?[@\/]([0-9\.]+)\/(?:dist\/cdn\/|dist\/js\/|dist\/|css\/|js\/)?\1(?:\.mini|\.min|-min)?\.(js|css)$/i))
 			return { version: mtch[2], name: canonicalizeName(mtch[1]), ext: mtch[3] };
 
 		// algoliasearch/3/algoliasearch.angular.js?v=1.2
@@ -167,14 +164,11 @@ function getVersionNameExt(hostname, pathname)
 
 		// bxslider/4.2.12/jquery.bxslider.js
 		// name before .js$ ends with name after ^/
-		if (mtch = pathname.match(/^\/(?:npm\/)?([a-z\.-]+?)(?:\.js|js|\.css|css)?[@\/]([0-9\.]+)\/(?:dist\/cdn\/|dist\/js\/|dist\/|css\/|js\/)?([a-z\.-]+?)\1(?:\.mini|\.min|-min)?\.(js|css)$/i))
+		if (mtch = pathname.match(/^\/([a-z\.-]+?)(?:\.js|js|\.css|css)?[@\/]([0-9\.]+)\/(?:dist\/cdn\/|dist\/js\/|dist\/|css\/|js\/)?([a-z\.-]+?)\1(?:\.mini|\.min|-min)?\.(js|css)$/i))
 			return { version: mtch[2], name: canonicalizeName(mtch[3]), ext: mtch[4] };
 
-		// /npm/fomantic-ui@2.8.6/dist/components/icon.min.css
 		// /crypto-js/3.1.2/components/enc-base64-min.js
-		// /npm/@unicorn-fail/drupal-bootstrap-styles@0.0.2/dist/3.4.0/8.x-3.x/drupal-bootstrap.css
-		// /npm/@elastic/app-search-javascript@7.7.0/dist/elastic_app_search.umd.js
-		if (mtch = pathname.match(/^\/(?:npm\/@[a-z-]+\/|npm\/)?([a-z0-9\.-]+?)[@\/]([0-9\.]+(?:-beta\.\d|-beta\d*|-rc\.\d+)?)\/(?:dist\/cdn\/|dist\/components\/|components\/|dist\/)?([a-z0-9\/\._-]+?)(?:\.min|-min)?\.(js|css|gif|png|jpg|svg|json|ttf|woff2|woff|eot|ico|xap|swf)$/i))
+		if (mtch = pathname.match(/^\/(?:@[a-z-]+\/)?([a-z0-9\.-]+?)[@\/]([0-9\.]+(?:-beta\.\d|-beta\d*|-rc\.\d+)?)\/(?:dist\/cdn\/|dist\/components\/|components\/|dist\/)?([a-z0-9\/\._-]+?)(?:\.min|-min)?\.(js|css|gif|png|jpg|svg|json|ttf|woff2|woff|eot|ico|xap|swf)$/i))
 			return { version: mtch[2], name: canonicalizeName(mtch[1] + "/" + mtch[3]), ext: mtch[4] };
 
 		// /gh/ractoon/jQuery-Text-Counter@0.8.0/textcounter.min.js
@@ -190,9 +184,45 @@ function getVersionNameExt(hostname, pathname)
 		//FIXME: ugly catch-alls. Disable this when you are fixing the rules above
 		if (mtch = pathname.match(/^\/(g|combine)\/([a-z0-9+(),\.@\/_-]*)$/i))
 			return { version: "", name: "Combine/" + mtch[1], ext: "" };
-		if (mtch = pathname.match(/^\/(?:npm\/)?([a-z0-9+,\.@\/_-]*?)(?:\.min|-min)?\.(js|css|gif|png|jpg|svg|json|ttf|woff2|woff|eot|ico|xap|swf)$/i))
+		if (mtch = pathname.match(/^\/([a-z0-9+,\.@\/_-]*?)(?:\.min|-min)?\.(js|css|gif|png|jpg|svg|json|ttf|woff2|woff|eot|ico|xap|swf)$/i))
 			return { version: "", name: mtch[1], ext: mtch[2] };
-		if (mtch = pathname.match(/^\/(?:npm\/)?([a-z0-9+,\.@\/_-]*)$/i))
+	}
+	else if (hostname == "unpkg.com")
+	{
+		//unescape %5E to ^
+		pathname = pathname.replace(/%5E/g, '^');
+
+		// /@gobistories/gobi-web-integration@^6.7.15
+		if (mtch = pathname.match(/^\/@[a-z-]+\/([a-z\._-]+2?)@([~\^]?[0-9][0-9x\.]*)$/i))
+			return { version: mtch[2], name: mtch[1], ext: "js" };
+
+		// /chartjs-plugin-zoom@0.7.0
+		if (mtch = pathname.match(/^\/([a-z\._-]+2?)@([~\^]?[0-9][0-9x\.]*)$/i))
+			return { version: mtch[2], name: mtch[1], ext: "js" };
+
+		// /jquery@3.2.1/dist/jquery.min.js
+		// /jquery@3.2/dist/jquery.min.js
+		//	FIXME: change 3.2 to 3.2.x
+		// /jquery@3/dist/jquery.min.js
+		// name before .js$ is equal to name after ^/
+		if (mtch = pathname.match(/^\/([a-z\.-]+?)(?:\.js|js|\.css|css)?[@\/]([~\^]?[0-9][0-9x\.]*)\/(?:dist\/cdn\/|dist\/js\/|dist\/|css\/|js\/)?\1(?:\.pkgd\.min|\.pkgd|\.mini|\.min|-min)?\.(js|css)$/i))
+			return { version: mtch[2], name: canonicalizeName(mtch[1]), ext: mtch[3] };
+
+		// name before .js$ starts with name after ^/
+		if (mtch = pathname.match(/^\/([a-z\.-]+?)(?:-core|\.js|js|\.css|css)?[@\/]([~\^]?[0-9][0-9x\.]*)\/(?:dist\/cdn\/|dist\/js\/|dist\/|css\/|js\/)?(\1[a-z\.-]+?)(?:\.pkgd\.min|\.pkgd|\.mini|\.min|-min)?\.(js|css)$/i))
+			return { version: mtch[2], name: canonicalizeName(mtch[3]), ext: mtch[4] };
+
+		// /fomantic-ui@2.8.6/dist/components/icon.min.css
+		// /@unicorn-fail/drupal-bootstrap-styles@0.0.2/dist/3.4.0/8.x-3.x/drupal-bootstrap.css
+		// /@elastic/app-search-javascript@7.7.0/dist/elastic_app_search.umd.js
+		// /@damplus/indexed-cloudinary@^3.2.0/dist/indexed-cloudinary.js
+		if (mtch = pathname.match(/^\/(?:@[a-z-]+\/)?([a-z0-9\.-]+?)[@\/]([~\^]?[0-9][0-9x\.]*(?:-beta\.\d|-beta\d*|-rc\.\d+)?)\/(?:dist\/cdn\/|dist\/components\/|components\/|dist\/)?([a-z0-9\/\._-]+?)(?:\.min|-min)?\.(js|css|gif|png|jpg|svg|json|ttf|woff2|woff|eot|ico|xap|swf)$/i))
+			return { version: mtch[2], name: canonicalizeName(mtch[1] + "/" + mtch[3]), ext: mtch[4] };
+
+		//FIXME: ugly catch-alls. Disable this when you are fixing the rules above
+		if (mtch = pathname.match(/^\/([a-z0-9+,\.@\/_-]*?)(?:\.min|-min)?\.(js|css|gif|png|jpg|svg|json|ttf|woff2|woff|eot|ico|xap|swf)$/i))
+			return { version: "", name: mtch[1], ext: mtch[2] };
+		if (mtch = pathname.match(/^\/([a-z0-9+,\.@\/_-]*)$/i))
 			return { version: "", name: mtch[1], ext: "" };
 	}
 	return { version: null, name: null, ext: null};
@@ -204,18 +234,6 @@ function getUID(url)
 		return { uid: name + " " + ext + " " + canonicalizeVersion(version), version: version };
 	return { uid: "//" + url.host + url.pathname, version: "0" };
 }
-/*
-function getFontUrlsFromCSS(css)
-{
-	let doc = document.implementation.createHTMLDocument(""),
-	styleElem = document.createElement("style");
-	styleElem.textContent = css;
-	doc.body.appendChild(styleElem);
-
-	var urls = [];
-	let styles = [...styleElem.sheet.cssRules].filter(r => r.type == 5).map(r => r.style);
-};
-*/
 
 function isMimeTextual(contentType)
 {
@@ -232,8 +250,50 @@ function sizeOf(value)
 
 function canonicalizeName(name)
 {
-	return name.replace(/[_\.-]+/g, '/');
+	return name.toLowerCase().replace(/[_\.-]+/g, '/');
 }
+
+// Semantic Versioning
+// [major, minor, patch]
+// [x X *] wildcard
+// ~ upgrade least significant digit to latest
+//	~1.2.0 == 1.2.x
+//	~1.0 == 1.x
+// ^ upgrade all but most significant digit to latest
+//	^1.0.0 == 1.x.x
+// versionsMatch('1.0.0', ['1.0.1']) matches, but not in official Semantic Versioning!
+/*
+function versionsMatch(semVer, availVs)
+{
+	if (!Array.isArray(availVs))
+		availVs = [availVs];
+	//semVer is a pattern that can have caret, tilde, * and x
+	//availVs only contain actual version numbers
+	let regex, mtch, minorMin;
+	if      (mtch = semVer.match(/^\^(\d+)\.(\d+)\.(\d+)$/i))
+		regex = new RegExp('^' + mtch[1] + '\\.'), minorMin = 1 * mtch[2];
+	else if (mtch = semVer.match(/^(\d+)\.[x*]$/i))
+		regex = new RegExp('^' + mtch[1] + '\\.');
+	else if (mtch = semVer.match(/^\~?(\d+)\.(\d+)\.(\d+)$/i))
+		regex = new RegExp('^' + mtch[1] + '\\.' + mtch[2] + '\\.');
+	else if (mtch = semVer.match(/^(\d+)\.(\d+)\.[x*]$/i))
+		regex = new RegExp('^' + mtch[1] + '\\.' + mtch[2] + '\\.');
+
+	for (let v of availVs)
+	{
+		if (semVer === v)
+			return v;
+		if (regex && regex.test(v))
+			if (!minorMin || getMinor(v) >= minorMin)
+				return v;
+	}
+}
+function getMinor(v)
+{
+	return v.split(".")[1];
+}
+*/
+const versionRE = /^[\^\~]?(\d+\.\d+\.)(\d+)$/;
 function canonicalizeVersion(versi)
 {
 	return versi.replace(versionRE, '$1x');
@@ -249,6 +309,7 @@ function isNewerPointVersion(v1, v2)
 	}
 	return false;
 }
+
 function getDefaultSettings()
 {
 	return { allowModifyHeaders: true, blockUnknownGoogleFonts: true };

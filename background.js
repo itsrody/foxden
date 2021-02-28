@@ -14,7 +14,7 @@ const cdnDomains = [
 //	'netdna.bootstrapcdn.com/',		// 649k
 //	'use.fontawesome.com/releases/v',	// 573k
 //	'cdn.bootcss.com/',			// 443k
-//	'unpkg.com/',				// 390k	alias for 'cdn.jsdelivr.net/npm/
+	'unpkg.com/',				// 390k	alias for 'cdn.jsdelivr.net/npm/
 //	'libs.baidu.com/',			// 280k
 //	'apps.bdimg.com/libs/',			// 239k
 //	'ajax.aspnetcdn.com/ajax/',		// 203k
@@ -48,10 +48,9 @@ const cdnDomains = [
 const cdnDomainsRE = new RegExp('//(' + cdnDomains.map(m => m.replace(/\W/g, '\\$&')).join('|') + ')');
 let stats = {};
 let tabStats = {};
-let asciiDecoder = new TextDecoder('ASCII');//windows-1252
+let asciiDecoder = new TextDecoder('ASCII');//windows-1252 / iso-8859-1
 let settings = getDefaultSettings();
 let knownGoogleFonts = [];
-
 
 function blockRequest(req)
 {
@@ -108,7 +107,7 @@ function addTabStats(tabId, storKeys)
 	storKeys.forEach(storKey => {
 		tabStats[tabId][storKey] = tabStats[tabId][storKey] ? tabStats[tabId][storKey] + 1 : 1;
 	});
-	//FIXME: the keys are for the entire tab sesion
+	//FIXME: the keys are for the entire tab session
 	chrome.browserAction.setBadgeText({text: "" + Object.keys(tabStats[tabId]).length, tabId: tabId});
 }
 async function redirectRequestCDN(req)
@@ -126,9 +125,16 @@ async function redirectRequestCDN(req)
 		if (itemExists)
 			console.log("%cJSLibCache: upgrading " + storKey + " from " + item[storKey].v + " to " + versi, logStyle);
 		console.log("%cJSLibCache: " + req.url + " fetching", logStyle);
+		//FIXME: read version from .js files, can be higher in unpkg and jsdelivr
+/*!
+ * autocomplete.js 0.38.0
+ * https://github.com/algolia/autocomplete.js
+ * Copyright 2020 Algolia, Inc. and other contributors; Licensed MIT
+ */
+
 		let resp = await fetch(req.url, {
 			"referer": "no-referrer", // *client, no-referrer
-			"redirect": "error", // *manual, follow, error
+			"redirect": "follow", // manual, follow, error
 			"credentials": "omit", // include, *omit, same-origin
 		});
 		let contentType = resp.headers.get('content-type');
@@ -158,106 +164,109 @@ async function redirectRequestCDN(req)
 	{
 		console.log("%cJSLibCache: " + storKey + " retrieved from local storage", logStyle);
 	}
-	//return { redirectUrl: 'data:' + item[storKey].contentType + (item[storKey].b64 ? ';base64,' + item[storKey].data : ',/*JSLC*/' + escape(item[storKey].data)) };
-	return { redirectUrl: 'data:' + item[storKey].contentType + (item[storKey].b64 ? ';base64,' + item[storKey].data : ',' + escape(item[storKey].data)) };
+	return { redirectUrl: 'data:' + item[storKey].contentType + (item[storKey].b64 ? ';base64,' + item[storKey].data : ',/*JSLC*/' + escape(item[storKey].data)) };
 }
 
 
 function removeIntegrityCrossoriginHtml(req)
 {
-	let headerIdx = req.responseHeaders.findIndex(h => h.name.toLowerCase() == 'content-security-policy');//TODO FIXME: report-only?
-	let hasCspChange = false, hasCTChange = false;
-	if (headerIdx > -1)
+	console.log(`%cJSLibCache: removeIntegrityCrossoriginHtml ${req.url}, id=${req.requestId}, status=${req.statusCode}`, logStyle);
+	if (req.statusCode == 200)
 	{
-		let headerCSP = req.responseHeaders[headerIdx];
-		let parsedCSP = parseCspHeader(headerCSP.value);
-		if (parsedCSP["script-src"] && !parsedCSP["script-src"].includes("data:"))
+		let headerIdx = req.responseHeaders.findIndex(h => h.name.toLowerCase() == 'content-security-policy');//TODO FIXME: report-only?
+		let hasCspChange = false, hasCTChange = false;
+		if (headerIdx > -1)
 		{
-			hasCspChange = true;
-			parsedCSP["script-src"].unshift("data:");
-		}
-		if (parsedCSP["style-src"] && !parsedCSP["style-src"].includes("data:"))
-		{
-			hasCspChange = true;
-			parsedCSP["style-src"].unshift("data:");
-		}
-		if (hasCspChange && settings.allowModifyHeaders)
-		{
-			console.log(`%cJSLibCache: adding data: to CSP header ${req.url}`, logStyle);
-			req.responseHeaders.splice(headerIdx, 1);//Remove CSP header, see https://github.com/gorhill/uMatrix/issues/967
-			req.responseHeaders.push({ name: 'Content-Security-Policy', value: Object.keys(parsedCSP).map(k => k + " " + parsedCSP[k].join(" ")).join(";") });
-		}
-	}
-	headerIdx = req.responseHeaders.findIndex(h => h.name.toLowerCase() == 'content-type');
-	let headerCT = req.responseHeaders[headerIdx];//.find(h => h.name.toLowerCase() == 'content-type');
-	if (headerCT)
-	{
-		let mimeType = headerCT.value.replace(/;.*/, '').toLowerCase();
-		let charset = /charset\s*=/.test(headerCT.value) && headerCT.value.replace(/^.*?charset\s*=\s*/, '').replace(/["']/g, '');
-
-		if (mimeType == 'text/html')
-		{
-			if (charset && charset != "utf-8")
+			let headerCSP = req.responseHeaders[headerIdx];
+			let parsedCSP = parseCspHeader(headerCSP.value);
+			if (parsedCSP["script-src"] && !parsedCSP["script-src"].includes("data:"))
 			{
-				hasCTChange = true;
-				console.log(`%cJSLibCache: changing ContentType from "${headerCT.value}" to "text/html;charset=UTF-8"`, logStyle);
-				req.responseHeaders.splice(headerIdx, 1);//Remove CT header, see https://github.com/gorhill/uMatrix/issues/967
-				req.responseHeaders.push({ name: 'Content-Type', value: 'text/html;charset=UTF-8'});
+				hasCspChange = true;
+				parsedCSP["script-src"].unshift("data:");
 			}
-			let filter = browser.webRequest.filterResponseData(req.requestId);
-			console.log(`%cJSLibCache: checking integrity|crossorigin attributes in ${req.url} html`, logStyle);
-			let isFirstData = true;
-			let encoder = new TextEncoder();
-			//headerCT.value = 'text/html; charset=UTF-8';
-			let decoder;
+			if (parsedCSP["style-src"] && !parsedCSP["style-src"].includes("data:"))
+			{
+				hasCspChange = true;
+				parsedCSP["style-src"].unshift("data:");
+			}
+			if (hasCspChange && settings.allowModifyHeaders)
+			{
+				console.log(`%cJSLibCache: adding data: to CSP header ${req.url}`, logStyle);
+				req.responseHeaders.splice(headerIdx, 1);//Remove CSP header, see https://github.com/gorhill/uMatrix/issues/967
+				req.responseHeaders.push({ name: 'Content-Security-Policy', value: Object.keys(parsedCSP).map(k => k + " " + parsedCSP[k].join(" ")).join(";") });
+			}
+		}
+		headerIdx = req.responseHeaders.findIndex(h => h.name.toLowerCase() == 'content-type');
+		let headerCT = req.responseHeaders[headerIdx];//.find(h => h.name.toLowerCase() == 'content-type');
+		if (headerCT)
+		{
+			let mimeType = headerCT.value.replace(/;.*/, '').toLowerCase();
+			let charset = /charset\s*=/.test(headerCT.value) && headerCT.value.replace(/^.*?charset\s*=\s*/, '').replace(/["']/g, '').toLowerCase();
 
-			//Note that this will not work if the '<script crossorigin="anonymous" src="dfgsfgd.com">' string is divided into two chunks, but we want to flush this data asap.
-			filter.ondata = evt => {
-				if (isFirstData)
+			if (mimeType == 'text/html')
+			{
+				if (charset && charset != "utf-8")
 				{
-					if (!charset) //content-type has no charset declared
-					{
-						//<meta http-equiv="Content-Type" content="text/html; charset=gb2312">
-						//<meta http-equiv="content-type" content="text/html;charset=shift_jis">
-						//<meta charset="ISO-8859-1">
-						//<?xml version="1.0" encoding="iso-8859-1"?><
-						let htmlHead = asciiDecoder.decode(evt.data, {stream: false});
-						let charsetMatch = htmlHead.match(/<meta\s+charset=["']?([^>"'\/]+)["'>\/]/i);
-						if (!charsetMatch)
-							charsetMatch = htmlHead.match(/<meta\s+http-equiv=["']?content-type["']?\s+content=["']?text\/html;\s*charset=([^>"'\/]+)["'>\/]/i);
-						charset = charsetMatch ? charsetMatch[1] : "UTF-8";
-						//TODO: change charsets in HTML?
-					}
-					console.log(`%cJSLibCache: charset ${charset}`, logStyle);
-					decoder = new TextDecoder(charset);
+					hasCTChange = true;
+					console.log(`%cJSLibCache: changing ContentType from "${headerCT.value}" to "text/html;charset=utf-8", id=${req.requestId}`, logStyle);
+					req.responseHeaders.splice(headerIdx, 1);//Remove CT header, see https://github.com/gorhill/uMatrix/issues/967
+					req.responseHeaders.push({ name: 'Content-Type', value: 'text/html;charset=utf-8'});
 				}
-				//remove crossorigin and integrity attributes
-				let str = decoder.decode(evt.data, {stream: true}).replace(/<(link|script)[^>]+>/ig, m => {
+				console.log(`%cJSLibCache: checking integrity|crossorigin attributes in ${req.url} html, id=${req.requestId}`, logStyle);
+
+				let filter = browser.webRequest.filterResponseData(req.requestId);
+				let encoder = new TextEncoder();
+				//Note that this will not work if the '<script crossorigin="anonymous" src="dfgsfgd.com">' string is divided into two chunks, but we want to flush this data asap.
+				filter.ondata = evt => {
+					if (!filter.decoder) //first ondata call
+					{
+						if (!charset) //content-type has no charset declared
+						{
+							//<meta http-equiv="Content-Type" content="text/html; charset=gb2312">
+							//<meta http-equiv="content-type" content="text/html;charset=shift_jis">
+							//<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+							//<meta charset="ISO-8859-1">
+							//<?xml version="1.0" encoding="iso-8859-1"?><
+							let htmlHead = asciiDecoder.decode(evt.data, {stream: false});
+							let charsetMatch = htmlHead.match(/<meta\s+charset=["']?([^>"'\/]+)["'>\/]/i);
+							if (!charsetMatch)
+								charsetMatch = htmlHead.match(/<meta\s+http-equiv=["']?content-type["']?\s+content=["']?text\/html;\s*charset=([^>"'\/]+)["'>\/]/i);
+							charset = charsetMatch ? charsetMatch[1] : "utf-8";
+							console.log(`%cJSLibCache: No charset in headers, decoding HTML head, ${charsetMatch}, id=${req.requestId}`, logStyle);
+							//TODO: change charsets in HTML?
+						}
+						console.log(`%cJSLibCache: charset ${charset}, id=${req.requestId}`, logStyle);
+						filter.decoder = new TextDecoder(charset);
+					}
+					//remove crossorigin and integrity attributes
+					let str = filter.decoder.decode(evt.data, {stream: true}).replace(/<(link|script)[^>]+>/ig, m => {
 						if (cdnDomainsRE.test(m))
 						{
-							console.log(`%cJSLibCache: removing any integrity|crossorigin attributes from ${m}`, logStyle);
-							return m.replace(/\s+(integrity|crossorigin)(="[^"]*"|='[^']*'|=[^"'`=\s]+|)/ig, '');
+							console.log(`%cJSLibCache: removing any integrity|crossorigin attributes from ${m}, id=${req.requestId}`, logStyle);
+							return m.replace(/\s+(integrity|crossorigin)(="[^"]*"|='[^']*'|=[^"'`=>\s]+|)/ig, '');
 						}
 						return m;
-					});
-				filter.write(encoder.encode(str));
-				isFirstData = false;
-			}
-
-			filter.onstop = evt => {
-				if (encoder)
-				{
-					let str = decoder.decode(); //end-of-stream
+					}).replace(/(<meta\s+)(http-equiv=["']?Content-Type["']?\s+content=["']?text\/html;\s*charset=|charset=["']?)([a-z0-9_-]+)/gi, "$1$2utf-8");
+					//console.log(str.substr(0,100));
 					filter.write(encoder.encode(str));
-				}
-				filter.close();
+				};
+
+				filter.onstop = evt => {
+					let str = filter.decoder.decode(); //end-of-stream
+					filter.write(encoder.encode(str));
+					filter.close();
+				};
+
+				filter.onerror = evt => {
+					console.error("%cError on filter:", logStyle, evt, filter.error);
+				};
 			}
 		}
+		// https://developer.chrome.com/docs/extensions/reference/webRequest/
+		// Only return responseHeaders if you really want to modify the headers in order to limit the number of conflicts (only one extension may modify responseHeaders for each request)
+		if (hasCspChange || hasCTChange)
+			return { responseHeaders: req.responseHeaders }; //headers with modified content-security-policy or content-type
 	}
-	// https://developer.chrome.com/docs/extensions/reference/webRequest/
-	// Only return responseHeaders if you really want to modify the headers in order to limit the number of conflicts (only one extension may modify responseHeaders for each request)
-	if (hasCspChange || hasCTChange)
-		return { responseHeaders: req.responseHeaders }; //headers with modified content-security-policy or content-type
 }
 function onBeforeNavigate(details)
 {
@@ -329,7 +338,7 @@ chrome.webNavigation.onBeforeNavigate.addListener(onBeforeNavigate);
 
 
 browser.storage.local.get(null).then(stor => {
-	let size = Math.round(sizeOf(stor) / 1024).toLocaleString() + 'kB';
+	let size = Math.round(sizeOf(stor) / 1024) + 'kB';
 	console.log("%cJSLibCache: cache has " + Object.keys(stor).length + " files, total size is " + size, logStyle);
 	Object.keys(stor).forEach(storKey => { stats[storKey] = 0; });
 });

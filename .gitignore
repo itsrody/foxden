@@ -1,3 +1,4 @@
 JSLibCache.xpi
 test/puppeteer/
+test/*.OLD
 resources/fonts/urls.text

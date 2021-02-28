@@ -4,29 +4,103 @@ var expect = chai.expect;
 chai.config.truncateThreshold = 2;
 chai.config.includeStack = false;
 
+/*
 let fontFamilies = {};
 for (let line of urls.googleapisfonts.split(/\r?\n/))
 	if (line && line.charAt(0) != '#')
 		for (let fam of getFamiliesFromGoogleFontCSSURL(new URL(line)))
 			fontFamilies[fam] = fontFamilies[fam] ? fontFamilies[fam] + 1 : 1;
 console.log(JSON.stringify(Object.keys(fontFamilies).sort((a,b) => fontFamilies[b] - fontFamilies[a])));
-/*
 */
 
 describe("utils", function() {
+	describe.skip("versionMatches", function() {
+		// [major, minor, patch]
+		// [x X *] wildcard
+		// ~ upgrade least significant digit to latest
+		//      ~1.2.0 == 1.2.x
+		//      ~1.0 == 1.x
+		// ^ upgrade all but most significant digit to latest
+		//      ^1.0.0 == 1.x.x
+		for (let line of [
+			//requested, available, isMatch
+			["1.0.0", "1.0.0", true],
+			["^1.0.0", "1.0.0", true],
+			["~1.0.0", "1.0.0", true],
+			["1.0.x", "1.0.0", true],
+			["1.0.*", "1.0.0", true],
+			["1.x", "1.0.0", true],
+			["1.*", "1.0.0", true],
+
+			["1.0.0", "1.0.1", true],
+			["^1.0.0", "1.0.1", true],
+			["~1.0.0", "1.0.1", true],
+			["1.0.x", "1.0.1", true],
+			["1.0.*", "1.0.1", true],
+			["1.x", "1.0.1", true],
+			["1.*", "1.0.1", true],
+
+			["1.0.1", "1.0.0", true],
+			["^1.0.1", "1.0.0", true],
+			["~1.0.1", "1.0.0", true],
+			["1.1.x", "1.0.0", false],
+			["1.1.*", "1.0.0", false],
+			["2.x", "1.0.0", false],
+			["2.*", "1.0.0", false],
+
+			["1.0.1", "1.2.3", false],
+			["^1.0.1", "1.2.3", true],
+			["^1.1.1", "1.2.3", true],
+			["^1.2.1", "1.2.3", true],
+			["^1.2.4", "1.2.3", true],
+			["^1.3.1", "1.2.1", false],
+			["^1.3.1", "1.2.2", false],
+			["^1.3.1", "1.2.3", false],
+			["^1.3.1", "1.2.10", false],
+			["^1.3.1", "1.10.1", true],
+			["~1.0.1", "1.2.3", false],
+			["~1.1.1", "1.2.3", false],
+			["~1.2.1", "1.2.3", true],
+			["~1.2.4", "1.2.3", true],
+			["~1.3.1", "1.2.3", false],
+			["1.1.x", "1.2.3", false],
+			["1.1.*", "1.2.3", false],
+			["1.2.*", "1.2.3", true],
+			["1.3.*", "1.2.3", false],
+			["1.10.*", "1.2.3", false],
+			["2.x", "1.2.3", false],
+			["2.*", "1.2.3", false],
+
+			["1.0.0", "1.0.a", true],
+			["1.0.0", "1.0.a0", true],
+			["1.0.0", "1.0.0a", true],
+			["1.0.0", "1.a.0", false],
+			["1.1.0", "1.a.0", false],
+			["1.b.0", "1.a.0", false],
+			["1.0.0", "1.a", false],
+		])
+		{
+			it('requested:' + line[0] + ', available:' + line[1] + ' ⟹ ' + line[2], function() {
+				if (line[2])
+					expect(versionsMatch(line[0], [line[1]])).to.deep.equal(line[1]);
+				else
+					expect(versionsMatch(line[0], [line[1]])).to.be.undefined;
+			});
+		}
+	});
 	describe("isMimeTextual", function() {
 		for (let line of [
-				["text/html", true],
-				["application/json", true],
-				["text/css", true],
-				["text/xml", true],
-				["application/xml", true],
-				["text/javascript", true],
-				["image/svg+xml", true],
-				["image/jpeg", false],
-				["audio/wav", false],
-				["font/woff2", false],
-			])
+			["text/html", true],
+			["application/json", true],
+			["text/css", true],
+			["text/xml", true],
+			["application/xml", true],
+			["text/javascript", true],
+			["image/svg+xml", true],
+			["image/jpeg", false],
+			["audio/wav", false],
+			["font/woff2", false],
+		])
 		{
 			it(line[0] + ' ⟹ ' + line[1], function() {
 				expect(isMimeTextual(line[0])).to.equal(line[1]);
@@ -35,11 +109,11 @@ describe("utils", function() {
 	});
 	describe("canonicalizeGoogleFontCSSURL", function() {
 		for (let line of [
-				["https://fonts.googleapis.com/css2?family=Noto+Sans+HK&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap", ["Noto Sans HK", "Roboto"]],
-				["https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,200;0,300;0,400;0,500;0,700;0,900;1,100;1,200;1,300;1,400;1,500;1,700;1,900", ["Roboto"]],
-				["https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700", ["Open Sans"]],
-				["https://fonts.googleapis.com/css?family=Droid+Sans:700,regular|Droid+Serif:italic,regular&subset=latin", ["Droid Sans", "Droid Serif"]],
-			])
+			["https://fonts.googleapis.com/css2?family=Noto+Sans+HK&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap", ["Noto Sans HK", "Roboto"]],
+			["https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,200;0,300;0,400;0,500;0,700;0,900;1,100;1,200;1,300;1,400;1,500;1,700;1,900", ["Roboto"]],
+			["https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700", ["Open Sans"]],
+			["https://fonts.googleapis.com/css?family=Droid+Sans:700,regular|Droid+Serif:italic,regular&subset=latin", ["Droid Sans", "Droid Serif"]],
+		])
 		{
 			it(line[0] + ' ⟹ ' + line[1], function() {
 				expect(getFamiliesFromGoogleFontCSSURL(new URL(line[0]))).to.deep.equal(line[1]);
@@ -48,8 +122,8 @@ describe("utils", function() {
 	});
 	describe("getUID", function() {
 		for (let line of [
-				["https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js", "jquery js 1.12.x", "1.12.4"],
-			])
+			["https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js", "jquery js 1.12.x", "1.12.4"],
+		])
 		{
 			it(line[0] + ' ⟹ ' + line[1] + ' / ' + line[2], function() {
 				let { uid: storKey, version: versi } = getUID(new URL(line[0]));
@@ -60,11 +134,11 @@ describe("utils", function() {
 	});
 	describe("getUID equivalency", function() {
 		for (let line of [
-				["https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js", "https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.js", "https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js"],
-				["https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js", "https://code.jquery.com/jquery-1.12.4.min.js", "https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js"],
-				["https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css", "https://code.jquery.com/ui/1.12.1/themes/smoothness/jquery-ui.css", "https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.min.css"],
-				["https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js", "https://code.jquery.com/ui/1.12.1/jquery-ui.js", "https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"],
-			])
+			["https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js", "https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.js", "https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js"],
+			["https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js", "https://code.jquery.com/jquery-1.12.4.min.js", "https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js"],
+			["https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css", "https://code.jquery.com/ui/1.12.1/themes/smoothness/jquery-ui.css", "https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.min.css"],
+			["https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js", "https://code.jquery.com/ui/1.12.1/jquery-ui.js", "https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"],
+		])
 		{
 			let { uid: uid1, version: version1 } = getUID(new URL(line[0]));
 			it(line[0] + ' == ' + line[1], function() {
@@ -81,27 +155,27 @@ describe("utils", function() {
 	});
 	describe("isNewerPointVersion", function() {
 		for (let line of [
-				["3.5.1", "3.5.0", true],
-				["3.5.2", "3.5.0", true],
-				["3.5.3", "3.5.0", true],
-				["3.5.1", "3.5.1", false],
-				["3.5.2", "3.5.1", true],
-				["3.5.3", "3.5.1", true],
-				["3.5.1", "3.5.2", false],
-				["3.5.2", "3.5.2", false],
-				["3.5.3", "3.5.2", true],
-				["1.10.0", "1.10.0", false],
-				["1.10.1", "1.10.0", true],
-				["1.10.2", "1.10.0", true],
-				["1.10.10", "1.10.0", true],
-				["1.1.1", "1.1.0", true],
-				["1.1.10", "1.1.0", true],
-				["1.1.3", "1.1.20", false],
-				["1.1.1a", "1.1.0", false],
-				["1.1.1.1", "1.1.1.0", false],
-				["1.2.1", "1.1.0", false],
-				["2.5.1-beta2", "2.5.0-beta2", false],
-			])
+			["3.5.1", "3.5.0", true],
+			["3.5.2", "3.5.0", true],
+			["3.5.3", "3.5.0", true],
+			["3.5.1", "3.5.1", false],
+			["3.5.2", "3.5.1", true],
+			["3.5.3", "3.5.1", true],
+			["3.5.1", "3.5.2", false],
+			["3.5.2", "3.5.2", false],
+			["3.5.3", "3.5.2", true],
+			["1.10.0", "1.10.0", false],
+			["1.10.1", "1.10.0", true],
+			["1.10.2", "1.10.0", true],
+			["1.10.10", "1.10.0", true],
+			["1.1.1", "1.1.0", true],
+			["1.1.10", "1.1.0", true],
+			["1.1.3", "1.1.20", false],
+			["1.1.1a", "1.1.0", false],
+			["1.1.1.1", "1.1.1.0", false],
+			["1.2.1", "1.1.0", false],
+			["2.5.1-beta2", "2.5.0-beta2", false],
+		])
 		{
 			it(line[0] + ' > ' + line[1] + ' ⟹ ' + line[2], function() {
 				expect(isNewerPointVersion(line[0], line[1])).to.equal(line[2]);
@@ -125,7 +199,7 @@ describe("utils", function() {
 			["",""],
 			["2.5.0-beta2","2.5.0-beta2"],
 			["1","1"],
-			])
+		])
 		{
 			it(line[0] + ' ⟹ ' + line[1], function() {
 				expect(canonicalizeVersion(line[0])).to.equal(line[1]);
@@ -177,11 +251,28 @@ describe("urls", function() {
 				});
 			}
 		});
+		describe("unpkg", function() {
+			for (let line of [
+				["/flickity@2.2.2/dist/flickity.pkgd.min.js", "2.2.2", "flickity", "js"],
+				["/flickity@2/dist/flickity.pkgd.min.js", "2", "flickity", "js"],
+				//["/rivet-core@2.0.0-alpha.3/js/rivet-iife.js", "2.0.0-alpha.3", "rivet/iife", "js"],
+				//["/@lottiefiles/lottie-player@latest/dist/lottie-player.js", "", "lottie-player", "js"],
+			])
+			{
+				it(line[0] + ' ⟹ ' + line[2] + ' ' + line[1] + ' ' + line[3], function() {
+					let { version, name, ext } = getVersionNameExt("unpkg.com", line[0]);
+					expect(version).to.equal(line[1]);
+					expect(name).to.equal(line[2]);
+					expect(ext).to.equal(line[3]);
+				});
+			}
+		});
 		describe("cloudflare", function() {
 			for (let line of [
 				["/ajax/libs/flexslider/2.7.2/jquery.flexslider.min.js", "2.7.2", "jquery/flexslider", "js"],
 				["/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js", "3.3.7", "bootstrap", "js"],
 				["/ajax/libs/toastr.js/latest/toastr.min.css", "2.1.3", "toastr", "css"],
+				["/ajax/libs/Chart.js/2.9.3/Chart.bundle.min.js", "2.9.3", "chart", "js"],
 			])
 			{
 				it(line[0] + ' ⟹ ' + line[2] + ' ' + line[1] + ' ' + line[3], function() {
@@ -218,7 +309,7 @@ describe("urls", function() {
 	});
 	describe("not null", function() {
 		describe("url keys", function() {
-			let keys = ['fontsgstatic', 'cloudflare', 'cloudflareajax', 'googleapis', 'jquery', 'ampproject', 'jsdelivr'];
+			let keys = ['fontsgstatic', 'cloudflare', 'cloudflareajax', 'googleapis', 'jquery', 'ampproject', 'jsdelivr', 'unpkg'];
 			for (let key of keys)
 			{
 				it(key, function() {

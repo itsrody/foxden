@@ -25,6 +25,7 @@ https://cdnjs.cloudflare.com/ajax/libs/CanvasInput/1.2.7/CanvasInput.min.js
 https://cdnjs.cloudflare.com/ajax/libs/Captionator/0.6/js/captionator-min.js
 https://cdnjs.cloudflare.com/ajax/libs/Caret.js/0.3.1/jquery.caret.min.js
 https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.min.js
+https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.bundle.min.js
 https://cdnjs.cloudflare.com/ajax/libs/Clamp.js/0.5.1/clamp.min.js
 https://cdnjs.cloudflare.com/ajax/libs/ClientJS/0.1.11/client.min.js
 https://cdnjs.cloudflare.com/ajax/libs/CodeFlask.js/1.4.1/codeflask.min.js
