@@ -15,6 +15,17 @@ function onSettingChange(evt)
 	);
 
 }
+function onCleancacheButtonClick(evt)
+{
+	let btn = evt.target;
+	chrome.runtime.sendMessage({'action': 'cleanCache' }, result => {
+		if (result && result.success)
+		{
+			//FIXME: update first tab (stats) contents
+			btn.textContent += " ✅";
+		}
+	});
+}
 function onClearcacheButtonClick(evt)
 {
 	let btn = evt.target;
@@ -53,12 +64,12 @@ function init()
 		chrome.runtime.sendMessage({'action': 'getStats' }, result => {
 			if (result)
 			{
-				if (result.stats)
+				if (result.globStats) //created, hits, last
 				{
 					let tabStats = result.tabStats||{};
 					let frag = document.createDocumentFragment();
-					let keys = Object.keys(result.stats);
-					keys.sort((a, b) => result.stats[a] == result.stats[b] ? a.localeCompare(b) : result.stats[b] - result.stats[a]);
+					let keys = Object.keys(result.globStats);
+					keys.sort((a, b) => result.globStats[a].hits == result.globStats[b].hits ? a.localeCompare(b) : result.globStats[b].hits - result.globStats[a].hits);
 					for (let storKey of keys)
 					{
 						//<tr><td>jquery js</th><th>1.10.x</td><th>?</th><th>2</th><th>0</th></tr>
@@ -77,8 +88,8 @@ function init()
 						let th4 = document.createElement("th");
 						td.appendChild(document.createTextNode(name));
 						th1.appendChild(document.createTextNode(version));
-						//th2.appendChild(document.createTextNode("?"));
-						th3.appendChild(document.createTextNode(result.stats[storKey] || ""));
+						th2.appendChild(document.createTextNode(result.globStats[storKey].hits || ""));
+						th3.appendChild(document.createTextNode(result.sessStats[storKey] || ""));
 						th4.appendChild(document.createTextNode(tabStats[storKey] || ""));
 						tr.appendChild(td);
 						tr.appendChild(th1);
@@ -96,6 +107,7 @@ function init()
 			}
 		});
 		document.querySelector('form#settings').addEventListener("change", onSettingChange);
+		document.querySelector('button#cleancache').addEventListener("click", onCleancacheButtonClick);
 		document.querySelector('button#clearcache').addEventListener("click", onClearcacheButtonClick);
 		document.querySelector('#version').textContent = chrome.runtime.getManifest().version;
 	}

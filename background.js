@@ -15,6 +15,7 @@ const cdnDomains = [
 //	'use.fontawesome.com/releases/v',	// 573k
 //	'cdn.bootcss.com/',			// 443k
 	'unpkg.com/',				// 390k	alias for 'cdn.jsdelivr.net/npm/
+//	'cdn.shopify.com/',			// 320k
 //	'libs.baidu.com/',			// 280k
 //	'apps.bdimg.com/libs/',			// 239k
 //	'ajax.aspnetcdn.com/ajax/',		// 203k
@@ -46,8 +47,8 @@ const cdnDomains = [
 //	"fonts.loli.net",
 ];
 const cdnDomainsRE = new RegExp('//(' + cdnDomains.map(m => m.replace(/\W/g, '\\$&')).join('|') + ')');
-let stats = {};
-let tabStats = {};
+let globStats = {}, sessStats = {}, tabStats = {};
+let globStatsSaveTime = new Date().getTime();
 let asciiDecoder = new TextDecoder('ASCII');//windows-1252 / iso-8859-1
 let settings = getDefaultSettings();
 let knownGoogleFonts = [];
@@ -68,7 +69,7 @@ async function handleGoogleFontsCss(url, req)
 {
 	let families = getFamiliesFromGoogleFontCSSURL(url);
 	let storKeys = families.map(family => 'font/' + family + ' css');
-	storKeys.forEach(storKey => { stats[storKey] = stats[storKey] ? stats[storKey] + 1 : 1});
+	storKeys.forEach(storKey => addStats(storKey));
 	addTabStats(req.tabId, storKeys);
 	let items = await browser.storage.local.get(storKeys);
 	let unknownStorKeys = storKeys.filter(storKey => !(storKey in items));
@@ -100,6 +101,27 @@ async function handleGoogleFontsCss(url, req)
 	let dataURI = 'data:text/css;charset=utf-8,' + escape('/*JSLC*/' + replaceFontsGstaticURLs(storKeys.map(storKey => items[storKey] ? items[storKey].data : newItems[storKey].data).join("\n")));
 	return { redirectUrl: dataURI };
 }
+
+function addStats(storKey, created)
+{
+	let now = new Date().getTime();
+	if (!(storKey in globStats))
+		globStats[storKey] = { created: created || now - 1, hits: 0 };
+	globStats[storKey].hits = globStats[storKey].hits + 1;
+	globStats[storKey].last = created || now;
+	if (!created)
+		sessStats[storKey] = (sessStats[storKey] || 0) + 1;
+	if (now - globStatsSaveTime > 60000)
+	{
+		browser.storage.local.set({_stats: globStats}).then(
+			//Success
+			() => console.log("%cJSLibCache: globStats stored", logStyle),
+			//Error
+			msg => console.warn("%cJSLibCache: error storing globStats: " + msg, logStyle),
+		);
+		globStatsSaveTime = now;
+	}
+}
 function addTabStats(tabId, storKeys)
 {
 	if (!tabStats[tabId])
@@ -110,13 +132,14 @@ function addTabStats(tabId, storKeys)
 	//FIXME: the keys are for the entire tab session
 	chrome.browserAction.setBadgeText({text: "" + Object.keys(tabStats[tabId]).length, tabId: tabId});
 }
+
 async function redirectRequestCDN(req)
 {
 	let url = new URL(req.url)
 	if (url.hostname == "fonts.googleapis.com")
 		return handleGoogleFontsCss(url, req);
 	let { uid: storKey, version: versi } = getUID(url);
-	stats[storKey] = stats[storKey] ? stats[storKey] + 1 : 1;
+	addStats(storKey);
 	addTabStats(req.tabId, [storKey]);
 	let item = await browser.storage.local.get(storKey);
 	let itemExists = storKey in item;
@@ -288,32 +311,50 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 			{
 				tabId = tabsResp[0].id;
 			}
-			sendResponse({"success": true, "stats": stats, "tabStats": tabStats[tabId], "cdnDomains": cdnDomains.map(href => href.replace(/\/.*/,""))});
+			sendResponse({"success": true, "globStats": globStats, "sessStats": sessStats, "tabStats": tabStats[tabId], "cdnDomains": cdnDomains.map(href => href.replace(/\/.*/,""))});
 		});
+		return true; //for async sendResponse
+	}
+	else if (request.action === "cleanCache")//from popup.js
+	{
+		let now = new Date().getTime();
+		let weekMs = 7 * 24 * 3600 * 1000;
+		let deletableStorKeys = Object.keys(globStats).filter(storKey => (now - globStats[storKey].last) / (weekMs * globStats[storKey].hits) > 1);
+		console.log(deletableStorKeys);
+		browser.storage.local.remove(deletableStorKeys).then(
+			//Success
+			() => {
+				console.log("%cJSLibCache: browser.storage.local cleaned", logStyle);
+				deletableStorKeys.forEach(storKey => { delete globStats[storKey]; });
+				sendResponse({"success": true});
+			},
+			//Error
+			msg => {
+				console.warn("%cJSLibCache: error cleaning browser.storage.local: " + msg, logStyle);
+				sendResponse({"success": false});
+			}
+		);
 		return true; //for async sendResponse
 	}
 	else if (request.action === "clearCache")//from popup.js
 	{
-		//FIXME
 		browser.storage.local.clear().then(
 			//Success
 			() => {
 				console.log("%cJSLibCache: browser.storage.local cleared", logStyle);
-				stats = {};
+				globStats = {};
+				sessStats = {};
 				sendResponse({"success": true});
 			},
 			//Error
-			msg => console.warn("%cJSLibCache: error clearing browser.storage.local: " + msg, logStyle),
+			msg => {
+				console.warn("%cJSLibCache: error clearing browser.storage.local: " + msg, logStyle);
+				sendResponse({"success": false});
+			}
 		);
-		return true;
+		return true; //for async sendResponse
 	}
 });
-/* not supported by Fx
-browser.runtime.onSuspend.addListener(() => {
-	//TODO, FIXME: save stats to storage.local
-	console.log(`%cJSLibCache: background suspended`, logStyle);
-});
-*/
 
 
 // init
@@ -340,7 +381,12 @@ chrome.webNavigation.onBeforeNavigate.addListener(onBeforeNavigate);
 browser.storage.local.get(null).then(stor => {
 	let size = Math.round(sizeOf(stor) / 1024) + 'kB';
 	console.log("%cJSLibCache: cache has " + Object.keys(stor).length + " files, total size is " + size, logStyle);
-	Object.keys(stor).forEach(storKey => { stats[storKey] = 0; });
+	//Object.keys(stor).forEach(storKey => { sessStats[storKey] = 0; });
+	globStats = stor._stats||{};
+	Object.keys(stor).forEach(storKey => {
+		if (!(storKey in globStats) && stor[storKey].created)
+			addStats(storKey, stor[storKey].created);
+	});
 });
 
 }
