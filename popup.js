@@ -21,7 +21,9 @@ function onCleancacheButtonClick(evt)
 	chrome.runtime.sendMessage({'action': 'cleanCache' }, result => {
 		if (result && result.success)
 		{
-			//FIXME: update first tab (stats) contents
+			let tbody = document.querySelector('tbody');
+			tbody.parentNode.replaceChild(document.createElement("tbody"), tbody);
+			getStats();
 			btn.textContent += " ✅";
 		}
 	});
@@ -33,7 +35,7 @@ function onClearcacheButtonClick(evt)
 		if (result && result.success)
 		{
 			let tbody = document.querySelector('tbody');
-			tbody.parentNode.removeChild(tbody);
+			tbody.parentNode.replaceChild(document.createElement("tbody"), tbody);
 			btn.textContent += " ✅";
 		}
 	});
@@ -60,57 +62,60 @@ function init()
 			//Error
 			msg => console.warn("JSLibCache.popup: Error getting settings from browser.storage.sync: " + msg)
 		);
-
-		chrome.runtime.sendMessage({'action': 'getStats' }, result => {
-			if (result)
-			{
-				if (result.globStats) //created, hits, last
-				{
-					let tabStats = result.tabStats||{};
-					let frag = document.createDocumentFragment();
-					let keys = Object.keys(result.globStats);
-					keys.sort((a, b) => result.globStats[a].hits == result.globStats[b].hits ? a.localeCompare(b) : result.globStats[b].hits - result.globStats[a].hits);
-					for (let storKey of keys)
-					{
-						//<tr><td>jquery js</th><th>1.10.x</td><th>?</th><th>2</th><th>0</th></tr>
-						let name = storKey, version = "";
-						let m = storKey.match(/^(.* (js|css)) ([0-9a-zA-Z\.-]+)$/);
-						if (m)
-						{
-							name = m[1];
-							version = m[3];
-						}
-						let tr = document.createElement("tr");
-						let td = document.createElement("td");
-						let th1 = document.createElement("td");
-						let th2 = document.createElement("th");
-						let th3 = document.createElement("th");
-						let th4 = document.createElement("th");
-						td.appendChild(document.createTextNode(name));
-						th1.appendChild(document.createTextNode(version));
-						th2.appendChild(document.createTextNode(result.globStats[storKey].hits || ""));
-						th3.appendChild(document.createTextNode(result.sessStats[storKey] || ""));
-						th4.appendChild(document.createTextNode(tabStats[storKey] || ""));
-						tr.appendChild(td);
-						tr.appendChild(th1);
-						tr.appendChild(th2);
-						tr.appendChild(th3);
-						tr.appendChild(th4);
-						frag.appendChild(tr);
-					}
-					document.querySelector('tbody').appendChild(frag);
-				}
-				if (result.cdnDomains)
-				{
-					document.querySelector('#ublockrules').textContent = result.cdnDomains.map(host => `* ${host} * noop`).join("\n");
-				}
-			}
-		});
+		getStats();
 		document.querySelector('form#settings').addEventListener("change", onSettingChange);
 		document.querySelector('button#cleancache').addEventListener("click", onCleancacheButtonClick);
 		document.querySelector('button#clearcache').addEventListener("click", onClearcacheButtonClick);
 		document.querySelector('#version').textContent = chrome.runtime.getManifest().version;
 	}
+}
+function getStats()
+{
+	chrome.runtime.sendMessage({'action': 'getStats' }, result => {
+		if (result)
+		{
+			if (result.globStats) //created, hits, last
+			{
+				let tabStats = result.tabStats||{};
+				let frag = document.createDocumentFragment();
+				let keys = Object.keys(result.globStats);
+				keys.sort((a, b) => result.globStats[a].hits == result.globStats[b].hits ? a.localeCompare(b) : result.globStats[b].hits - result.globStats[a].hits);
+				for (let storKey of keys)
+				{
+					//<tr><td>jquery js</th><th>1.10.x</td><th>?</th><th>2</th><th>0</th></tr>
+					let name = storKey, version = "";
+					let m = storKey.match(/^(.* (js|css)) ([0-9a-zA-Z\.-]+)$/);
+					if (m)
+					{
+						name = m[1];
+						version = m[3];
+					}
+					let tr = document.createElement("tr");
+					let td = document.createElement("td");
+					let th1 = document.createElement("td");
+					let th2 = document.createElement("th");
+					let th3 = document.createElement("th");
+					let th4 = document.createElement("th");
+					td.appendChild(document.createTextNode(name));
+					th1.appendChild(document.createTextNode(version));
+					th2.appendChild(document.createTextNode(result.globStats[storKey].hits || ""));
+					th3.appendChild(document.createTextNode(result.sessStats[storKey] || ""));
+					th4.appendChild(document.createTextNode(tabStats[storKey] || ""));
+					tr.appendChild(td);
+					tr.appendChild(th1);
+					tr.appendChild(th2);
+					tr.appendChild(th3);
+					tr.appendChild(th4);
+					frag.appendChild(tr);
+				}
+				document.querySelector('tbody').appendChild(frag);
+			}
+			if (result.cdnDomains)
+			{
+				document.querySelector('#ublockrules').textContent = result.cdnDomains.map(host => `* ${host} * noop`).join("\n");
+			}
+		}
+	});
 }
 document.addEventListener("DOMContentLoaded", init);
 }
