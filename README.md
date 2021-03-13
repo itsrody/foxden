@@ -5,6 +5,7 @@ A WebExtension for Firefox / Chrome that enhances privacy by serving requests to
 It is similar to [Decentraleyes](https://git.synz.io/Synzvato/decentraleyes/) / [LocalCDN](https://codeberg.org/nobody/LocalCDN).
 
 It serves Javascript libraries, CSS files and Fonts that a website tries to load from popular CDNs like ajax.googleapis.com.
+![Screenshot](screenshot.png)
 
 ## Difference between JSLibCache and Decentraleyes / LocalCDN
 JSLibCache fetches resources from CDNs dynamically, once. So if a website you visit requests
