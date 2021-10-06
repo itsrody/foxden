@@ -63,7 +63,7 @@ function replaceFontsGstaticURLs(css)
 	//src: url(https://fonts.gstatic.com/s/roboto/v20/KFOiCnqEu92Fr1Mu51QrEz0dL-vwnYh2eg.woff2) format('woff2');
 	if (settings.blockUnknownGoogleFonts)
 		return css.replace(/https?:\/\/fonts\.gstatic\.com\/s\/([a-z0-9]+)\/v\d+/g, chrome.extension.getURL("resources/fonts/") + "$1");
-	return css.replace(new RegExp("https?://fonts\\.gstatic\\.com/s/(" + knownGoogleFonts.join("|") + ")/v\\d+", "g"), chrome.extension.getURL("resources/fonts/") + "$1");
+	return css.replace(new RegExp("https?://fonts\\.gstatic\\.com/s/(" + knownGoogleFonts.join("|") + ")/v\\d+", "g"), chrome.runtime.getURL("resources/fonts/") + "$1");
 }
 async function handleGoogleFontsCss(url, req)
 {
@@ -175,6 +175,7 @@ async function redirectRequestCDN(req)
 			data = await resp.text();
 		else
 			data = btoa(String.fromCharCode(...new Uint8Array(await resp.arrayBuffer())));
+		//FIXME: Fix URLs in CSS @font-face
 		item[storKey] = { 'created': now, 'url': req.url, 'v': versi, 'contentType': contentType, 'b64': isTextual?0:1, 'data': data };
 		browser.storage.local.set(item).then(
 			//Success
