@@ -62,7 +62,7 @@ function replaceFontsGstaticURLs(css)
 {
 	//src: url(https://fonts.gstatic.com/s/roboto/v20/KFOiCnqEu92Fr1Mu51QrEz0dL-vwnYh2eg.woff2) format('woff2');
 	if (settings.blockUnknownGoogleFonts)
-		return css.replace(/https?:\/\/fonts\.gstatic\.com\/s\/([a-z0-9]+)\/v\d+/g, chrome.extension.getURL("resources/fonts/") + "$1");
+		return css.replace(/https?:\/\/fonts\.gstatic\.com\/s\/([a-z0-9]+)\/v\d+/g, chrome.runtime.getURL("resources/fonts/") + "$1");
 	return css.replace(new RegExp("https?://fonts\\.gstatic\\.com/s/(" + knownGoogleFonts.join("|") + ")/v\\d+", "g"), chrome.runtime.getURL("resources/fonts/") + "$1");
 }
 async function handleGoogleFontsCss(url, req)
@@ -175,7 +175,7 @@ async function redirectRequestCDN(req)
 			data = await resp.text();
 		else
 			data = btoa(String.fromCharCode(...new Uint8Array(await resp.arrayBuffer())));
-		//FIXME: Fix URLs in CSS @font-face
+		//FIXME: Fix URLs in 'data: url' CSS @font-face, see https://www.irctc.co.in/nget/train-search
 		item[storKey] = { 'created': now, 'url': req.url, 'v': versi, 'contentType': contentType, 'b64': isTextual?0:1, 'data': data };
 		browser.storage.local.set(item).then(
 			//Success
@@ -366,15 +366,15 @@ function getSyncSettings()
 browser.storage.onChanged.addListener((changes, area) => { if (area == "sync") { getSyncSettings(); } });
 getSyncSettings();
 
-fetch(chrome.extension.getURL("resources/fonts/")).then(resp => resp.text()).then(txt => {
+fetch(chrome.runtime.getURL("resources/fonts/")).then(resp => resp.text()).then(txt => {
 	knownGoogleFonts = txt.split(/\n/).filter(line => line.startsWith("201: ") && line.endsWith(" DIRECTORY")).map(line => line.replace(/^201: (\w+)\/ .*$/, "$1"));
 	console.log("%cJSLibCache: knownGoogleFonts", logStyle, knownGoogleFonts);
 });
 
 chrome.browserAction.setBadgeBackgroundColor({color:"green"});
 
-chrome.webRequest.onHeadersReceived.addListener(blockRequest, {'types': ['csp_report'], 'urls': cdnDomains.map(host => '*://' + host + '*')}, ['blocking']);
-chrome.webRequest.onHeadersReceived.addListener(redirectRequestCDN, {'types': ['script','stylesheet'], 'urls': cdnDomains.map(host => '*://' + host + '*')}, ['blocking']); //types 'font', 'image', 'other' (for svg?)
+chrome.webRequest.onBeforeRequest.addListener(blockRequest, {'types': ['csp_report'], 'urls': cdnDomains.map(host => '*://' + host + '*')}, ['blocking']);
+chrome.webRequest.onBeforeRequest.addListener(redirectRequestCDN, {'types': ['script','stylesheet'], 'urls': cdnDomains.map(host => '*://' + host + '*')}, ['blocking']); //types 'font', 'image', 'other' (for svg?)
 chrome.webRequest.onHeadersReceived.addListener(removeIntegrityCrossoriginHtml, {'types': ['main_frame', 'sub_frame'], 'urls': ['*://*/*']}, ['blocking', 'responseHeaders']);
 chrome.webNavigation.onBeforeNavigate.addListener(onBeforeNavigate);
 
