@@ -65,6 +65,11 @@ function replaceFontsGstaticURLs(css)
 		return css.replace(/https?:\/\/fonts\.gstatic\.com\/s\/([a-z0-9]+)\/v\d+/g, chrome.runtime.getURL("resources/fonts/") + "$1");
 	return css.replace(new RegExp("https?://fonts\\.gstatic\\.com/s/(" + knownGoogleFonts.join("|") + ")/v\\d+", "g"), chrome.runtime.getURL("resources/fonts/") + "$1");
 }
+function replaceFontsOtherURLs(url, css)
+{
+	console.log(`%cJSLibCache: making CSS url()s absolute ${url}`, logStyle);
+	return css.replace(/([:,]\s*url\()("|'|)([^)"']+)\2\)/g, (m, p0, p1, p2) => p0 + p1 + new URL(p2, url).href + p1 + ")");
+}
 async function handleGoogleFontsCss(url, req)
 {
 	let families = getFamiliesFromGoogleFontCSSURL(url);
@@ -175,7 +180,6 @@ async function redirectRequestCDN(req)
 			data = await resp.text();
 		else
 			data = btoa(String.fromCharCode(...new Uint8Array(await resp.arrayBuffer())));
-		//FIXME: Fix URLs in 'data: url' CSS @font-face, see https://www.irctc.co.in/nget/train-search
 		item[storKey] = { 'created': now, 'url': req.url, 'v': versi, 'contentType': contentType, 'b64': isTextual?0:1, 'data': data };
 		browser.storage.local.set(item).then(
 			//Success
@@ -188,7 +192,12 @@ async function redirectRequestCDN(req)
 	{
 		console.log("%cJSLibCache: " + storKey + " retrieved from local storage", logStyle);
 	}
-	return { redirectUrl: 'data:' + item[storKey].contentType + (item[storKey].b64 ? ';base64,' + item[storKey].data : ',/*JSLC*/' + escape(item[storKey].data)) };
+	//FIXME: Fix URLs in 'data: url' CSS @font-face, see https://www.irctc.co.in/nget/train-search
+	let data = item[storKey].data;
+	let contentType = item[storKey].contentType;
+	if (data != null && contentType != null && contentType.startsWith("text/css"))
+		data = replaceFontsOtherURLs(url, data);
+	return { redirectUrl: 'data:' + contentType + (item[storKey].b64 ? ';base64,' + data : ',/*JSLC*/' + escape(data)) };
 }
 
 
