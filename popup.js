@@ -79,7 +79,19 @@ function getStats()
 				let tabStats = result.tabStats||{};
 				let frag = document.createDocumentFragment();
 				let keys = Object.keys(result.globStats);
-				keys.sort((a, b) => result.globStats[a].hits == result.globStats[b].hits ? a.localeCompare(b) : result.globStats[b].hits - result.globStats[a].hits);
+				keys.sort((a, b) => {
+					if (tabStats[a])
+					{
+						if (!tabStats[b])
+							return -1;
+					}
+					else if (tabStats[b])
+						return 1;
+					return result.globStats[a].hits == result.globStats[b].hits ?
+						a.localeCompare(b) :
+						result.globStats[b].hits - result.globStats[a].hits
+				});
+				//keys.unshift(...Object.keys(tabStats));
 				for (let storKey of keys)
 				{
 					//<tr><td>jquery js</th><th>1.10.x</td><th>?</th><th>2</th><th>0</th></tr>
