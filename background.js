@@ -52,6 +52,7 @@ let globStatsSaveTime = new Date().getTime();
 let asciiDecoder = new TextDecoder('ASCII');//windows-1252 / iso-8859-1
 let settings = getDefaultSettings();
 let knownGoogleFonts = [];
+let tabDomains = {};
 
 function blockRequest(req)
 {
@@ -141,6 +142,11 @@ function addTabStats(tabId, storKeys)
 async function redirectRequestCDN(req)
 {
 	let url = new URL(req.url)
+	if (req.tabId && tabDomains[""+req.tabId] && settings.domainBlacklist.includes(tabDomains[""+req.tabId]))
+	{
+		console.log(`%cJSLibCache: stopping because domain is blacklisted`, logStyle);
+		return;
+	}
 	if (url.hostname == "fonts.googleapis.com")
 		return handleGoogleFontsCss(url, req);
 	let { uid: storKey, version: versi } = getUID(url);
@@ -204,6 +210,11 @@ async function redirectRequestCDN(req)
 function removeIntegrityCrossoriginHtml(req)
 {
 	console.log(`%cJSLibCache: removeIntegrityCrossoriginHtml ${req.url}, id=${req.requestId}, status=${req.statusCode}`, logStyle);
+	if (req.tabId && tabDomains[""+req.tabId] && settings.domainBlacklist.includes(tabDomains[""+req.tabId]))
+	{
+		console.log(`%cJSLibCache: stopping because domain is blacklisted`, logStyle);
+		return;
+	}
 	if (req.statusCode == 200)
 	{
 		let headerIdx = req.responseHeaders.findIndex(h => h.name.toLowerCase() == 'content-security-policy');//TODO FIXME: report-only?
@@ -386,6 +397,17 @@ chrome.webRequest.onBeforeRequest.addListener(blockRequest, {'types': ['csp_repo
 chrome.webRequest.onBeforeRequest.addListener(redirectRequestCDN, {'types': ['script','stylesheet'], 'urls': cdnDomains.map(host => '*://' + host + '*')}, ['blocking']); //types 'font', 'image', 'other' (for svg?)
 chrome.webRequest.onHeadersReceived.addListener(removeIntegrityCrossoriginHtml, {'types': ['main_frame', 'sub_frame'], 'urls': ['*://*/*']}, ['blocking', 'responseHeaders']);
 chrome.webNavigation.onBeforeNavigate.addListener(onBeforeNavigate);
+
+function tabUpdated(tabId, changeInfo, tabInfo) {
+	//console.log("%cJSLibCache: tabUpdated", logStyle, tabId, changeInfo, tabInfo);
+	if (tabInfo.url)
+	{
+		let url = new URL(tabInfo.url);
+		tabDomains[""+tabId] = url.hostname;
+		//console.log("%cJSLibCache: tabDomains", logStyle, tabDomains);
+	}
+}
+browser.tabs.onUpdated.addListener(tabUpdated);
 
 
 browser.storage.local.get(null).then(stor => {

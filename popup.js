@@ -5,8 +5,12 @@ let settings = getDefaultSettings();
 function onSettingChange(evt)
 {
 	evt.preventDefault();
+	console.log("JSLibCache.popup: onSettingChange");
 	let input = evt.target;
-	settings[input.id] = input.checked;
+	if (input.tagName == "INPUT")
+		settings[input.id] = input.checked;
+	else if (input.tagName == "TEXTAREA")
+		settings[input.id] = input.value.split(/\s*\n\s*/);
 	browser.storage.sync.set({settings}).then(
 		//Success
 		() => console.log("JSLibCache.popup: Settings saved", settings, JSON.stringify(settings)),
@@ -54,7 +58,12 @@ function init()
 				{
 					let input = document.getElementById(id);
 					if (input)
-						input.checked = settings[id];
+					{
+						if (input.tagName == "INPUT")
+							input.checked = settings[id];
+						else if (input.tagName == "TEXTAREA")
+							input.value = settings[id].join("\n");
+					}
 					else
 						console.warn("JSLibCache.popup: unable to find setting with id " + id);
 				}
@@ -66,6 +75,7 @@ function init()
 		document.querySelector('form#settings').addEventListener("change", onSettingChange);
 		document.querySelector('button#cleancache').addEventListener("click", onCleancacheButtonClick);
 		document.querySelector('button#clearcache').addEventListener("click", onClearcacheButtonClick);
+
 		document.querySelector('#version').textContent = chrome.runtime.getManifest().version;
 	}
 }
@@ -129,5 +139,5 @@ function getStats()
 		}
 	});
 }
-document.addEventListener("DOMContentLoaded", init);
+if(/^(interactive|complete|loaded)$/.test(document.readyState))init();else document.addEventListener("DOMContentLoaded",init,false);
 }

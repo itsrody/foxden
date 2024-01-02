@@ -312,7 +312,7 @@ function isNewerPointVersion(v1, v2)
 
 function getDefaultSettings()
 {
-	return { allowModifyHeaders: true, blockUnknownGoogleFonts: true };
+	return { allowModifyHeaders: true, blockUnknownGoogleFonts: true, domainBlacklist: [] };
 }
 
 function parseCspHeader(policy)

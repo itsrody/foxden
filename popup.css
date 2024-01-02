@@ -39,4 +39,6 @@ tbody>tr>th:empty::after { content: '0'; color: var(--grey); }
 th[title] { text-decoration: underline dotted; }
 thead>tr>td,thead>tr>th { font-weight: bold; }
 
-div>form>div>span,div>form>label>span { display: inline-block; width: 300px; }
+div>form>div>span,div>form>label>span { display: inline-block; width: 250px; vertical-align: top; }
+textarea { width: 280px; height: 200px; }
+textarea::placeholder { color: #BBB; }
