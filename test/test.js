@@ -319,6 +319,24 @@ describe("perf", function() {
 			expect(extractNestedCdnUrls("url(https://example.com/a.woff2)", "not a url")).to.deep.equal([]);
 		});
 	});
+	describe("extractTagSrc", function() {
+		it("extracts src/href", function() {
+			expect(extractTagSrc('<script src="https://cdn.jsdelivr.net/npm/a@1.0.0/a.js"></script>')).to.equal("https://cdn.jsdelivr.net/npm/a@1.0.0/a.js");
+			expect(extractTagSrc("<link href='https://example.com/a.css' rel=stylesheet>")).to.equal("https://example.com/a.css");
+			expect(extractTagSrc("<script src=https://example.com/a.js></script>")).to.equal("https://example.com/a.js");
+		});
+		it("null when inline", function() {
+			expect(extractTagSrc("<script>var a=1</script>")).to.equal(null);
+			expect(extractTagSrc("<link rel=preload>")).to.equal(null);
+		});
+	});
+	describe("getUID memo", function() {
+		it("returns cached object for same host+path", function() {
+			const a = getUID(new URL("https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"));
+			const b = getUID(new URL("https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js?ver=2"));
+			expect(b).to.equal(a);
+		});
+	});
 });
 describe("urls", function() {
 	describe("version, name, ext", function() {

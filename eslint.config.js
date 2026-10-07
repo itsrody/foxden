@@ -62,7 +62,7 @@ export default [
 				allowDataUriInCsp: 'readonly', rewriteGstaticCss: 'readonly',
 				collectGstaticFontUrls: 'readonly',
 				shouldCancelSourcemap: 'readonly', shouldBypassLargeEntry: 'readonly',
-				extractNestedCdnUrls: 'readonly',
+				extractNestedCdnUrls: 'readonly', extractTagSrc: 'readonly',
 			},
 		},
 		rules: {

@@ -232,12 +232,28 @@ export function getVersionNameExt(hostname, pathname)
 	return { version: null, name: null, ext: null};
 }
 
+const uidMemo = new Map();
+const UID_MEMO_MAX = 5000;
+
+export function clearUidMemo()
+{
+	uidMemo.clear();
+}
+
 export function getUID(url)
 {
+	const memoKey = url.hostname + url.pathname;
+	const memoHit = uidMemo.get(memoKey);
+	if (memoHit)
+		return memoHit;
 	let { version, name, ext } = getVersionNameExt(url.hostname, url.pathname);
-	if (name && version != null)
-		return { uid: name + " " + ext + " " + canonicalizeVersion(version), version: version };
-	return { uid: "//" + url.host + url.pathname, version: "0" };
+	const out = (name && version != null)
+		? { uid: name + " " + ext + " " + canonicalizeVersion(version), version: version }
+		: { uid: "//" + url.host + url.pathname, version: "0" };
+	if (uidMemo.size >= UID_MEMO_MAX)
+		uidMemo.clear();
+	uidMemo.set(memoKey, out);
+	return out;
 }
 
 export function canonicalizeName(name)

@@ -6,6 +6,8 @@
 import { logStyle, cdnDomainsRE } from './shared/constants.js';
 import { allowDataUriInCsp } from './shared/csp.js';
 import { isTabDomainBlacklisted } from './stats.js';
+import { getUID } from './shared/urlkey.js';
+import { extractTagSrc } from './shared/perf.js';
 
 const MAX_PENDING_TAG = 4096;
 const asciiDecoder = new TextDecoder('ASCII');//windows-1252 / iso-8859-1
@@ -35,10 +37,32 @@ function splitTrailingTag(str)
 
 function makeTransformer(req)
 {
+	// Per-page set of already-seen CDN UIDs: duplicate <script>/<link> tags
+	// for the same library would each trigger a blocking redirect + data:
+	// encode, so the second+ copies are dropped entirely.
+	const seenUids = new Set();
 	return str => str
 		.replace(/<(link|script)[^>]+>/ig, m => {
 			if (!cdnDomainsRE.test(m))
 				return m;
+			const src = extractTagSrc(m);
+			if (src)
+			{
+				try
+				{
+					const { uid } = getUID(new URL(src, req.url));
+					if (seenUids.has(uid))
+					{
+						console.log(`%cJSLibCache: dropping duplicate CDN tag ${src}, id=${req.requestId}`, logStyle);
+						return "<!--JSLC dupe-->";
+					}
+					seenUids.add(uid);
+				}
+				catch
+				{
+					// unresolvable URL: fall through to integrity strip
+				}
+			}
 			console.log(`%cJSLibCache: adjusting integrity|crossorigin attributes on ${m}, id=${req.requestId}`, logStyle);
 			// data: URL redirects fail both CORS (no CORS mode on opaque origins) and
 			// SRI (final URL is cross-origin), so crossorigin and integrity must both

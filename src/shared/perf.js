@@ -23,6 +23,16 @@ export function shouldBypassLargeEntry(size)
 	return typeof size === "number" && size > MAX_DATA_URI_BYTES;
 }
 
+// Extract the src/href URL from a <script>/<link> tag. Returns null when the
+// tag has no external reference (inline script, preload without href, ...).
+export function extractTagSrc(tag)
+{
+	const m = tag.match(/\b(?:src|href)\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/i);
+	if (!m)
+		return null;
+	return m[1].replace(/^["']|["']$/g, "");
+}
+
 // Extract absolute nested CDN URLs from CSS text (@import + url()).
 // Returns deduped absolute URLs; callers filter/prefetch them in background.
 export function extractNestedCdnUrls(cssText, baseUrlString)
