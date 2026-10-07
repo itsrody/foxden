@@ -18,8 +18,8 @@
 		"url": "git+https://github.com/itsrody/jslibcache.git"
 	},
 	"keywords": [],
-	"author": "",
-	"license": "ISC",
+	"author": "itsrody",
+	"license": "MPL-2.0",
 	"type": "module",
 	"bugs": {
 		"url": "https://github.com/itsrody/jslibcache/issues"

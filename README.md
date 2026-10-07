@@ -1,4 +1,7 @@
-# JSLibCache
+# JSLibCache (modern fork)
+
+> Independent modern fork of [Jaaap/jslibcache](https://gitlab.com/Jaaap/jslibcache) (MPL-2.0).
+> Upstream's last release was `0.0.21` (2024); this fork restarts at `0.1.0` with a new Firefox extension ID (`jslibcache@itsrody.github.io`), so it installs side-by-side and does not claim upstream's AMO listing.
 
 A WebExtension for Firefox / Chrome that enhances privacy by serving requests to popular CDNs from local cache/storage.
 
@@ -13,7 +16,21 @@ https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js
 and that lib is not yet in the local cache, it is fetched from the CDN and put into local storage for subsequent requests.
 
 ## Download for Firefox, Chrome
-This WebExtension can be added to Firefox from https://addons.mozilla.org/en-US/firefox/addon/jslibcache/
+Original upstream listing (not this fork): https://addons.mozilla.org/en-US/firefox/addon/jslibcache/
+
+For this fork, build from source:
+```
+npm ci
+npm run build
+```
+then load `web-ext-artifacts/jslibcache.xpi` in Firefox, or load the repo as an unpacked extension in Chrome.
+
+## What's new in this fork (0.1.0)
+- ES modules split: `background.js` (424 lines) → `src/` modules
+- IndexedDB cache (`entries` + `stats` stores) with one-time `storage.local` migration, instead of capped `storage.local`
+- Bundled Google Fonts + `resources/fonts/manifest.json` + `tools/build-fonts-manifest.mjs`; font CSS served with `data:` URIs embedded (works around Bugzilla 1645683)
+- Firefox 158+ support: `strict_min_version 158.0`, `data_collection_permissions: none`, MV2 module background
+- Tooling: `eslint`, `tsc`, `web-ext lint/build`, `node test/run.mjs`, GitHub Actions CI
 
 ## Which CDNs are supported?
 The following CDNs are or will be supported:
