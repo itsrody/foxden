@@ -485,6 +485,40 @@ describe("urls", function() {
 				expect(b).to.deep.equal(a);
 			});
 		});
+		describe("query variants", function() {
+			it("esm.sh ?dev is a different UID than plain", function() {
+				let a = getUID(new URL("https://esm.sh/react@19.2.4"));
+				let b = getUID(new URL("https://esm.sh/react@19.2.4?dev"));
+				expect(b.uid).to.not.equal(a.uid);
+				expect(b.version).to.equal(a.version);
+			});
+			it("esm.sh same query hits memo", function() {
+				let a = getUID(new URL("https://esm.sh/react@19.2.4?dev"));
+				let b = getUID(new URL("https://esm.sh/react@19.2.4?dev"));
+				expect(b).to.equal(a);
+			});
+			it("esm.sh ?ver= busting still dedupes", function() {
+				let a = getUID(new URL("https://esm.sh/react@19.2.4"));
+				let b = getUID(new URL("https://esm.sh/react@19.2.4?ver=2"));
+				expect(b).to.equal(a);
+			});
+			it("unpkg ?module is a different UID than UMD", function() {
+				let a = getUID(new URL("http://unpkg.com/web-vitals@0.2.2/dist/web-vitals.es5.umd.min.js"));
+				let b = getUID(new URL("http://unpkg.com/web-vitals@0.2.2/dist/web-vitals.es5.umd.min.js?module"));
+				expect(b.uid).to.not.equal(a.uid);
+			});
+		});
+		describe("combine", function() {
+			it("different bundles get different UIDs", function() {
+				let a = getUID(new URL("https://cdn.jsdelivr.net/combine/npm/jquery@3.3.1/dist/jquery.min.js,npm/bootstrap@3.3.7/dist/js/bootstrap.min.js"));
+				let b = getUID(new URL("https://cdn.jsdelivr.net/combine/npm/jquery@1,npm/d3@3.5.6/d3.min.js"));
+				expect(b.uid).to.not.equal(a.uid);
+			});
+			it("same bundle hits memo", function() {
+				let u = "https://cdn.jsdelivr.net/g/jquery@1.10.2,bootstrap@3.3.4";
+				expect(getUID(new URL(u))).to.equal(getUID(new URL(u)));
+			});
+		});
 	});
 	describe("not null", function() {
 		describe("url keys", function() {

@@ -147,8 +147,10 @@ export function getVersionNameExt(hostname, pathname)
 			return { version: mtch[3], name: "WordPress/" + mtch[1] + mtch[2] + "/" + mtch[4], ext: mtch[5] };
 
 		//FIXME: ugly catch-alls. Disable this when you are fixing the rules above
+		// /g and /combine bundle MANY files in one response: the full path
+		// selects the content, so different bundles must not share one UID.
 		if (mtch = pathname.match(/^\/(g|combine)\/([a-z0-9+(),\.@\/_-]*)$/i))
-			return { version: "", name: "Combine/" + mtch[1], ext: "" };
+			return { version: "", name: "Combine/" + mtch[1] + "/" + shortHash(pathname), ext: "" };
 		if (mtch = pathname.match(/^\/([a-z0-9+,\.@\/_-]*?)(?:\.min|-min)?\.(js|css|gif|png|jpg|svg|json|ttf|woff2|woff|eot|ico|xap|swf)$/i))
 			return { version: "", name: mtch[1], ext: mtch[2] };
 	}
@@ -240,13 +242,66 @@ export function clearUidMemo()
 	uidMemo.clear();
 }
 
+// FNV-1a 32-bit, hex. For cache-key namespacing only, not security.
+export function shortHash(str)
+{
+	let h = 0x811c9dc5;
+	for (let i = 0; i < str.length; i++)
+	{
+		h ^= str.charCodeAt(i);
+		h = Math.imul(h, 0x01000193);
+	}
+	return ("0000000" + (h >>> 0).toString(16)).slice(-8);
+}
+
+// Query params that change response bytes (build flags), not cache-busters.
+// ?ver= / ?_= are deliberately ignored so busting aids dedupe.
+const ESM_VARIANT_PARAMS = ["bundle", "conditions", "css", "deps", "dev", "external", "module", "raw", "target"];
+
+function variantSuffix(searchParams, allow)
+{
+	const parts = [];
+	for (const k of allow)
+	{
+		if (!searchParams.has(k))
+			continue;
+		const v = searchParams.get(k);
+		parts.push(v ? k + "-" + v : k);
+	}
+	if (!parts.length)
+		return "";
+	parts.sort();
+	let s = parts.join(",").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+	if (s.length > 48)
+		s = "q" + shortHash(parts.join(","));
+	return s;
+}
+
 export function getUID(url)
 {
-	const memoKey = url.hostname + url.pathname;
+	let memoKey = url.hostname + url.pathname;
+	// Same path + different build flags = different bytes = different UID.
+	// (esm.sh ?dev/?bundle=false/?external=…, unpkg ?module UMD vs ESM.)
+	let variant = "";
+	if (url.hostname == "esm.sh")
+	{
+		variant = variantSuffix(url.searchParams, ESM_VARIANT_PARAMS);
+		if (variant)
+			memoKey += "?" + variant;
+	}
+	else if ((url.hostname == "unpkg.com" || url.hostname == "cdn.jsdelivr.net" || url.hostname == "fastly.jsdelivr.net") && url.searchParams.has("module"))
+	{
+		variant = "module";
+		memoKey += "?module";
+	}
 	const memoHit = uidMemo.get(memoKey);
 	if (memoHit)
 		return memoHit;
 	let { version, name, ext } = getVersionNameExt(url.hostname, url.pathname);
+	// Variant goes in the name so the numeric version still point-upgrades
+	// within one variant (dev 19.2.4 → dev 19.2.5) but never across variants.
+	if (variant && name)
+		name = name + "/@" + variant;
 	const out = (name && version != null)
 		? { uid: name + " " + ext + " " + canonicalizeVersion(version), version: version }
 		: { uid: "//" + url.host + url.pathname, version: "0" };
