@@ -15,16 +15,16 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://gitlab.com/Jaaap/jslibcache.git"
+		"url": "git+https://github.com/itsrody/jslibcache.git"
 	},
 	"keywords": [],
 	"author": "",
 	"license": "ISC",
 	"type": "module",
 	"bugs": {
-		"url": "https://gitlab.com/Jaaap/jslibcache/issues"
+		"url": "https://github.com/itsrody/jslibcache/issues"
 	},
-	"homepage": "https://gitlab.com/Jaaap/jslibcache#readme",
+	"homepage": "https://github.com/itsrody/jslibcache#readme",
 	"devDependencies": {
 		"chai": "^6.3.0",
 		"eslint": "^10.12.0",
@@ -51,7 +51,7 @@
 			"eslint.config.js",
 			".gitignore",
 			".gitattributes",
-			".gitlab-ci.yml",
+			".github/**",
 			"screenshot.png",
 			"*.log",
 			".DS_Store"
