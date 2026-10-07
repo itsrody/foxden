@@ -1,28 +1,37 @@
 {
 	"manifest_version": 2,
 	"name": "JSLibCache",
-	"version": "0.0.21",
+	"version": "0.1.0",
 	"default_locale": "en",
-	"browser_specific_settings": { "gecko": { "id": "jslibcache@pass.dog" } },
+	"browser_specific_settings": {
+		"gecko": {
+			"id": "jslibcache@pass.dog",
+			"strict_min_version": "158.0",
+			"data_collection_permissions": { "required": ["none"] }
+		}
+	},
 	"description": "__MSG_description__",
-	"icons": { "128": "icon256.png" },
+	"icons": { "256": "icon256.png" },
 	"permissions": [
 		"*://*/*",
 		"storage",
-		"activeTab",
+		"alarms",
 		"unlimitedStorage",
 		"webRequest",
 		"webRequestBlocking",
 		"webNavigation"
 	],
-	"background": { "scripts": ["utils.js", "background.js"] },
+	"background": {
+		"scripts": ["src/background.js"],
+		"type": "module"
+	},
 	"browser_action": {
 		"default_popup": "popup.html",
 		"browser_style": false,
 		"theme_icons": [{
 			"dark": "icon256.png",
 			"light": "icon256white.png",
-			"size": 128
+			"size": 256
 		}]
 	},
 	"web_accessible_resources": [ "resources/*" ]

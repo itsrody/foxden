@@ -3,3 +3,6 @@ test/puppeteer/
 test/*.OLD
 resources/fonts/urls.text
 .idea/
+node_modules/
+*.xpi
+web-ext-artifacts/

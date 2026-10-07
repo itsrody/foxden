@@ -6,17 +6,6 @@
 <link rel="stylesheet" href="mocha.css"/>
 <script src="mocha.js"></script>
 <script src="chai.js"></script>
-<script>var urls = {};</script>
-<script src="cdn-fontsgstatic.js"></script>
-<script src="cdn-cloudflare.js"></script>
-<script src="cdn-cloudflare-ajax.js"></script>
-<script src="cdn-googleapis.js"></script>
-<script src="cdn-googleapis-fonts.js"></script>
-<script src="cdn-jquery.js"></script>
-<script src="cdn-ampproject.js"></script>
-<script src="cdn-jsdelivr.js"></script>
-<script src="cdn-unpkg.js"></script>
-<script src="../utils.js"></script>
 <style>
 #mocha { font-size: 32px; }
 #mocha h2 { font-size: 16px; }
@@ -26,8 +15,6 @@
 	<div id="mocha"><p><a href=".">Index</a></p></div>
 	<div id="messages"></div>
 	<div id="fixtures"></div>
-	<script>mocha.setup('bdd')</script>
-	<script src="test.js"></script>
-	<script>mocha.run();</script>
+	<script type="module" src="browser.mjs"></script>
 </body>
 </html>

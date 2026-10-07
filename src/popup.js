@@ -1,87 +1,97 @@
-{
 'use strict';
+import { getDefaultSettings, loadSettings, saveSettings } from './shared/settings.js';
+
 let settings = getDefaultSettings();
 
 function onSettingChange(evt)
 {
 	evt.preventDefault();
 	console.log("JSLibCache.popup: onSettingChange");
-	let input = evt.target;
+	let input = /** @type {HTMLInputElement | HTMLTextAreaElement} */ (evt.target);
 	if (input.tagName == "INPUT")
-		settings[input.id] = input.checked;
+		settings[input.id] = /** @type {HTMLInputElement} */ (input).checked;
 	else if (input.tagName == "TEXTAREA")
-		settings[input.id] = input.value.split(/\s*\n\s*/);
-	browser.storage.sync.set({settings}).then(
+		settings[input.id] = /** @type {HTMLTextAreaElement} */ (input).value.split(/\s*\n\s*/).filter(Boolean);
+	saveSettings(settings).then(
 		//Success
 		() => console.log("JSLibCache.popup: Settings saved", settings, JSON.stringify(settings)),
 		//Error
 		msg => console.warn("JSLibCache.popup: Error saving settings to browser.storage.sync: " + msg)
 	);
-
+}
+function clearStatsTable()
+{
+	let tbody = document.querySelector('tbody');
+	tbody.parentNode.replaceChild(document.createElement("tbody"), tbody);
 }
 function onCleancacheButtonClick(evt)
 {
 	let btn = evt.target;
-	chrome.runtime.sendMessage({'action': 'cleanCache' }, result => {
+	browser.runtime.sendMessage({'action': 'cleanCache' }).then(result => {
 		if (result && result.success)
 		{
-			let tbody = document.querySelector('tbody');
-			tbody.parentNode.replaceChild(document.createElement("tbody"), tbody);
+			clearStatsTable();
 			getStats();
-			btn.textContent += " ✅";
+			btn.textContent += " ✅";
 		}
 	});
 }
 function onClearcacheButtonClick(evt)
 {
 	let btn = evt.target;
-	chrome.runtime.sendMessage({'action': 'clearCache' }, result => {
+	browser.runtime.sendMessage({'action': 'clearCache' }).then(result => {
 		if (result && result.success)
 		{
-			let tbody = document.querySelector('tbody');
-			tbody.parentNode.replaceChild(document.createElement("tbody"), tbody);
-			btn.textContent += " ✅";
+			clearStatsTable();
+			btn.textContent += " ✅";
 		}
 	});
 }
 
+async function initSettings()
+{
+	try
+	{
+		settings = await loadSettings();
+		console.log("JSLibCache.popup: settings retrieved", settings);
+		for (let id in settings)
+		{
+			let input = document.getElementById(id);
+			if (input)
+			{
+				if (input.tagName == "INPUT")
+					/** @type {HTMLInputElement} */ (input).checked = settings[id];
+				else if (input.tagName == "TEXTAREA")
+					/** @type {HTMLTextAreaElement} */ (input).value = settings[id].join("\n");
+			}
+			else
+				console.warn("JSLibCache.popup: unable to find setting with id " + id);
+		}
+	}
+	catch (msg)
+	{
+		console.warn("JSLibCache.popup: Error getting settings from browser.storage.sync: " + msg);
+	}
+}
+
 function init()
 {
-	if ("chrome" in window && "runtime" in chrome)
-	{
-		browser.storage.sync.get({"settings": getDefaultSettings()}).then(
-			//Success
-			sett => {
-				settings = sett.settings;
-				console.log("JSLibCache.popup: settings retrieved", sett);
-				for (let id in settings)
-				{
-					let input = document.getElementById(id);
-					if (input)
-					{
-						if (input.tagName == "INPUT")
-							input.checked = settings[id];
-						else if (input.tagName == "TEXTAREA")
-							input.value = settings[id].join("\n");
-					}
-					else
-						console.warn("JSLibCache.popup: unable to find setting with id " + id);
-				}
-			},
-			//Error
-			msg => console.warn("JSLibCache.popup: Error getting settings from browser.storage.sync: " + msg)
-		);
-		getStats();
-		document.querySelector('form#settings').addEventListener("change", onSettingChange);
-		document.querySelector('button#cleancache').addEventListener("click", onCleancacheButtonClick);
-		document.querySelector('button#clearcache').addEventListener("click", onClearcacheButtonClick);
+	initSettings();
+	getStats();
+	document.querySelector('form#settings').addEventListener("change", onSettingChange);
+	document.querySelector('button#cleancache').addEventListener("click", onCleancacheButtonClick);
+	document.querySelector('button#clearcache').addEventListener("click", onClearcacheButtonClick);
 
-		document.querySelector('#version').textContent = chrome.runtime.getManifest().version;
-	}
+	document.querySelector('#version').textContent = browser.runtime.getManifest().version;
+	// Firefox version: getBrowserInfo() is the browser's own version —
+	// runtime.getVersion() returns the extension version, not this.
+	browser.runtime.getBrowserInfo().then(
+		info => document.querySelector('#firefoxversion').textContent = info.version,
+		() => {});
 }
 function getStats()
 {
-	chrome.runtime.sendMessage({'action': 'getStats' }, result => {
+	browser.runtime.sendMessage({'action': 'getStats' }).then(result => {
 		if (result)
 		{
 			if (result.globStats) //created, hits, last
@@ -99,12 +109,11 @@ function getStats()
 						return 1;
 					return result.globStats[a].hits == result.globStats[b].hits ?
 						a.localeCompare(b) :
-						result.globStats[b].hits - result.globStats[a].hits
+						result.globStats[b].hits - result.globStats[a].hits;
 				});
-				//keys.unshift(...Object.keys(tabStats));
 				for (let storKey of keys)
 				{
-					//<tr><td>jquery js</th><th>1.10.x</td><th>?</th><th>2</th><th>0</th></tr>
+					//<tr><td>jquery js</th><th>1.10.x</th><th>?</th><th>2</th><th>0</th></tr>
 					let name = storKey, version = "";
 					let m = storKey.match(/^(.* (js|css)) ([0-9a-zA-Z\.-]+)$/);
 					if (m)
@@ -140,4 +149,3 @@ function getStats()
 	});
 }
 if(/^(interactive|complete|loaded)$/.test(document.readyState))init();else document.addEventListener("DOMContentLoaded",init,false);
-}

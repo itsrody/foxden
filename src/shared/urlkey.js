@@ -1,46 +1,6 @@
 "use strict";
 
-const logStyle = 'color:#093';
-const typeSizes = {
-	"undefined": () => 0,
-	"boolean": () => 4,
-	"number": () => 8,
-	"string": item => 2 * item.length,
-	"object": item => !item ? 0 : Object.keys(item).reduce((total, key) => sizeOf(key) + sizeOf(item[key]) + total, 0)
-};
-
-function getFamiliesFromGoogleFontCSSURL(url)
-{
-	//https://fonts.googleapis.com/css2?family=Noto+Sans+HK&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap
-	//https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,200;0,300;0,400;0,500;0,700;0,900;1,100;1,200;1,300;1,400;1,500;1,700;1,900
-	//https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700
-	//https://fonts.googleapis.com/css?family=Droid+Sans:700,regular|Droid+Serif:italic,regular&subset=latin
-	//https://fonts.googleapis.com/css?family=Lato&text=ABC
-	//https://fonts.googleapis.com/icon?family=Material+Icons
-	//https://fonts.googleapis.com/icon?family=Material+Icons&ver=5.4.1
-	//let url = new URL('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,200;0,300;0,400;0,500;0,700;0,900;1,100;1,200;1,300;1,400;1,500;1,700;1,900');
-	let params = new URLSearchParams(url.search);
-	let result = [];
-	if (url.pathname == "/css2" || url.pathname == "/icon")
-	{
-		for (let family of params.getAll('family'))
-		{
-			let i = family.indexOf(':');
-			result.push(i == -1 ? family : family.substr(0,i));
-		}
-	}
-	else if (url.pathname == "/css" && params.has('family'))
-	{
-		for (let family of params.get('family').split('|'))
-		{
-			let i = family.indexOf(':');
-			result.push(i == -1 ? family : family.substr(0,i));
-		}
-	}
-	return result;
-}
-
-function getVersionNameExt(hostname, pathname)
+export function getVersionNameExt(hostname, pathname)
 {
 	let mtch;
 	if (hostname == "cdn.jsdelivr.net" && pathname.startsWith("/npm/"))
@@ -120,7 +80,7 @@ function getVersionNameExt(hostname, pathname)
 			return { version: mtch[2], name: canonicalizeName(mtch[1] + "/" + mtch[3]), ext: mtch[4] };
 		}
 		// /ajax/libs/toastr.js/latest/toastr.min.css => 2.1.3
-		if (mtch = pathname.match(/^\/ajax\/libs\/toastr.js\/latest\/toastr(\.min)?\.(js|css)$/i))
+		if (mtch = pathname.match(/^\/ajax\/libs\/toastr\.js\/latest\/toastr(\.min)?\.(js|css)$/i))
 			return { version: "2.1.3", name: "toastr", ext: mtch[2] };
 	}
 	else if (hostname == "ajax.cloudflare.com")
@@ -227,7 +187,8 @@ function getVersionNameExt(hostname, pathname)
 	}
 	return { version: null, name: null, ext: null};
 }
-function getUID(url)
+
+export function getUID(url)
 {
 	let { version, name, ext } = getVersionNameExt(url.hostname, url.pathname);
 	if (name && version != null)
@@ -235,20 +196,7 @@ function getUID(url)
 	return { uid: "//" + url.host + url.pathname, version: "0" };
 }
 
-function isMimeTextual(contentType)
-{
-	let textuals = ["text/", "application/javascript", "application/atom+xml", "application/rss+xml", "image/svg+xml", "application/json", "application/vnd.google-earth.kml+xml", "application/x-perl", "application/xhtml+xml", "application/xspf+xml", "application/xml", "application/ld+json", "message/"];
-	for (let textual of textuals)
-		if (contentType.startsWith(textual))
-			return true;
-	return false;
-}
-function sizeOf(value)
-{
-	return typeSizes[typeof value](value);
-}
-
-function canonicalizeName(name)
+export function canonicalizeName(name)
 {
 	return name.toLowerCase().replace(/[_\.-]+/g, '/');
 }
@@ -262,43 +210,13 @@ function canonicalizeName(name)
 // ^ upgrade all but most significant digit to latest
 //	^1.0.0 == 1.x.x
 // versionsMatch('1.0.0', ['1.0.1']) matches, but not in official Semantic Versioning!
-/*
-function versionsMatch(semVer, availVs)
-{
-	if (!Array.isArray(availVs))
-		availVs = [availVs];
-	//semVer is a pattern that can have caret, tilde, * and x
-	//availVs only contain actual version numbers
-	let regex, mtch, minorMin;
-	if      (mtch = semVer.match(/^\^(\d+)\.(\d+)\.(\d+)$/i))
-		regex = new RegExp('^' + mtch[1] + '\\.'), minorMin = 1 * mtch[2];
-	else if (mtch = semVer.match(/^(\d+)\.[x*]$/i))
-		regex = new RegExp('^' + mtch[1] + '\\.');
-	else if (mtch = semVer.match(/^\~?(\d+)\.(\d+)\.(\d+)$/i))
-		regex = new RegExp('^' + mtch[1] + '\\.' + mtch[2] + '\\.');
-	else if (mtch = semVer.match(/^(\d+)\.(\d+)\.[x*]$/i))
-		regex = new RegExp('^' + mtch[1] + '\\.' + mtch[2] + '\\.');
-
-	for (let v of availVs)
-	{
-		if (semVer === v)
-			return v;
-		if (regex && regex.test(v))
-			if (!minorMin || getMinor(v) >= minorMin)
-				return v;
-	}
-}
-function getMinor(v)
-{
-	return v.split(".")[1];
-}
-*/
 const versionRE = /^[\^\~]?(\d+\.\d+\.)(\d+)$/;
-function canonicalizeVersion(versi)
+
+export function canonicalizeVersion(versi)
 {
 	return versi.replace(versionRE, '$1x');
 }
-function isNewerPointVersion(v1, v2)
+export function isNewerPointVersion(v1, v2)
 {
 	let m1 = v1.match(versionRE);
 	if (m1)
@@ -308,19 +226,4 @@ function isNewerPointVersion(v1, v2)
 			return parseInt(m1[2]) > parseInt(m2[2]);
 	}
 	return false;
-}
-
-function getDefaultSettings()
-{
-	return { allowModifyHeaders: true, blockUnknownGoogleFonts: true, domainBlacklist: [] };
-}
-
-function parseCspHeader(policy)
-{
-	return policy.split(';').reduce((result, directive) => {
-		const [directiveKey, ...directiveValue] = directive.trim().split(/\s+/g);
-		if (!directiveKey || Object.prototype.hasOwnProperty.call(result, directiveKey))
-			return result;
-		return Object.assign(Object.assign({}, result), { [directiveKey]: directiveValue });
-	}, {});
 }

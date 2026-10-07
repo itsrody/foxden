@@ -207,6 +207,82 @@ describe("utils", function() {
 		}
 	});
 });
+describe("allowDataUriInCsp", function() {
+	for (let line of [
+		// [policy, changed, expected]
+		["script-src 'self' https://code.jquery.com", true, "script-src data: 'self' https://code.jquery.com"],
+		["style-src https://cdnjs.cloudflare.com", true, "style-src data: https://cdnjs.cloudflare.com"],
+		["font-src https://fonts.gstatic.com", true, "font-src data: moz-extension: https://fonts.gstatic.com"],
+		["script-src 'self'; style-src 'self'; font-src 'self'", true, "script-src data: 'self';style-src data: 'self';font-src data: moz-extension: 'self'"],
+		// directives governed by default-src are created from it
+		["default-src 'self' https://code.jquery.com", true, "default-src 'self' https://code.jquery.com;script-src 'self' https://code.jquery.com data:;style-src 'self' https://code.jquery.com data:;font-src 'self' https://code.jquery.com data: moz-extension:"],
+		["default-src 'self' https://fonts.gstatic.com", true, "default-src 'self' https://fonts.gstatic.com;script-src 'self' https://fonts.gstatic.com data:;style-src 'self' https://fonts.gstatic.com data:;font-src 'self' https://fonts.gstatic.com data: moz-extension:"],
+		// default-src already allows data: for a type → that directive is not created
+		["default-src data:", true, "default-src data:;font-src data: moz-extension:"],
+		// nothing to patch: unrestricted or already patched
+		["", false, ""],
+		["img-src 'self'", false, "img-src 'self'"],
+		["script-src data: https://x.com", false, "script-src data: https://x.com"],
+		["script-src data:;style-src data:;font-src data: moz-extension:", false, "script-src data:;style-src data:;font-src data: moz-extension:"],
+	])
+	{
+		it(line[0] + ' ⟹ changed:' + line[1], function() {
+			const { changed, value } = allowDataUriInCsp(line[0]);
+			expect(changed).to.equal(line[1]);
+			expect(value).to.equal(line[2]);
+		});
+	}
+});
+describe("rewriteGstaticCss", function() {
+	const base = "moz-extension://id/resources/fonts/";
+	const families = { roboto: ["bundled.woff2"], lato: [] };
+	const css = "src: url(https://fonts.gstatic.com/s/roboto/v51/bundled.woff2) format('woff2');" +
+		"src: url(https://fonts.gstatic.com/s/roboto/v51/gone.woff2) format('woff2');" +
+		"src: url(http://fonts.gstatic.com/s/other/v1/keep.ttf) format('truetype');" +
+		"src: url(https://fonts.gstatic.com/s/strange/v2/x.eot) format('embedded-opentype');";
+	it("bundled file → packaged URL; missing bundled file stays for the pipeline", function() {
+		expect(rewriteGstaticCss(css, families, false, base)).to.equal(
+			"src: url(" + base + "roboto/bundled.woff2) format('woff2');" +
+			"src: url(https://fonts.gstatic.com/s/roboto/v51/gone.woff2) format('woff2');" +
+			"src: url(http://fonts.gstatic.com/s/other/v1/keep.ttf) format('truetype');" +
+			"src: url(https://fonts.gstatic.com/s/strange/v2/x.eot) format('embedded-opentype');");
+	});
+	it("blockUnknown: unknown family → nonexistent packaged path (blocked), known family falls back to pipeline", function() {
+		expect(rewriteGstaticCss(css, families, true, base)).to.equal(
+			"src: url(" + base + "roboto/bundled.woff2) format('woff2');" +
+			"src: url(https://fonts.gstatic.com/s/roboto/v51/gone.woff2) format('woff2');" +
+			"src: url(" + base + "other/keep.ttf) format('truetype');" +
+			"src: url(" + base + "strange/x.eot) format('embedded-opentype');");
+	});
+	it("blockUnknown off: unknown family untouched", function() {
+		expect(rewriteGstaticCss("url(https://fonts.gstatic.com/s/strange/v2/x.woff2)", families, false, base))
+			.to.equal("url(https://fonts.gstatic.com/s/strange/v2/x.woff2)");
+	});
+	it("Map input and non-gstatic URLs", function() {
+		const map = new Map([["roboto", ["bundled.woff2"]]]);
+		expect(rewriteGstaticCss("url(https://fonts.gstatic.com/s/roboto/v40/bundled.woff2) url(https://example.com/f.woff2)", map, true, base))
+			.to.equal("url(" + base + "roboto/bundled.woff2) url(https://example.com/f.woff2)");
+	});
+	it("family without file list never blocks and never rewrites", function() {
+		expect(rewriteGstaticCss("url(https://fonts.gstatic.com/s/roboto/v51/x.woff2)", { roboto: null }, true, base))
+			.to.equal("url(https://fonts.gstatic.com/s/roboto/v51/x.woff2)");
+	});
+});
+describe("collectGstaticFontUrls", function() {
+	it("returns distinct gstatic font URLs only", function() {
+		const css = "url(https://fonts.gstatic.com/s/roboto/v51/a.woff2) url(https://fonts.gstatic.com/s/roboto/v51/a.woff2)" +
+			" url(http://fonts.gstatic.com/s/lato/v20/b.woff) url(https://example.com/c.woff2)" +
+			" url(https://fonts.gstatic.com/s/noto/v5/d.woff2?#iefix)";
+		expect(collectGstaticFontUrls(css)).to.deep.equal([
+			"https://fonts.gstatic.com/s/roboto/v51/a.woff2",
+			"http://fonts.gstatic.com/s/lato/v20/b.woff",
+			"https://fonts.gstatic.com/s/noto/v5/d.woff2",
+		]);
+	});
+	it("empty when nothing matches", function() {
+		expect(collectGstaticFontUrls("url(https://example.com/c.woff2)")).to.deep.equal([]);
+	});
+});
 describe("urls", function() {
 	describe("version, name, ext", function() {
 		describe("fontsgstatic", function() {
