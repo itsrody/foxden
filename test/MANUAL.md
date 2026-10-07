@@ -31,6 +31,7 @@ Run against a temporary profile (`npx web-ext run`), with uBO disabled unless no
 
 ## Settings
 - [ ] Domain blacklist: listed domain's CDN requests pass through untouched
+- [ ] Domain blacklist: listing `example.com` also covers `sub.example.com` (eTLD+1 via publicSuffix)
 - [ ] `allowModifyHeaders` OFF: CSP header untouched
 - [ ] Settings sync via `storage.sync`, survive restart
 

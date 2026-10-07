@@ -142,7 +142,44 @@ export function isTabDomainBlacklisted(tabId, domainBlacklist)
 	if (!domainBlacklist.length)
 		return false;
 	const domain = tabDomains["" + tabId];
-	return !!domain && domainBlacklist.includes(domain);
+	if (!domain)
+		return false;
+	if (domainBlacklist.includes(domain))
+		return true;
+	// Registrable-domain match (publicSuffix, FF153+): listing evil.com also
+	// covers sub.evil.com, which exact matching misses. Hostnames are
+	// case-insensitive; comparison runs lowercased on both sides.
+	const registrable = registrableDomain(domain.toLowerCase());
+	return domainBlacklist.some(entry => registrableDomain(String(entry).toLowerCase()) === registrable);
+}
+
+const registrableMemo = new Map();
+const REGISTRABLE_MEMO_MAX = 500;
+
+export function registrableDomain(hostname)
+{
+	const hit = registrableMemo.get(hostname);
+	if (hit !== undefined)
+		return hit;
+	let out = hostname;
+	try
+	{
+		if (typeof browser !== "undefined" && browser.publicSuffix && typeof browser.publicSuffix.getDomain === "function")
+			out = browser.publicSuffix.getDomain(hostname) || hostname;
+	}
+	catch
+	{
+		out = hostname; // invalid hostnames throw since FF158: treat as opaque
+	}
+	if (registrableMemo.size >= REGISTRABLE_MEMO_MAX)
+		registrableMemo.clear();
+	registrableMemo.set(hostname, out);
+	return out;
+}
+
+export function clearRegistrableMemo()
+{
+	registrableMemo.clear();
 }
 
 export async function dropStatsKeys(keys)

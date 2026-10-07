@@ -103,8 +103,19 @@ export async function statsLoad()
 {
 	const db = await openDB();
 	const tx = db.transaction(STATS, 'readonly');
-	const keys = await reqResult(tx.objectStore(STATS).getAllKeys());
-	const values = await reqResult(tx.objectStore(STATS).getAll());
+	const store = /** @type {*} */ (tx.objectStore(STATS));
+	// getAllRecords() (FF153+) fetches keys+values in one trip; fall back to
+	// the two-request form where unavailable.
+	if (typeof store.getAllRecords === 'function')
+	{
+		const records = await reqResult(store.getAllRecords());
+		const result = {};
+		for (const rec of records)
+			result[rec.key] = rec.value;
+		return result;
+	}
+	const keys = await reqResult(store.getAllKeys());
+	const values = await reqResult(store.getAll());
 	const result = {};
 	keys.forEach((key, i) => result[key] = values[i]);
 	return result;

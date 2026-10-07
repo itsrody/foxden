@@ -5,8 +5,10 @@ import * as csp from '../src/shared/csp.js';
 import * as fonts from '../src/fonts.js';
 import * as perf from '../src/shared/perf.js';
 import * as vendor from '../src/vendor.js';
+import * as cache from '../src/cache.js';
+import * as stats from '../src/stats.js';
 
-Object.assign(window, urlkey, mime, googlefonts, csp, fonts, perf, vendor);
+Object.assign(window, urlkey, mime, googlefonts, csp, fonts, perf, vendor, cache, stats);
 window.urls = {};
 
 mocha.setup('bdd');

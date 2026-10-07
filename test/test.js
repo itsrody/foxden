@@ -668,6 +668,31 @@ describe("urls", function() {
 				expect(hasCdnMarker('<script src="https://example.com/a.js">')).to.equal(false);
 			});
 		});
+		describe("isTabDomainBlacklisted", function() {
+			it("exact match blocks", function() {
+				setTabDomain(901, "evil.com");
+				expect(isTabDomainBlacklisted(901, ["evil.com"])).to.equal(true);
+			});
+			it("unrelated domains pass", function() {
+				setTabDomain(902, "good.com");
+				expect(isTabDomainBlacklisted(902, ["evil.com"])).to.equal(false);
+			});
+			it("matching is case-insensitive", function() {
+				setTabDomain(903, "evil.com");
+				expect(isTabDomainBlacklisted(903, ["EVIL.COM"])).to.equal(true);
+			});
+			it("unknown tabs and empty lists pass", function() {
+				expect(isTabDomainBlacklisted(999991, ["evil.com"])).to.equal(false);
+				setTabDomain(904, "evil.com");
+				expect(isTabDomainBlacklisted(904, [])).to.equal(false);
+			});
+			it("subdomain follows registrableDomain()", function() {
+				setTabDomain(905, "sub.evil.com");
+				const covered = registrableDomain("sub.evil.com") === "evil.com";
+				expect(isTabDomainBlacklisted(905, ["evil.com"])).to.equal(covered);
+				expect(isTabDomainBlacklisted(905, ["sub.evil.com"])).to.equal(true);
+			});
+		});
 	});
 	describe("not null", function() {
 		describe("url keys", function() {
