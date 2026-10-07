@@ -5,6 +5,8 @@ export const cdnDomains = [
 	'ajax.googleapis.com/ajax/libs/',	// 1000k+ / 637
 	'cdnjs.cloudflare.com/ajax/libs/',	// 1000k+ / 670
 	'cdn.jsdelivr.net/',			// 1000k+ / 975
+	'fastly.jsdelivr.net/',		// jsdelivr Fastly mirror, same paths as cdn.jsdelivr.net
+	'esm.sh/',				// modern ESM CDN: /PKG[@SEMVER][/PATH]
 	'code.jquery.com/',			// 1000k+ /1276
 //	'maxcdn.bootstrapcdn.com/',		// 1000k+ /1475
 //	'maps.googleapis.com/',			// 963k
@@ -17,15 +19,15 @@ export const cdnDomains = [
 //	'cdn.shopify.com/',			// 320k
 //	'libs.baidu.com/',			// 280k
 //	'apps.bdimg.com/libs/',			// 239k
-//	'ajax.aspnetcdn.com/ajax/',		// 203k
-//	'cdn.staticfile.org/',			// 179k
+	'ajax.aspnetcdn.com/ajax/',		// 203k — Microsoft Ajax CDN (same shape as ajax.microsoft.com)
+	'ajax.microsoft.com/ajax/',		// 8k — legacy alias of ajax.aspnetcdn.com
+	'cdn.staticfile.org/',			// 179k — staticfile mirror, /<lib>/<ver>/<file>
 	'ajax.cloudflare.com/',			// 150k
 //	'yastatic.net/',			// 104k
 	'cdn.ampproject.org/',			// 73k
 //	'yandex.st/',				// 64k
 //	'code.createjs.com/',			// 9k
 //	'lib.baomitu.com/',			// 9k
-//	'ajax.microsoft.com/ajax/',		// 8k
 //	'lib.sinaapp.com/js/',			// 6k
 //	'cdn.sstatic.net/',			// 2k
 //	'mat1.gtimg.com/libs/',			// 1k

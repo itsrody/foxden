@@ -3,6 +3,11 @@
 export function getVersionNameExt(hostname, pathname)
 {
 	let mtch;
+	if (hostname == "fastly.jsdelivr.net")
+	{
+		// Fastly mirror of jsdelivr: identical paths, shared cache keys
+		hostname = "cdn.jsdelivr.net";
+	}
 	if (hostname == "cdn.jsdelivr.net" && pathname.startsWith("/npm/"))
 	{
 		hostname = "unpkg.com";
@@ -184,6 +189,45 @@ export function getVersionNameExt(hostname, pathname)
 			return { version: "", name: mtch[1], ext: mtch[2] };
 		if (mtch = pathname.match(/^\/([a-z0-9+,\.@\/_-]*)$/i))
 			return { version: "", name: mtch[1], ext: "" };
+	}
+	else if (hostname == "ajax.aspnetcdn.com" || hostname == "ajax.microsoft.com")
+	{
+		// /ajax/4.5.2/1/MicrosoftAjax.js (versioned framework bundle — check before generic)
+		// /ajax/jquery.ui/1.11.3/jquery-ui.min.js
+		// /ajax/jquery.ui/1.11.3/themes/blitzer/jquery-ui.css
+		// /ajax/jQuery/jquery-1.8.0.js (old format, version in filename)
+		if (mtch = pathname.match(/^\/ajax\/([\d][\d\.]*)\/\d+\/(.+?)(?:\.debug)?\.(js)$/i))
+			return { version: mtch[1], name: canonicalizeName(mtch[2]), ext: mtch[3] };
+		if (mtch = pathname.match(/^\/ajax\/([^\/]+)\/([\d][\d\.a-z-]*)\/(.+?)(?:\.min|\.pack)?\.(js|css)$/i))
+			return { version: mtch[2], name: canonicalizeName(mtch[1] + "/" + mtch[3]), ext: mtch[4] };
+		if (mtch = pathname.match(/^\/ajax\/[a-z\.]+\/([a-z\.-]+?)-([\d\.]+)(\.min)?\.(js|css)$/i))
+			return { version: mtch[2], name: canonicalizeName(mtch[1]), ext: mtch[4] };
+	}
+	else if (hostname == "cdn.staticfile.org")
+	{
+		// /jquery/3.7.1/jquery.min.js
+		// /vue/3.3.4/vue.global.min.js
+		if (mtch = pathname.match(/^\/([^\/]+)\/([0-9][0-9a-z\.\-]+)\/(.+?)(?:\.min|-min)?\.(js|css|gif|png|jpg|svg|json|ttf|woff2|woff|eot|ico)$/i))
+			return { version: mtch[2], name: canonicalizeName(mtch[1] + "/" + mtch[3]), ext: mtch[4] };
+	}
+	else if (hostname == "esm.sh")
+	{
+		// /react@19.2.4
+		// /react@19.2.4/dist/react.js
+		// /@scope/pkg@1.2.3/file.js
+		// /@scope/pkg@^1.2.0?dev
+		if (mtch = pathname.match(/^\/@([^\/]+)\/([^\/@]+)@([~\^]?[0-9][0-9a-z\.\-]+)(?:\/(.*))?$/i))
+		{
+			const file = mtch[4] || "index";
+			const extm = file.match(/\.([a-z0-9]+)$/i);
+			return { version: mtch[3], name: canonicalizeName("@" + mtch[1] + "/" + mtch[2] + "/" + file.replace(/\.[a-z0-9]+$/i, "")), ext: extm ? extm[1].toLowerCase() : "js" };
+		}
+		if (mtch = pathname.match(/^\/([^\/@]+)@([~\^]?[0-9][0-9a-z\.\-]+)(?:\/(.*))?$/i))
+		{
+			const file = mtch[3] || "index";
+			const extm = file.match(/\.([a-z0-9]+)$/i);
+			return { version: mtch[2], name: canonicalizeName(mtch[1] + "/" + file.replace(/\.[a-z0-9]+$/i, "")), ext: extm ? extm[1].toLowerCase() : "js" };
+		}
 	}
 	return { version: null, name: null, ext: null};
 }

@@ -419,6 +419,54 @@ describe("urls", function() {
 				});
 			}
 		});
+		describe("aspnetcdn", function() {
+			for (let line of [
+				["/ajax/jquery.ui/1.11.3/jquery-ui.min.js", "1.11.3", "jquery/ui/jquery/ui", "js"],
+				["/ajax/4.5.2/1/MicrosoftAjax.js", "4.5.2", "microsoftajax", "js"],
+			])
+			{
+				it(line[0] + ' ⟹ ' + line[2] + ' ' + line[1] + ' ' + line[3], function() {
+					let { version, name, ext } = getVersionNameExt("ajax.aspnetcdn.com", line[0]);
+					expect(version).to.equal(line[1]);
+					expect(name).to.equal(line[2]);
+					expect(ext).to.equal(line[3]);
+				});
+			}
+		});
+		describe("staticfile", function() {
+			for (let line of [
+				["/jquery/3.7.1/jquery.min.js", "3.7.1", "jquery/jquery", "js"],
+			])
+			{
+				it(line[0] + ' ⟹ ' + line[2] + ' ' + line[1] + ' ' + line[3], function() {
+					let { version, name, ext } = getVersionNameExt("cdn.staticfile.org", line[0]);
+					expect(version).to.equal(line[1]);
+					expect(name).to.equal(line[2]);
+					expect(ext).to.equal(line[3]);
+				});
+			}
+		});
+		describe("esm", function() {
+			for (let line of [
+				["/react@19.2.4", "19.2.4", "react/index", "js"],
+				["/react-dom@19.2.4/client", "19.2.4", "react/dom/client", "js"],
+			])
+			{
+				it(line[0] + ' ⟹ ' + line[2] + ' ' + line[1] + ' ' + line[3], function() {
+					let { version, name, ext } = getVersionNameExt("esm.sh", line[0]);
+					expect(version).to.equal(line[1]);
+					expect(name).to.equal(line[2]);
+					expect(ext).to.equal(line[3]);
+				});
+			}
+		});
+		describe("fastly", function() {
+			it("shares jsdelivr keys", function() {
+				let a = getVersionNameExt("cdn.jsdelivr.net", "/npm/jquery@3.7.1/dist/jquery.min.js");
+				let b = getVersionNameExt("fastly.jsdelivr.net", "/npm/jquery@3.7.1/dist/jquery.min.js");
+				expect(b).to.deep.equal(a);
+			});
+		});
 	});
 	describe("not null", function() {
 		describe("url keys", function() {

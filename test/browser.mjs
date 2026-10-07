@@ -13,6 +13,7 @@ mocha.setup('bdd');
 const fixtures = [
 	'cdn-fontsgstatic', 'cdn-cloudflare', 'cdn-cloudflare-ajax', 'cdn-googleapis',
 	'cdn-googleapis-fonts', 'cdn-jquery', 'cdn-ampproject', 'cdn-jsdelivr', 'cdn-unpkg',
+	'cdn-aspnetcdn', 'cdn-microsoft', 'cdn-staticfile', 'cdn-esm', 'cdn-fastly',
 ];
 for (const name of fixtures)
 	await import(`./${name}.js`);

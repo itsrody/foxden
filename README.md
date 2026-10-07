@@ -44,6 +44,8 @@ The following CDNs are or will be supported:
 1. cdn.ampproject.org
 1. cdn.bootcss.com
 1. cdn.jsdelivr.net
+1. esm.sh
+1. fastly.jsdelivr.net (jsdelivr mirror, shared cache keys)
 1. cdn.sstatic.net
 1. cdn.staticfile.org
 1. cdnjs.cloudflare.com
