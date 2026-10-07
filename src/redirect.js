@@ -5,9 +5,10 @@
 import { logStyle, cdnDomainsRE } from './shared/constants.js';
 import { getUID } from './shared/urlkey.js';
 import { entryToDataUri } from './cache.js';
-import { loadOrFetch, warmCache } from './fetchcache.js';
+import { loadOrFetch, loadOrFetchLocal, warmCache } from './fetchcache.js';
 import { addStats, addTabStats, setEntrySize, isTabDomainBlacklisted } from './stats.js';
 import { handleGoogleFontsCss } from './fontcss.js';
+import { getVendorFile } from './vendor.js';
 import { absolutizeCssUrls } from './htmlfilter.js';
 import { shouldCancelSourcemap, shouldBypassLargeEntry, extractNestedCdnUrls } from './shared/perf.js';
 
@@ -45,6 +46,26 @@ export async function redirectRequestCDN(req, getSettings)
 	const { uid: storKey, version: versi } = getUID(url);
 	addStats(storKey);
 	addTabStats(req.tabId, [storKey]);
+
+	// Bundled top-N libs seed the cache with zero CDN contact. Falls through
+	// to the normal fetch-once path when unbundled or on any local failure.
+	const vendorUrl = getVendorFile(storKey, versi);
+	if (vendorUrl)
+	{
+		try
+		{
+			const entry = await loadOrFetchLocal(storKey, versi, vendorUrl);
+			setEntrySize(storKey, entry.size);
+			console.log(`%cJSLibCache: ${storKey} served from vendor bundle`, logStyle);
+			const isCss = entry.contentType && entry.contentType.startsWith("text/css");
+			const base = new URL(vendorUrl);
+			return { redirectUrl: entryToDataUri(entry, isCss ? data => absolutizeCssUrls(base, data) : null, `vendor|${storKey}|${entry.v}|${entry.size}`) };
+		}
+		catch (err)
+		{
+			console.warn(`%cJSLibCache: vendor bundle failed for ${storKey}: ${err}`, logStyle);
+		}
+	}
 
 	let entry;
 	try

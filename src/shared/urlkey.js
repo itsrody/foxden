@@ -136,6 +136,13 @@ export function getVersionNameExt(hostname, pathname)
 		if (mtch = pathname.match(/^\/(?:@[a-z-]+\/)?([a-z0-9\.-]+?)[@\/]([0-9\.]+(?:-beta\.\d|-beta\d*|-rc\.\d+)?)\/(?:dist\/cdn\/|dist\/components\/|components\/|dist\/)?([a-z0-9\/\._-]+?)(?:\.min|-min)?\.(js|css|gif|png|jpg|svg|json|ttf|woff2|woff|eot|ico|xap|swf)$/i))
 			return { version: mtch[2], name: canonicalizeName(mtch[1] + "/" + mtch[3]), ext: mtch[4] };
 
+		// /gh/<user>/<repo>@<numeric-ref>/<file> → versioned so point-upgrades
+		// work (branch refs like @gh-pages fall through to the unversioned
+		// catch-all below, which revalidates every 24h)
+		// /gh/cutestat/bootstrap2@2/css/bootstrap.min.css
+		// /gh/namamax/jqui-crcstm@1.0.0/js/bootstrap.min.js
+		if (mtch = pathname.match(/^\/gh\/([^\/@]+)\/([^\/@]+)@([~^]?[0-9][0-9a-z\.\-]*)\/(.+?)(?:\.min|-min)?\.(js|css|gif|png|jpg|svg|json)$/i))
+			return { version: mtch[3], name: canonicalizeName("GitHub/" + mtch[1] + "/" + mtch[2] + "/" + mtch[4]), ext: mtch[5] };
 		// /gh/ractoon/jQuery-Text-Counter@0.8.0/textcounter.min.js
 		if (mtch = pathname.match(/^\/gh\/([a-z0-9\.@\/_-]*?)(?:\.min|-min)?\.(js|css|gif|png|jpg|svg|json)$/i))
 			return { version: "", name: "GitHub/" + mtch[1], ext: mtch[2] };
@@ -211,6 +218,21 @@ export function getVersionNameExt(hostname, pathname)
 		// /vue/3.3.4/vue.global.min.js
 		if (mtch = pathname.match(/^\/([^\/]+)\/([0-9][0-9a-z\.\-]+)\/(.+?)(?:\.min|-min)?\.(js|css|gif|png|jpg|svg|json|ttf|woff2|woff|eot|ico)$/i))
 			return { version: mtch[2], name: canonicalizeName(mtch[1] + "/" + mtch[3]), ext: mtch[4] };
+	}
+	else if (hostname == "maxcdn.bootstrapcdn.com" || hostname == "stackpath.bootstrapcdn.com" || hostname == "netdna.bootstrapcdn.com")
+	{
+		// /bootstrap/3.3.7/css/bootstrap.min.css
+		// /font-awesome/4.7.0/css/font-awesome.min.css
+		// /jquery/3.7.1/jquery.min.js
+		if (mtch = pathname.match(/^\/([^\/]+)\/([0-9][0-9a-z\.\-]+)\/(.+?)(?:\.min|-min)?\.(js|css|gif|png|jpg|svg|json|ttf|woff2|woff|eot|ico)$/i))
+			return { version: mtch[2], name: canonicalizeName(mtch[1] + "/" + mtch[3]), ext: mtch[4] };
+	}
+	else if (hostname == "use.fontawesome.com")
+	{
+		// /releases/v5.15.4/css/all.css
+		// /releases/v6.5.2/js/all.min.js
+		if (mtch = pathname.match(/^\/releases\/v([0-9][0-9a-z\.\-]*)\/(.+?)(?:\.min)?\.(js|css)$/i))
+			return { version: mtch[1], name: canonicalizeName("fontawesome/" + mtch[2]), ext: mtch[3] };
 	}
 	else if (hostname == "esm.sh")
 	{

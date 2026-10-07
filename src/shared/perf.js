@@ -23,6 +23,16 @@ export function shouldBypassLargeEntry(size)
 	return typeof size === "number" && size > MAX_DATA_URI_BYTES;
 }
 
+// Unversioned entries (bare /latest / branch pins) have no version to compare,
+// so without revalidation the first-seen bytes would be served forever.
+// Entries older than this are refetched on next hit.
+export const UNVERSIONED_REVALIDATE_MS = 24 * 3600 * 1000;
+
+export function isStaleUnversioned(entry)
+{
+	return !!entry && entry.v === "" && (Date.now() - entry.created) > UNVERSIONED_REVALIDATE_MS;
+}
+
 // Extract the src/href URL from a <script>/<link> tag. Returns null when the
 // tag has no external reference (inline script, preload without href, ...).
 export function extractTagSrc(tag)

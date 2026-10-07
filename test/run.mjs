@@ -10,7 +10,7 @@ const testDir = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.dirname(testDir);
 
 async function loadSources() {
-	const moduleFiles = ['src/shared/urlkey.js', 'src/shared/mime.js', 'src/shared/googlefonts.js', 'src/shared/csp.js', 'src/fonts.js', 'src/shared/perf.js'];
+	const moduleFiles = ['src/shared/urlkey.js', 'src/shared/mime.js', 'src/shared/googlefonts.js', 'src/shared/csp.js', 'src/fonts.js', 'src/shared/perf.js', 'src/vendor.js'];
 	for (const rel of moduleFiles)
 		Object.assign(globalThis, await import(pathToFileURL(path.join(rootDir, rel)).href));
 }

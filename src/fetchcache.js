@@ -6,6 +6,9 @@
 import { logStyle } from './shared/constants.js';
 import { isNewerPointVersion } from './shared/urlkey.js';
 import { cacheGet, cachePut, entryFromResponse } from './cache.js';
+import { isStaleUnversioned } from './shared/perf.js';
+
+export { UNVERSIONED_REVALIDATE_MS } from './shared/perf.js';
 
 const FETCH_TIMEOUT_MS = 6000;
 const inflight = new Map();
@@ -21,7 +24,7 @@ function hotGet(storKey, versi)
 	const entry = hotEntries.get(storKey);
 	if (!entry)
 		return null;
-	if (isNewerPointVersion(versi, entry.v))
+	if (isNewerPointVersion(versi, entry.v) || isStaleUnversioned(entry))
 	{
 		hotEntries.delete(storKey);
 		return null;
@@ -63,6 +66,25 @@ export async function warmCache(storKey, versi, requestUrl)
 	}
 }
 
+// Packaged-file seeding: fetch a moz-extension:// vendor/fallback file into
+// the cache. Zero CDN contact — failures fall through to the normal pipeline.
+export async function loadOrFetchLocal(storKey, versi, fileUrl)
+{
+	let entry = await cacheGet(storKey);
+	if (entry && !isNewerPointVersion(versi, entry.v) && !isStaleUnversioned(entry))
+	{
+		hotSet(storKey, entry);
+		return entry;
+	}
+	const resp = await fetch(fileUrl, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+	if (!resp.ok)
+		throw new Error("HTTP " + resp.status + " for " + fileUrl);
+	const newEntry = await entryFromResponse(resp, fileUrl, versi);
+	await cachePut(storKey, newEntry);
+	hotSet(storKey, newEntry);
+	return newEntry;
+}
+
 export async function loadOrFetch(storKey, versi, requestUrl)
 {
 	const hot = hotGet(storKey, versi);
@@ -72,12 +94,14 @@ export async function loadOrFetch(storKey, versi, requestUrl)
 		return hot;
 	}
 	let entry = await cacheGet(storKey);
-	if (entry && !isNewerPointVersion(versi, entry.v))
+	if (entry && !isNewerPointVersion(versi, entry.v) && !isStaleUnversioned(entry))
 	{
 		console.log(`%cJSLibCache: ${storKey} retrieved from local storage`, logStyle);
 		hotSet(storKey, entry);
 		return entry;
 	}
+	if (entry && isStaleUnversioned(entry))
+		console.log(`%cJSLibCache: revalidating stale unversioned ${storKey}`, logStyle);
 	if (entry)
 		console.log(`%cJSLibCache: upgrading ${storKey} from ${entry.v} to ${versi}`, logStyle);
 

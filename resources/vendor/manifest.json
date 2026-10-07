@@ -1,0 +1,9 @@
+{
+	"libs": {
+		"jquery js 3.7.x": { "file": "jquery/jquery-3.7.1.min.js", "version": "3.7.1" },
+		"lodash js 4.17.x": { "file": "lodash/lodash-4.17.21.min.js", "version": "4.17.21" },
+		"bootstrap js 5.3.x": { "file": "bootstrap/js/bootstrap-5.3.3.min.js", "version": "5.3.3" },
+		"bootstrap css 5.3.x": { "file": "bootstrap/css/bootstrap-5.3.3.min.css", "version": "5.3.3" },
+		"react js 18.3.x": { "file": "react/react-18.3.1.min.js", "version": "18.3.1" }
+	}
+}

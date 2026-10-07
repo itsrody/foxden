@@ -8,12 +8,12 @@ export const cdnDomains = [
 	'fastly.jsdelivr.net/',		// jsdelivr Fastly mirror, same paths as cdn.jsdelivr.net
 	'esm.sh/',				// modern ESM CDN: /PKG[@SEMVER][/PATH]
 	'code.jquery.com/',			// 1000k+ /1276
-//	'maxcdn.bootstrapcdn.com/',		// 1000k+ /1475
-//	'maps.googleapis.com/',			// 963k
+	'maxcdn.bootstrapcdn.com/',		// bootstrapcdn legacy: /<lib>/<ver>/<file>
+	'stackpath.bootstrapcdn.com/',		// bootstrapcdn: /<lib>/<ver>/<file>
+	'netdna.bootstrapcdn.com/',		// bootstrapcdn legacy: /<lib>/<ver>/<file>
+//	'maps.googleapis.com/',			// 963k — dynamic API, never cache
 	'fonts.gstatic.com/',			// 923k — font files referenced by Google Fonts CSS
-//	'stackpath.bootstrapcdn.com/',		// 828k
-//	'netdna.bootstrapcdn.com/',		// 649k
-//	'use.fontawesome.com/releases/v',	// 573k
+	'use.fontawesome.com/releases/v',	// 573k — kit CSS: /releases/v<ver>/<css|js>/<file>
 //	'cdn.bootcss.com/',			// 443k
 	'unpkg.com/',				// 390k	alias for 'cdn.jsdelivr.net/npm/
 //	'cdn.shopify.com/',			// 320k

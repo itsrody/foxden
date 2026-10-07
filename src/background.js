@@ -9,6 +9,7 @@ import {
 	dropStatsKeys, resetStats, getGlobStats, getSessStats, getTabStats, flushSession,
 } from './stats.js';
 import { loadFontsManifest } from './fonts.js';
+import { loadVendorManifest } from './vendor.js';
 import { redirectRequestCDN, shouldCancelSourcemapRequest } from './redirect.js';
 import { onHeadersReceived } from './htmlfilter.js';
 
@@ -50,6 +51,7 @@ const ready = (async () => {
 	}
 	await hydrateStats();
 	await loadFontsManifest();
+	await loadVendorManifest();
 	try
 	{
 		const { count } = await cacheSummary();

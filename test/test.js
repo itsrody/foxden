@@ -337,6 +337,44 @@ describe("perf", function() {
 			expect(b).to.equal(a);
 		});
 	});
+	describe("isStaleUnversioned", function() {
+		it("stale only when versionless and older than 24h", function() {
+			const old = Date.now() - UNVERSIONED_REVALIDATE_MS - 1000;
+			expect(isStaleUnversioned({ v: "", created: old })).to.equal(true);
+			expect(isStaleUnversioned({ v: "", created: Date.now() })).to.equal(false);
+			expect(isStaleUnversioned({ v: "1.2.3", created: old })).to.equal(false);
+			expect(isStaleUnversioned(null)).to.equal(false);
+		});
+	});
+	describe("gh ref versions", function() {
+		it("numeric @ref becomes the version", function() {
+			let r = getVersionNameExt("cdn.jsdelivr.net", "/gh/cutestat/bootstrap2@2/css/bootstrap.min.css");
+			expect(r.version).to.equal("2");
+			let s = getVersionNameExt("cdn.jsdelivr.net", "/gh/namamax/jqui-crcstm@1.0.0/js/bootstrap.min.js");
+			expect(s.version).to.equal("1.0.0");
+			expect(s.name).to.not.equal(r.name);
+		});
+		it("branch refs stay unversioned", function() {
+			let r = getVersionNameExt("cdn.jsdelivr.net", "/gh/Wruczek/Bootstrap-Cookie-Alert@gh-pages/cookiealert.js");
+			expect(r.version).to.equal("");
+		});
+	});
+	describe("vendorFileForKey", function() {
+		const libs = {
+			"jquery js 3.7.x": { file: "jquery/jquery-3.7.1.min.js", version: "3.7.1" },
+		};
+		it("exact and older patches hit the bundle", function() {
+			expect(vendorFileForKey("jquery js 3.7.x", "3.7.1", libs)).to.equal("jquery/jquery-3.7.1.min.js");
+			expect(vendorFileForKey("jquery js 3.7.x", "3.7.0", libs)).to.equal("jquery/jquery-3.7.1.min.js");
+		});
+		it("newer patches never downgrade", function() {
+			expect(vendorFileForKey("jquery js 3.7.x", "3.7.2", libs)).to.equal(null);
+		});
+		it("unknown keys miss", function() {
+			expect(vendorFileForKey("vue js 3.4.x", "3.4.0", libs)).to.equal(null);
+			expect(vendorFileForKey("jquery js 3.7.x", "3.7.1", {})).to.equal(null);
+		});
+	});
 });
 describe("urls", function() {
 	describe("version, name, ext", function() {
@@ -484,6 +522,43 @@ describe("urls", function() {
 				let b = getVersionNameExt("fastly.jsdelivr.net", "/npm/jquery@3.7.1/dist/jquery.min.js");
 				expect(b).to.deep.equal(a);
 			});
+		});
+		describe("bootstrapcdn", function() {
+			for (let line of [
+				["/bootstrap/3.3.7/css/bootstrap.min.css", "3.3.7", "bootstrap/css/bootstrap", "css"],
+				["/font-awesome/4.7.0/css/font-awesome.min.css", "4.7.0", "font/awesome/css/font/awesome", "css"],
+			])
+			{
+				it(line[0] + ' ⟹ ' + line[2] + ' ' + line[1] + ' ' + line[3], function() {
+					for (const host of ["maxcdn.bootstrapcdn.com", "stackpath.bootstrapcdn.com", "netdna.bootstrapcdn.com"])
+					{
+						let { version, name, ext } = getVersionNameExt(host, line[0]);
+						expect(version).to.equal(line[1]);
+						expect(name).to.equal(line[2]);
+						expect(ext).to.equal(line[3]);
+					}
+				});
+			}
+			it("all three mirrors share keys", function() {
+				const p = "/bootstrap/4.5.2/css/bootstrap.min.css";
+				const a = getUID(new URL("https://maxcdn.bootstrapcdn.com" + p));
+				const b = getUID(new URL("https://stackpath.bootstrapcdn.com" + p));
+				expect(b.uid).to.equal(a.uid);
+			});
+		});
+		describe("fontawesome", function() {
+			for (let line of [
+				["/releases/v5.15.4/css/all.css", "5.15.4", "fontawesome/css/all", "css"],
+				["/releases/v6.5.2/js/all.min.js", "6.5.2", "fontawesome/js/all", "js"],
+			])
+			{
+				it(line[0] + ' ⟹ ' + line[2] + ' ' + line[1] + ' ' + line[3], function() {
+					let { version, name, ext } = getVersionNameExt("use.fontawesome.com", line[0]);
+					expect(version).to.equal(line[1]);
+					expect(name).to.equal(line[2]);
+					expect(ext).to.equal(line[3]);
+				});
+			}
 		});
 		describe("query variants", function() {
 			it("esm.sh ?dev is a different UID than plain", function() {
