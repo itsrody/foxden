@@ -11,7 +11,7 @@ import { loadOrFetch } from './fetchcache.js';
 import { addStats, addTabStats } from './stats.js';
 import { replaceFontsGstaticURLs, collectGstaticFontUrls, GSTATIC_FONT_URL_RE } from './fonts.js';
 
-const FETCH_TIMEOUT_MS = 15000;
+const FETCH_TIMEOUT_MS = 8000;
 const inflight = new Map();
 
 function familyCacheKey(family)
@@ -132,9 +132,11 @@ async function embedGstaticFonts(css, tabId)
 
 export async function handleGoogleFontsCss(url, req, settings)
 {
-	const families = getFamiliesFromGoogleFontCSSURL(url);
+	const families = [...new Set(getFamiliesFromGoogleFontCSSURL(url))];
 	const familyParams = getFamilyParamsFromGoogleFontCSSURL(url);
 	const display = new URLSearchParams(url.search).get('display');
+	if (!families.length)
+		return;
 	const storKeys = families.map(familyCacheKey);
 	storKeys.forEach(storKey => addStats(storKey));
 	addTabStats(req.tabId, storKeys);

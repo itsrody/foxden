@@ -7,8 +7,23 @@ import { logStyle } from './shared/constants.js';
 import { isNewerPointVersion } from './shared/urlkey.js';
 import { cacheGet, cachePut, entryFromResponse } from './cache.js';
 
-const FETCH_TIMEOUT_MS = 20000;
+const FETCH_TIMEOUT_MS = 6000;
 const inflight = new Map();
+
+// Fire-and-forget warming: prefetch a URL into cache without blocking the
+// current redirect. Failures are swallowed — the follow-on request falls
+// through to network as before.
+export async function warmCache(storKey, versi, requestUrl)
+{
+	try
+	{
+		await loadOrFetch(storKey, versi, requestUrl);
+	}
+	catch
+	{
+		// warming must never break the page
+	}
+}
 
 export async function loadOrFetch(storKey, versi, requestUrl)
 {

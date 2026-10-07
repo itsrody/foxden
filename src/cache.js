@@ -1,7 +1,7 @@
 "use strict";
 // IndexedDB-backed resource cache + stats store.
 // entries: storKey -> { created, url, v, contentType, kind: "text"|"bytes", data, size }
-// stats:   storKey -> { created, hits, last }
+// stats:   storKey -> { created, hits, last, size? }
 
 import { logStyle } from './shared/constants.js';
 import { isMimeTextual, bytesToBase64, base64ToBytes } from './shared/mime.js';
@@ -218,13 +218,41 @@ export async function entryFromResponse(resp, url, versi)
 }
 
 // data: URL for a cache entry; CSS gets relative url()s absolutized.
-export function entryToDataUri(entry, cssAbsolutizer)
+// Non-CSS encodings are memoized by content key: the same IndexedDB entry is
+// served on every hit and re-encoding base64/encodeURIComponent each time is
+// pure main-thread overhead. CSS with an absolutizer is NOT memoized because
+// the output depends on the requesting page's base URL.
+const dataUriMemo = new Map();
+const DATA_URI_MEMO_MAX = 200;
+export function entryToDataUri(entry, cssAbsolutizer, memoKey)
 {
+	if (!cssAbsolutizer && memoKey)
+	{
+		const hit = dataUriMemo.get(memoKey);
+		if (hit)
+			return hit;
+	}
 	let data = entry.data;
+	let out;
 	if (entry.kind === 'bytes')
-		return 'data:' + entry.contentType + ';base64,' + bytesToBase64(new Uint8Array(data));
-	if (entry.contentType && entry.contentType.startsWith('text/css') && cssAbsolutizer)
-		data = cssAbsolutizer(data);
-	const mime = (entry.contentType || 'text/plain').replace(/;.*$/, '');
-	return 'data:' + mime + ';charset=utf-8,' + encodeURIComponent('/*JSLC*/' + data);
+		out = 'data:' + entry.contentType + ';base64,' + bytesToBase64(new Uint8Array(data));
+	else
+	{
+		if (entry.contentType && entry.contentType.startsWith('text/css') && cssAbsolutizer)
+			data = cssAbsolutizer(data);
+		const mime = (entry.contentType || 'text/plain').replace(/;.*$/, '');
+		out = 'data:' + mime + ';charset=utf-8,' + encodeURIComponent('/*JSLC*/' + data);
+	}
+	if (!cssAbsolutizer && memoKey)
+	{
+		if (dataUriMemo.size >= DATA_URI_MEMO_MAX)
+			dataUriMemo.clear();
+		dataUriMemo.set(memoKey, out);
+	}
+	return out;
+}
+
+export function clearDataUriMemo()
+{
+	dataUriMemo.clear();
 }

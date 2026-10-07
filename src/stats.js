@@ -84,13 +84,15 @@ export async function flushStats()
 	}
 }
 
-export function addStats(storKey, created)
+export function addStats(storKey, created, size)
 {
 	const now = Date.now();
 	if (!(storKey in globStats))
 		globStats[storKey] = { created: created || now - 1, hits: 0 };
 	globStats[storKey].hits = globStats[storKey].hits + 1;
 	globStats[storKey].last = created || now;
+	if (typeof size === "number" && size > 0)
+		globStats[storKey].size = size;
 	if (!created)
 		sessStats[storKey] = (sessStats[storKey] || 0) + 1;
 	dirtyStats.add(storKey);
@@ -108,6 +110,15 @@ export function addTabStats(tabId, storKeys)
 	//FIXME: the keys are for the entire tab session
 	browser.browserAction.setBadgeText({ text: "" + Object.keys(tabStats[tabId]).length, tabId: tabId });
 	scheduleSessionFlush();
+}
+
+// Record served byte size without bumping hits (called after cache load).
+export function setEntrySize(storKey, size)
+{
+	if (!(storKey in globStats) || typeof size !== "number" || size <= 0)
+		return;
+	globStats[storKey].size = size;
+	dirtyStats.add(storKey);
 }
 
 export function onTabBeforeNavigate(details)

@@ -283,6 +283,43 @@ describe("collectGstaticFontUrls", function() {
 		expect(collectGstaticFontUrls("url(https://example.com/c.woff2)")).to.deep.equal([]);
 	});
 });
+describe("perf", function() {
+	describe("shouldCancelSourcemap", function() {
+		it("cancels .map paths", function() {
+			expect(shouldCancelSourcemap("https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.map")).to.equal(true);
+			expect(shouldCancelSourcemap("https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js.map?ver=1")).to.equal(true);
+		});
+		it("keeps real assets", function() {
+			expect(shouldCancelSourcemap("https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js")).to.equal(false);
+			expect(shouldCancelSourcemap("https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css")).to.equal(false);
+		});
+	});
+	describe("shouldBypassLargeEntry", function() {
+		it("bypasses >2MB data: URIs", function() {
+			expect(shouldBypassLargeEntry(2_000_001)).to.equal(true);
+			expect(shouldBypassLargeEntry(2_000_000)).to.equal(false);
+			expect(shouldBypassLargeEntry(500_000)).to.equal(false);
+		});
+	});
+	describe("extractNestedCdnUrls", function() {
+		it("finds @import and url() absolute URLs, dedupes, skips data:", function() {
+			const css = "@import url(https://cdn.jsdelivr.net/npm/a@1.0.0/a.css); " +
+				"@import 'https://cdnjs.cloudflare.com/ajax/libs/b/2.0/b.css'; " +
+				".x{background:url(../fonts/c.woff2)} " +
+				".y{background:url(data:font/woff2;base64,AAA)} " +
+				".x{background:url(../fonts/c.woff2)}";
+			expect(extractNestedCdnUrls(css, "https://cdn.jsdelivr.net/npm/a@1.0.0/dir/a.css")).to.deep.equal([
+				"https://cdn.jsdelivr.net/npm/a@1.0.0/a.css",
+				"https://cdnjs.cloudflare.com/ajax/libs/b/2.0/b.css",
+				"https://cdn.jsdelivr.net/npm/a@1.0.0/fonts/c.woff2",
+			]);
+		});
+		it("empty on bad input", function() {
+			expect(extractNestedCdnUrls("", "https://example.com/a.css")).to.deep.equal([]);
+			expect(extractNestedCdnUrls("url(https://example.com/a.woff2)", "not a url")).to.deep.equal([]);
+		});
+	});
+});
 describe("urls", function() {
 	describe("version, name, ext", function() {
 		describe("fontsgstatic", function() {

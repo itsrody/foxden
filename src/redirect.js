@@ -2,13 +2,14 @@
 // Blocking webRequest handler: look the CDN resource up in IndexedDB,
 // fetch it once on miss, and serve it back as a data: URL.
 
-import { logStyle } from './shared/constants.js';
+import { logStyle, cdnDomainsRE } from './shared/constants.js';
 import { getUID } from './shared/urlkey.js';
 import { entryToDataUri } from './cache.js';
-import { loadOrFetch } from './fetchcache.js';
-import { addStats, addTabStats, isTabDomainBlacklisted } from './stats.js';
+import { loadOrFetch, warmCache } from './fetchcache.js';
+import { addStats, addTabStats, setEntrySize, isTabDomainBlacklisted } from './stats.js';
 import { handleGoogleFontsCss } from './fontcss.js';
 import { absolutizeCssUrls } from './htmlfilter.js';
+import { shouldCancelSourcemap, shouldBypassLargeEntry, extractNestedCdnUrls } from './shared/perf.js';
 
 function replaceFontsOtherURLs(url, css)
 {
@@ -16,8 +17,21 @@ function replaceFontsOtherURLs(url, css)
 	return absolutizeCssUrls(url, css);
 }
 
+// Shared by the main CDN listener (script/stylesheet) and the sourcemap
+// blocker below (xmlhttprequest/other): .map files are never rendered.
+export function shouldCancelSourcemapRequest(req)
+{
+	return shouldCancelSourcemap(req.url);
+}
+
 export async function redirectRequestCDN(req, getSettings)
 {
+	// 1) Drop sourcemap/debug requests under CDNs: pure overhead, never rendered.
+	if (shouldCancelSourcemap(req.url))
+	{
+		console.log(`%cJSLibCache: blocking sourcemap ${req.url}`, logStyle);
+		return { cancel: true };
+	}
 	const settings = getSettings();
 	const url = new URL(req.url);
 	if (isTabDomainBlacklisted(req.tabId, settings.domainBlacklist))
@@ -44,6 +58,51 @@ export async function redirectRequestCDN(req, getSettings)
 	}
 	if (!entry)
 		return;
+	setEntrySize(storKey, entry.size);
 
-	return { redirectUrl: entryToDataUri(entry, entry.contentType && entry.contentType.startsWith("text/css") ? data => replaceFontsOtherURLs(url, data) : null) };
+	// 2) Skip giant data: URIs (>2MB): fall through to network + browser cache
+	// instead of paying base64/encodeURIComponent expansion + CSP churn.
+	if (shouldBypassLargeEntry(entry.size))
+	{
+		console.log(`%cJSLibCache: bypassing large entry ${storKey} (${entry.size}B)`, logStyle);
+		return;
+	}
+
+	const isCss = entry.contentType && entry.contentType.startsWith("text/css");
+	const memoKey = isCss ? null : `${storKey}|${entry.v}|${entry.size}`;
+	const redirectUrl = entryToDataUri(entry, isCss ? data => replaceFontsOtherURLs(url, data) : null, memoKey);
+
+	// 3) Warm nested CDN deps in background so follow-on requests hit cache.
+	if (isCss && typeof entry.data === "string")
+		warmNestedCss(entry.data, req.url);
+
+	return { redirectUrl };
+}
+
+function warmNestedCss(cssText, baseUrl)
+{
+	let nested;
+	try
+	{
+		nested = extractNestedCdnUrls(cssText, baseUrl);
+	}
+	catch
+	{
+		return;
+	}
+	for (const abs of nested)
+	{
+		if (!cdnDomainsRE.test(abs))
+			continue;
+		let uid, version;
+		try
+		{
+			({ uid, version } = getUID(new URL(abs)));
+		}
+		catch
+		{
+			continue;
+		}
+		void warmCache(uid, version, abs);
+	}
 }

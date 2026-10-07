@@ -61,6 +61,8 @@ export default [
 				getFamiliesFromGoogleFontCSSURL: 'readonly', versionsMatch: 'readonly',
 				allowDataUriInCsp: 'readonly', rewriteGstaticCss: 'readonly',
 				collectGstaticFontUrls: 'readonly',
+				shouldCancelSourcemap: 'readonly', shouldBypassLargeEntry: 'readonly',
+				extractNestedCdnUrls: 'readonly',
 			},
 		},
 		rules: {

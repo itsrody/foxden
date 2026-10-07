@@ -9,7 +9,7 @@ import {
 	dropStatsKeys, resetStats, getGlobStats, getSessStats, getTabStats, flushSession,
 } from './stats.js';
 import { loadFontsManifest } from './fonts.js';
-import { redirectRequestCDN } from './redirect.js';
+import { redirectRequestCDN, shouldCancelSourcemapRequest } from './redirect.js';
 import { onHeadersReceived } from './htmlfilter.js';
 
 let settings = getDefaultSettings();
@@ -122,6 +122,13 @@ initStatsAlarms();
 browser.browserAction.setBadgeBackgroundColor({ color: "green" });
 
 browser.webRequest.onBeforeRequest.addListener(blockRequest, { 'types': ['csp_report'], 'urls': cdnDomains.map(host => '*://' + host + '*') }, ['blocking']);
+browser.webRequest.onBeforeRequest.addListener((req) => {
+	if (shouldCancelSourcemapRequest(req))
+	{
+		console.log(`%cJSLibCache: blocking sourcemap ${req.url}`, logStyle);
+		return { cancel: true };
+	}
+}, { 'types': ['xmlhttprequest', 'other'], 'urls': cdnDomains.map(host => '*://' + host + '*') }, ['blocking']);
 browser.webRequest.onBeforeRequest.addListener(async (req) => {
 	await ready;
 	return redirectRequestCDN(req, getSettings);

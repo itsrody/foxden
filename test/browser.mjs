@@ -3,8 +3,9 @@ import * as mime from '../src/shared/mime.js';
 import * as googlefonts from '../src/shared/googlefonts.js';
 import * as csp from '../src/shared/csp.js';
 import * as fonts from '../src/fonts.js';
+import * as perf from '../src/shared/perf.js';
 
-Object.assign(window, urlkey, mime, googlefonts, csp, fonts);
+Object.assign(window, urlkey, mime, googlefonts, csp, fonts, perf);
 window.urls = {};
 
 mocha.setup('bdd');
