@@ -628,12 +628,36 @@ describe("urls", function() {
 				expect(preferMinSibling("not a url")).to.equal(null);
 			});
 		});
-		describe("stripSourceMapComment", function() {
+	describe("stripSourceMapComment", function() {
 			it("removes line and block form, keeps code", function() {
 				const src = "var a=1;\n//# sourceMappingURL=a.min.js.map\nvar b=2;";
 				expect(stripSourceMapComment(src)).to.equal("var a=1;\n\nvar b=2;");
 				expect(stripSourceMapComment("var a=1;/*# sourceMappingURL=a.map */"))
 					.to.equal("var a=1;");
+			});
+		});
+		describe("stripResourceHints", function() {
+			it("drops CDN preconnect/dns-prefetch/preload", function() {
+				expect(stripResourceHints('<link rel="preconnect" href="https://cdnjs.cloudflare.com">'))
+					.to.equal("<!--JSLC hint-->");
+				expect(stripResourceHints('<link rel=dns-prefetch href=https://cdn.jsdelivr.net>'))
+					.to.equal("<!--JSLC hint-->");
+				expect(stripResourceHints('<link rel="preload" as="font" href="https://fonts.gstatic.com/s/x.woff2">'))
+					.to.equal("<!--JSLC hint-->");
+			});
+			it("keeps stylesheets, icons and first-party hints", function() {
+				const css = '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/x/1.0/x.css">';
+				expect(stripResourceHints(css)).to.equal(css);
+				const icon = '<link rel="icon" href="https://cdnjs.cloudflare.com/favicon.ico">';
+				expect(stripResourceHints(icon)).to.equal(icon);
+				const first = '<link rel="preconnect" href="https://example.com">';
+				expect(stripResourceHints(first)).to.equal(first);
+				const script = '<script src="https://cdnjs.cloudflare.com/ajax/libs/y/1.0/y.js"></script>';
+				expect(stripResourceHints(script)).to.equal(script);
+			});
+			it("never matches lookalike hosts", function() {
+				const evil = '<link rel="preconnect" href="https://cdnjs.cloudflare.com.evil.com">';
+				expect(stripResourceHints(evil)).to.equal(evil);
 			});
 		});
 	});

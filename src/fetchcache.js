@@ -60,6 +60,13 @@ export function clearHotEntries()
 	hotEntries.clear();
 }
 
+// Seed the hot cache (used by vendor preload at startup): top-library hits
+// become pure memory lookups — no IndexedDB, no fetch, no encode on repeat.
+export function primeHotCache(storKey, entry)
+{
+	hotSet(storKey, entry);
+}
+
 // Fire-and-forget warming: prefetch a URL into cache without blocking the
 // current redirect. Failures are swallowed — the follow-on request falls
 // through to network as before.
@@ -79,6 +86,9 @@ export async function warmCache(storKey, versi, requestUrl)
 // the cache. Zero CDN contact — failures fall through to the normal pipeline.
 export async function loadOrFetchLocal(storKey, versi, fileUrl)
 {
+	const hot = hotGet(storKey, versi);
+	if (hot)
+		return hot;
 	let entry = await cacheGet(storKey);
 	if (entry && !isNewerPointVersion(versi, entry.v) && !isStaleUnversioned(entry))
 	{

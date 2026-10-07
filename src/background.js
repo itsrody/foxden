@@ -9,7 +9,7 @@ import {
 	dropStatsKeys, resetStats, getGlobStats, getSessStats, getTabStats, flushSession,
 } from './stats.js';
 import { loadFontsManifest } from './fonts.js';
-import { loadVendorManifest } from './vendor.js';
+import { loadVendorManifest, preloadVendor } from './vendor.js';
 import { redirectRequestCDN, shouldCancelSourcemapRequest } from './redirect.js';
 import { onHeadersReceived } from './htmlfilter.js';
 
@@ -52,6 +52,7 @@ const ready = (async () => {
 	await hydrateStats();
 	await loadFontsManifest();
 	await loadVendorManifest();
+	void preloadVendor(); // best-effort, must not delay request handling
 	try
 	{
 		const { count } = await cacheSummary();

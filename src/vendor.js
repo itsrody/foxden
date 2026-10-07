@@ -7,6 +7,8 @@
 
 import { logStyle } from './shared/constants.js';
 import { isNewerPointVersion } from './shared/urlkey.js';
+import { entryFromResponse } from './cache.js';
+import { primeHotCache } from './fetchcache.js';
 
 // storKey -> { file, version }
 let vendorLibs = new Map();
@@ -45,4 +47,29 @@ export function getVendorFile(storKey, requestVersion)
 {
 	const file = vendorFileForKey(storKey, requestVersion, vendorLibs);
 	return file ? browser.runtime.getURL("resources/vendor/" + file) : null;
+}
+
+// Best-effort startup preload: read packaged files into the hot cache so
+// top-library hits skip IndexedDB and fetch entirely. Never blocks startup;
+// individual failures just fall back to the normal vendor path per request.
+export async function preloadVendor()
+{
+	let n = 0;
+	await Promise.all([...vendorLibs].map(async ([storKey, { file, version }]) =>
+	{
+		try
+		{
+			const url = browser.runtime.getURL("resources/vendor/" + file);
+			const resp = await fetch(url);
+			if (!resp.ok)
+				return;
+			primeHotCache(storKey, await entryFromResponse(resp, url, version));
+			n++;
+		}
+		catch
+		{
+			// best-effort: per-request path covers misses
+		}
+	}));
+	console.log(`%cJSLibCache: preloaded ${n} vendor libraries into hot cache`, logStyle);
 }

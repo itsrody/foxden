@@ -7,7 +7,7 @@ import { logStyle, cdnDomainsRE } from './shared/constants.js';
 import { allowDataUriInCsp } from './shared/csp.js';
 import { isTabDomainBlacklisted } from './stats.js';
 import { getUID } from './shared/urlkey.js';
-import { extractTagSrc } from './shared/perf.js';
+import { extractTagSrc, stripResourceHints } from './shared/perf.js';
 
 const MAX_PENDING_TAG = 4096;
 const asciiDecoder = new TextDecoder('ASCII');//windows-1252 / iso-8859-1
@@ -41,7 +41,7 @@ function makeTransformer(req)
 	// for the same library would each trigger a blocking redirect + data:
 	// encode, so the second+ copies are dropped entirely.
 	const seenUids = new Set();
-	return str => str
+	return str => stripResourceHints(str)
 		.replace(/<(link|script)[^>]+>/ig, m => {
 			if (!cdnDomainsRE.test(m))
 				return m;

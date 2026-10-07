@@ -65,7 +65,7 @@ export default [
 				extractNestedCdnUrls: 'readonly', extractTagSrc: 'readonly',
 				isStaleUnversioned: 'readonly', UNVERSIONED_REVALIDATE_MS: 'readonly',
 				vendorFileForKey: 'readonly', preferMinSibling: 'readonly',
-				stripSourceMapComment: 'readonly',
+				stripSourceMapComment: 'readonly', stripResourceHints: 'readonly',
 			},
 		},
 		rules: {

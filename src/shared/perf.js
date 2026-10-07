@@ -1,6 +1,13 @@
 "use strict";
 // Pure helpers for dynamic local-CDN savings (request count / data / latency).
-// Kept dependency-free so they run in both the background page and node tests.
+// Kept browser-free so they run in both the background page and node tests.
+
+import { cdnDomains } from './constants.js';
+
+// Host-level matcher: resource hints point at bare origins
+// (https://cdnjs.cloudflare.com), while interception is path-scoped
+// (cdnjs.cloudflare.com/ajax/libs/). Hints need the looser match.
+const cdnHostsRE = new RegExp('//(' + [...new Set(cdnDomains.map(m => m.split('/')[0]))].map(h => h.replace(/\W/g, '\\$&')).join('|') + ')(?=[/"\'\\s>])');
 
 export const MAX_DATA_URI_BYTES = 2_000_000;
 export const LARGE_ENTRY_WARN_BYTES = 500_000;
@@ -56,6 +63,28 @@ export function preferMinSibling(urlString)
 	u.pathname = u.pathname.replace(/\.(js|css)$/i, ".min.$1");
 	u.hash = "";
 	return u.href;
+}
+
+// Drop <link> resource hints (preconnect/dns-prefetch/preload/…) pointing at
+// intercepted CDNs: the resources are served locally, so the DNS+TCP+TLS
+// setups and speculative fetches are pure waste — preloaded gstatic fonts
+// would even double-fetch next to our CSS-embedded copies. Stylesheet/icon
+// links and first-party hints are never touched.
+export function stripResourceHints(html)
+{
+	return html.replace(/<link[^>]+>/gi, m => {
+		if (!cdnHostsRE.test(m))
+			return m;
+		const rel = m.match(/\brel\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/i);
+		if (!rel)
+			return m;
+		const rv = rel[1].toLowerCase();
+		if (/stylesheet|icon/.test(rv))
+			return m;
+		if (!/(preconnect|dns-prefetch|preload|prefetch|modulepreload)/.test(rv))
+			return m;
+		return "<!--JSLC hint-->";
+	});
 }
 
 // Extract the src/href URL from a <script>/<link> tag. Returns null when the
