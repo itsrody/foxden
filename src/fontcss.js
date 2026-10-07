@@ -118,7 +118,7 @@ async function embedGstaticFonts(css, tabId)
 			const { uid: storKey, version: versi } = getUID(new URL(fontUrl));
 			const entry = await loadOrFetch(storKey, versi, fontUrl);
 			if (entry)
-				embedded.set(fontUrl, entryToDataUri(entry, null));
+				embedded.set(fontUrl, entryToDataUri(entry, null, `${storKey}|${entry.v}|${entry.size}`));
 		}
 		catch (err)
 		{

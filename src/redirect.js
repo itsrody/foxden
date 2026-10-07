@@ -11,6 +11,7 @@ import { handleGoogleFontsCss } from './fontcss.js';
 import { getVendorFile } from './vendor.js';
 import { absolutizeCssUrls } from './htmlfilter.js';
 import { shouldCancelSourcemap, shouldBypassLargeEntry, extractNestedCdnUrls } from './shared/perf.js';
+import { timeStage } from './shared/timing.js';
 
 function replaceFontsOtherURLs(url, css)
 {
@@ -27,6 +28,7 @@ export function shouldCancelSourcemapRequest(req)
 
 export async function redirectRequestCDN(req, getSettings)
 {
+	const t0 = performance.now();
 	// 1) Drop sourcemap/debug requests under CDNs: pure overhead, never rendered.
 	if (shouldCancelSourcemap(req.url))
 	{
@@ -44,6 +46,7 @@ export async function redirectRequestCDN(req, getSettings)
 		return handleGoogleFontsCss(url, req, settings);
 
 	const { uid: storKey, version: versi } = getUID(url);
+	timeStage('lookup', t0);
 	addStats(storKey);
 	// Badge IPC stays off the blocking path: microtasks run before any later
 	// event (including navigations that reset tab stats), so no count is lost.
@@ -72,6 +75,7 @@ export async function redirectRequestCDN(req, getSettings)
 	}
 
 	let entry;
+	const t1 = performance.now();
 	try
 	{
 		entry = await loadOrFetch(storKey, versi, req.url);
@@ -81,6 +85,7 @@ export async function redirectRequestCDN(req, getSettings)
 		console.warn(`%cJSLibCache: fetch error for ${req.url}: ${err}`, logStyle);
 		return;
 	}
+	timeStage('cache', t1);
 	if (!entry)
 		return;
 	setEntrySize(storKey, entry.size);
@@ -94,8 +99,12 @@ export async function redirectRequestCDN(req, getSettings)
 	}
 
 	const isCss = entry.contentType && entry.contentType.startsWith("text/css");
-	const memoKey = isCss ? null : `${storKey}|${entry.v}|${entry.size}`;
+	const memoKey = isCss
+		? `css|${storKey}|${entry.v}|${entry.size}|${url.href}`
+		: `${storKey}|${entry.v}|${entry.size}`;
+	const t2 = performance.now();
 	const redirectUrl = entryToDataUri(entry, isCss ? data => replaceFontsOtherURLs(url, data) : null, memoKey);
+	timeStage('encode', t2);
 
 	// 3) Warm nested CDN deps in background so follow-on requests hit cache.
 	if (isCss && typeof entry.data === "string")

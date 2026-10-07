@@ -145,6 +145,8 @@ function getStats()
 			{
 				document.querySelector('#ublockrules').textContent = result.cdnDomains.map(host => `* ${host} * noop`).join("\n");
 			}
+			if (result.timing)
+				console.log("JSLibCache.popup: redirect stage timing (count/avg/max ms)", result.timing);
 		}
 	});
 }

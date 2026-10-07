@@ -68,6 +68,8 @@ export default [
 				stripSourceMapComment: 'readonly', stripResourceHints: 'readonly',
 				hasCdnMarker: 'readonly', isTabDomainBlacklisted: 'readonly',
 				setTabDomain: 'readonly', registrableDomain: 'readonly',
+				timeStage: 'readonly', getTimingStats: 'readonly', resetTiming: 'readonly',
+				entryToDataUri: 'readonly', clearDataUriMemo: 'readonly',
 			},
 		},
 		rules: {

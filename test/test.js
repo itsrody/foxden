@@ -693,6 +693,34 @@ describe("urls", function() {
 				expect(isTabDomainBlacklisted(905, ["sub.evil.com"])).to.equal(true);
 			});
 		});
+		describe("timing", function() {
+			it("aggregates count/avg/max and resets", function() {
+				resetTiming();
+				const t = performance.now();
+				timeStage("lookup", t);
+				timeStage("lookup", t);
+				const s = getTimingStats();
+				expect(s.lookup.count).to.equal(2);
+				expect(s.lookup.avgMs).to.be.at.least(0);
+				expect(s.lookup.maxMs).to.be.at.least(s.lookup.avgMs);
+				resetTiming();
+				expect(getTimingStats()).to.deep.equal({});
+			});
+		});
+		describe("css memo", function() {
+			it("same base reuses encoding, other base re-resolves", function() {
+				clearDataUriMemo();
+				const entry = { kind: "text", contentType: "text/css", data: ".a{background:url(f.woff2)}", size: 27 };
+				const abs = base => d => d.replace("f.woff2", base + "f.woff2");
+				const k1 = "css|k|v|27|https://a.test/x.css";
+				const k2 = "css|k|v|27|https://b.test/x.css";
+				const first = entryToDataUri(entry, abs("https://a.test/"), k1);
+				expect(entryToDataUri(entry, abs("https://a.test/"), k1)).to.equal(first);
+				const other = entryToDataUri(entry, abs("https://b.test/"), k2);
+				expect(other).to.not.equal(first);
+				expect(decodeURIComponent(other)).to.contain("https://b.test/f.woff2");
+			});
+		});
 	});
 	describe("not null", function() {
 		describe("url keys", function() {

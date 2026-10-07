@@ -10,6 +10,7 @@ import {
 } from './stats.js';
 import { loadFontsManifest } from './fonts.js';
 import { loadVendorManifest, preloadVendor } from './vendor.js';
+import { getTimingStats } from './shared/timing.js';
 import { redirectRequestCDN, shouldCancelSourcemapRequest } from './redirect.js';
 import { onHeadersReceived } from './htmlfilter.js';
 
@@ -79,6 +80,7 @@ browser.runtime.onMessage.addListener(async (request) => {
 			"globStats": getGlobStats(),
 			"sessStats": getSessStats(),
 			"tabStats": getTabStats(tabId),
+			"timing": getTimingStats(),
 			"cdnDomains": cdnDomains.map(href => href.replace(/\/.*/, "")),
 		};
 	}

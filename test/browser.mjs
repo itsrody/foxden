@@ -7,8 +7,9 @@ import * as perf from '../src/shared/perf.js';
 import * as vendor from '../src/vendor.js';
 import * as cache from '../src/cache.js';
 import * as stats from '../src/stats.js';
+import * as timing from '../src/shared/timing.js';
 
-Object.assign(window, urlkey, mime, googlefonts, csp, fonts, perf, vendor, cache, stats);
+Object.assign(window, urlkey, mime, googlefonts, csp, fonts, perf, vendor, cache, stats, timing);
 window.urls = {};
 
 mocha.setup('bdd');

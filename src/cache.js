@@ -238,15 +238,15 @@ export async function entryFromResponse(resp, url, versi)
 }
 
 // data: URL for a cache entry; CSS gets relative url()s absolutized.
-// Non-CSS encodings are memoized by content key: the same IndexedDB entry is
-// served on every hit and re-encoding base64/encodeURIComponent each time is
-// pure main-thread overhead. CSS with an absolutizer is NOT memoized because
-// the output depends on the requesting page's base URL.
+// Encodings are memoized by caller-supplied content key: the same IndexedDB
+// entry is served on every hit and re-encoding base64/encodeURIComponent each
+// time is pure main-thread overhead. CSS callers fold the absolutizer base URL
+// into the key (css|…|baseHref) since output depends on it.
 const dataUriMemo = new Map();
 const DATA_URI_MEMO_MAX = 200;
 export function entryToDataUri(entry, cssAbsolutizer, memoKey)
 {
-	if (!cssAbsolutizer && memoKey)
+	if (memoKey)
 	{
 		const hit = dataUriMemo.get(memoKey);
 		if (hit)
@@ -263,7 +263,7 @@ export function entryToDataUri(entry, cssAbsolutizer, memoKey)
 		const mime = (entry.contentType || 'text/plain').replace(/;.*$/, '');
 		out = 'data:' + mime + ';charset=utf-8,' + encodeURIComponent('/*JSLC*/' + data);
 	}
-	if (!cssAbsolutizer && memoKey)
+	if (memoKey)
 	{
 		if (dataUriMemo.size >= DATA_URI_MEMO_MAX)
 			dataUriMemo.clear();
