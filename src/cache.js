@@ -202,6 +202,15 @@ export async function migrateLegacyStorage()
 	return { migrated: legacyKeys.length, hadLegacy };
 }
 
+// sourceMappingURL comments are devtools-only: the .map follow-on is already
+// blocked, so the comment is dead weight in every served copy.
+export function stripSourceMapComment(text)
+{
+	return text
+		.replace(/^[ \t]*\/\/#\s*sourceMappingURL=\S+.*$/gmi, "")
+		.replace(/\/\*#\s*sourceMappingURL=\S+.*?\*\//gs, "");
+}
+
 // Build a cache entry from a fetch Response.
 export async function entryFromResponse(resp, url, versi)
 {
@@ -210,7 +219,7 @@ export async function entryFromResponse(resp, url, versi)
 	const now = Date.now();
 	if (textual)
 	{
-		const data = await resp.text();
+		const data = stripSourceMapComment(await resp.text());
 		return { created: now, url, v: versi, contentType, kind: 'text', data, size: data.length };
 	}
 	const buf = await resp.arrayBuffer();

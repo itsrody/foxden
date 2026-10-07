@@ -64,7 +64,8 @@ export default [
 				shouldCancelSourcemap: 'readonly', shouldBypassLargeEntry: 'readonly',
 				extractNestedCdnUrls: 'readonly', extractTagSrc: 'readonly',
 				isStaleUnversioned: 'readonly', UNVERSIONED_REVALIDATE_MS: 'readonly',
-				vendorFileForKey: 'readonly',
+				vendorFileForKey: 'readonly', preferMinSibling: 'readonly',
+				stripSourceMapComment: 'readonly',
 			},
 		},
 		rules: {

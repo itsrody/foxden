@@ -583,7 +583,7 @@ describe("urls", function() {
 				expect(b.uid).to.not.equal(a.uid);
 			});
 		});
-		describe("combine", function() {
+	describe("combine", function() {
 			it("different bundles get different UIDs", function() {
 				let a = getUID(new URL("https://cdn.jsdelivr.net/combine/npm/jquery@3.3.1/dist/jquery.min.js,npm/bootstrap@3.3.7/dist/js/bootstrap.min.js"));
 				let b = getUID(new URL("https://cdn.jsdelivr.net/combine/npm/jquery@1,npm/d3@3.5.6/d3.min.js"));
@@ -592,6 +592,48 @@ describe("urls", function() {
 			it("same bundle hits memo", function() {
 				let u = "https://cdn.jsdelivr.net/g/jquery@1.10.2,bootstrap@3.3.4";
 				expect(getUID(new URL(u))).to.equal(getUID(new URL(u)));
+			});
+		});
+		describe("build flavors", function() {
+			it("react development vs production split", function() {
+				let dev = getUID(new URL("https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"));
+				let prod = getUID(new URL("https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"));
+				expect(prod.uid).to.not.equal(dev.uid);
+				expect(prod.version).to.equal(dev.version);
+			});
+			it("bootstrap bundle vs plain split", function() {
+				let bundle = getUID(new URL("https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"));
+				let plain = getUID(new URL("https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.min.js"));
+				expect(bundle.uid).to.not.equal(plain.uid);
+			});
+			it("plain min vs full still share", function() {
+				let min = getUID(new URL("https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"));
+				let full = getUID(new URL("https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.js"));
+				expect(full.uid).to.equal(min.uid);
+			});
+			it("slim is namespaced once, not twice", function() {
+				let { uid } = getUID(new URL("https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.slim.min.js"));
+				expect(uid.match(/slim/g).length).to.equal(1);
+			});
+		});
+		describe("preferMinSibling", function() {
+			it("synthesizes .min sibling", function() {
+				expect(preferMinSibling("https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.js"))
+					.to.equal("https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js");
+			});
+			it("null when already minified, not JS/CSS, or bad input", function() {
+				expect(preferMinSibling("https://example.com/a/jquery.min.js")).to.equal(null);
+				expect(preferMinSibling("https://example.com/a/jquery-min.js")).to.equal(null);
+				expect(preferMinSibling("https://example.com/a/font.woff2")).to.equal(null);
+				expect(preferMinSibling("not a url")).to.equal(null);
+			});
+		});
+		describe("stripSourceMapComment", function() {
+			it("removes line and block form, keeps code", function() {
+				const src = "var a=1;\n//# sourceMappingURL=a.min.js.map\nvar b=2;";
+				expect(stripSourceMapComment(src)).to.equal("var a=1;\n\nvar b=2;");
+				expect(stripSourceMapComment("var a=1;/*# sourceMappingURL=a.map */"))
+					.to.equal("var a=1;");
 			});
 		});
 	});

@@ -299,6 +299,28 @@ function variantSuffix(searchParams, allow)
 	return s;
 }
 
+// Build flavors that change bytes beyond minification. Folded into the UID
+// so development/production/bundle builds never share cache entries.
+// (.min alone stays shared — pure minification, prefer-min fetch biases the
+// stored bytes toward the smaller file.)
+const FLAVOR_TOKENS = ["development", "production", "bundle", "compiled", "pack", "slim"];
+
+function flavorSuffix(pathname, name)
+{
+	const file = pathname.split("/").pop().toLowerCase();
+	const norm = (name || "").toLowerCase();
+	const out = [];
+	for (const t of FLAVOR_TOKENS)
+	{
+		if (!new RegExp("(?:[.-])" + t + "(?=[.-])").test(file))
+			continue;
+		if (norm.split("/").includes(t) || norm.includes(t))
+			continue; // parser already namespaced it (e.g. jquery/slim)
+		out.push(t);
+	}
+	return out.length ? "/@" + out.sort().join(",") : "";
+}
+
 export function getUID(url)
 {
 	let memoKey = url.hostname + url.pathname;
@@ -324,6 +346,10 @@ export function getUID(url)
 	// within one variant (dev 19.2.4 → dev 19.2.5) but never across variants.
 	if (variant && name)
 		name = name + "/@" + variant;
+	// Build flavors (bundle/production/…) change bytes: namespace them too.
+	// (.min alone stays shared — pure minification.)
+	if (name)
+		name = name + flavorSuffix(url.pathname, name);
 	const out = (name && version != null)
 		? { uid: name + " " + ext + " " + canonicalizeVersion(version), version: version }
 		: { uid: "//" + url.host + url.pathname, version: "0" };

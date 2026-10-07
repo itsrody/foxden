@@ -33,6 +33,31 @@ export function isStaleUnversioned(entry)
 	return !!entry && entry.v === "" && (Date.now() - entry.created) > UNVERSIONED_REVALIDATE_MS;
 }
 
+// Sibling .min URL for a non-minified JS/CSS file, or null when the URL is
+// already minified, not JS/CSS, or unparseable. Lets a miss store the smaller
+// bytes so every later hit (min or full) serves minified content.
+export function preferMinSibling(urlString)
+{
+	let u;
+	try
+	{
+		u = new URL(urlString);
+	}
+	catch
+	{
+		return null;
+	}
+	const i = u.pathname.lastIndexOf("/");
+	const file = u.pathname.slice(i + 1);
+	if (!/\.(js|css)$/i.test(file))
+		return null;
+	if (/(?:\.min|-min|minified)\.(js|css)$/i.test(file))
+		return null;
+	u.pathname = u.pathname.replace(/\.(js|css)$/i, ".min.$1");
+	u.hash = "";
+	return u.href;
+}
+
 // Extract the src/href URL from a <script>/<link> tag. Returns null when the
 // tag has no external reference (inline script, preload without href, ...).
 export function extractTagSrc(tag)

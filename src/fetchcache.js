@@ -6,12 +6,21 @@
 import { logStyle } from './shared/constants.js';
 import { isNewerPointVersion } from './shared/urlkey.js';
 import { cacheGet, cachePut, entryFromResponse } from './cache.js';
-import { isStaleUnversioned } from './shared/perf.js';
+import { isStaleUnversioned, preferMinSibling } from './shared/perf.js';
 
 export { UNVERSIONED_REVALIDATE_MS } from './shared/perf.js';
 
 const FETCH_TIMEOUT_MS = 6000;
 const inflight = new Map();
+
+// Sibling URLs already proven to have no .min twin (session-only): avoids a
+// wasted 404 fetch on every miss for min-less libraries.
+const knownNoMin = new Set();
+
+export function clearKnownNoMin()
+{
+	knownNoMin.clear();
+}
 
 // Hot in-memory entry cache: skips IndexedDB on repeat hits within the
 // session. Entries are immutable unless point-upgraded, so no TTL needed;
@@ -115,6 +124,29 @@ export async function loadOrFetch(storKey, versi, requestUrl)
 				"credentials": "omit", // include, *omit, same-origin
 				"signal": AbortSignal.timeout(FETCH_TIMEOUT_MS),
 			});
+			// Prefer the minified sibling on a miss: same release, smaller
+			// bytes for every later hit (min and full share one UID).
+			const minUrl = preferMinSibling(requestUrl);
+			if (minUrl && !knownNoMin.has(minUrl))
+			{
+				try
+				{
+					const minResp = await fetch(minUrl, init);
+					if (minResp.ok)
+					{
+						console.log(`%cJSLibCache: storing minified bytes for ${storKey}`, logStyle);
+						const minEntry = await entryFromResponse(minResp, minUrl, versi);
+						await cachePut(storKey, minEntry);
+						hotSet(storKey, minEntry);
+						return minEntry;
+					}
+					knownNoMin.add(minUrl);
+				}
+				catch
+				{
+					// fall through to the requested URL
+				}
+			}
 			const resp = await fetch(requestUrl, init);
 			if (!resp.ok)
 			{
