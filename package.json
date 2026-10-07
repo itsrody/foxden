@@ -11,7 +11,8 @@
 		"lint:src": "eslint .",
 		"typecheck": "tsc",
 		"build": "web-ext build --overwrite-dest --filename jslibcache.xpi",
-		"build:fonts": "node tools/build-fonts-manifest.mjs"
+		"build:fonts": "node tools/build-fonts-manifest.mjs",
+		"build:vendor": "node tools/build-vendor-manifest.mjs"
 	},
 	"repository": {
 		"type": "git",
