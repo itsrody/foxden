@@ -107,8 +107,8 @@ async function embedGstaticFonts(css, tabId)
 		try { statsKeys.push(getUID(new URL(fontUrl)).uid); }
 		catch { /* not cacheable by key: still embedded below */ }
 	}
-	addStats(statsKeys);
-	addTabStats(tabId, statsKeys);
+	statsKeys.forEach(storKey => addStats(storKey));
+	queueMicrotask(() => addTabStats(tabId, statsKeys));
 
 	const embedded = new Map();
 	await Promise.all(fontUrls.map(async (fontUrl) =>
@@ -139,7 +139,7 @@ export async function handleGoogleFontsCss(url, req, settings)
 		return;
 	const storKeys = families.map(familyCacheKey);
 	storKeys.forEach(storKey => addStats(storKey));
-	addTabStats(req.tabId, storKeys);
+	queueMicrotask(() => addTabStats(req.tabId, storKeys));
 	console.log(`%cJSLibCache: serving CSS for these font families from googlefonts: ${families.join(", ")}`, logStyle);
 	const cssParts = await Promise.all(families.map((family, i) => getFamilyCss(family, familyParams[i] || family, display)));
 	const rewritten = replaceFontsGstaticURLs(cssParts.join("\n"), settings.blockUnknownGoogleFonts);

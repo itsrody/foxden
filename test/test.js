@@ -660,6 +660,14 @@ describe("urls", function() {
 				expect(stripResourceHints(evil)).to.equal(evil);
 			});
 		});
+		describe("hasCdnMarker", function() {
+			it("true for intercepted hosts, false otherwise", function() {
+				expect(hasCdnMarker('<script src="https://cdnjs.cloudflare.com/ajax/libs/x/1.0/x.js">')).to.equal(true);
+				expect(hasCdnMarker('<link href="https://cdn.jsdelivr.net/npm/y@1.0/y.css">')).to.equal(true);
+				expect(hasCdnMarker('<p>hello world</p>')).to.equal(false);
+				expect(hasCdnMarker('<script src="https://example.com/a.js">')).to.equal(false);
+			});
+		});
 	});
 	describe("not null", function() {
 		describe("url keys", function() {

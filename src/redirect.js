@@ -45,7 +45,11 @@ export async function redirectRequestCDN(req, getSettings)
 
 	const { uid: storKey, version: versi } = getUID(url);
 	addStats(storKey);
-	addTabStats(req.tabId, [storKey]);
+	// Badge IPC stays off the blocking path: microtasks run before any later
+	// event (including navigations that reset tab stats), so no count is lost.
+	const tabKeys = [storKey];
+	const tabId = req.tabId;
+	queueMicrotask(() => addTabStats(tabId, tabKeys));
 
 	// Bundled top-N libs seed the cache with zero CDN contact. Falls through
 	// to the normal fetch-once path when unbundled or on any local failure.

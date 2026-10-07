@@ -7,7 +7,7 @@ import { logStyle, cdnDomainsRE } from './shared/constants.js';
 import { allowDataUriInCsp } from './shared/csp.js';
 import { isTabDomainBlacklisted } from './stats.js';
 import { getUID } from './shared/urlkey.js';
-import { extractTagSrc, stripResourceHints } from './shared/perf.js';
+import { extractTagSrc, hasCdnMarker, stripResourceHints } from './shared/perf.js';
 
 const MAX_PENDING_TAG = 4096;
 const asciiDecoder = new TextDecoder('ASCII');//windows-1252 / iso-8859-1
@@ -41,8 +41,12 @@ function makeTransformer(req)
 	// for the same library would each trigger a blocking redirect + data:
 	// encode, so the second+ copies are dropped entirely.
 	const seenUids = new Set();
-	return str => stripResourceHints(str)
-		.replace(/<(link|script)[^>]+>/ig, m => {
+	return str => {
+		// Fast path: chunks without any CDN marker skip both tag walks; the
+		// meta-charset fix below still runs unconditionally.
+		if (hasCdnMarker(str))
+			str = stripResourceHints(str)
+				.replace(/<(link|script)[^>]+>/ig, m => {
 			if (!cdnDomainsRE.test(m))
 				return m;
 			const src = extractTagSrc(m);
@@ -70,8 +74,9 @@ function makeTransformer(req)
 			let out = m.replace(/\s+(crossorigin)(="[^"]*"|='[^']*'|=[^"'`=>\s]+|)/ig, '');
 			out = out.replace(/\s+(integrity)(="[^"]*"|='[^']*'|=[^"'`=>\s]+|)/ig, '');
 			return out;
-		})
-		.replace(/(<meta\s+)(http-equiv=["']?Content-Type["']?\s+content=["']?text\/html;\s*charset=|charset=["']?)([a-z0-9_-]+)/gi, "$1$2utf-8");
+		});
+		return str.replace(/(<meta\s+)(http-equiv=["']?Content-Type["']?\s+content=["']?text\/html;\s*charset=|charset=["']?)([a-z0-9_-]+)/gi, "$1$2utf-8");
+	};
 }
 
 function sniffCharset(firstChunk)

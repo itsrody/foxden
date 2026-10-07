@@ -9,6 +9,13 @@ import { cdnDomains } from './constants.js';
 // (cdnjs.cloudflare.com/ajax/libs/). Hints need the looser match.
 const cdnHostsRE = new RegExp('//(' + [...new Set(cdnDomains.map(m => m.split('/')[0]))].map(h => h.replace(/\W/g, '\\$&')).join('|') + ')(?=[/"\'\\s>])');
 
+// Fast-path gate for the HTML transformer: chunks without any CDN marker
+// skip the tag walks entirely (the common case on non-CDN pages).
+export function hasCdnMarker(str)
+{
+	return cdnHostsRE.test(str);
+}
+
 export const MAX_DATA_URI_BYTES = 2_000_000;
 export const LARGE_ENTRY_WARN_BYTES = 500_000;
 

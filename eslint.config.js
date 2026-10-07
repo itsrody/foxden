@@ -66,6 +66,7 @@ export default [
 				isStaleUnversioned: 'readonly', UNVERSIONED_REVALIDATE_MS: 'readonly',
 				vendorFileForKey: 'readonly', preferMinSibling: 'readonly',
 				stripSourceMapComment: 'readonly', stripResourceHints: 'readonly',
+				hasCdnMarker: 'readonly',
 			},
 		},
 		rules: {
