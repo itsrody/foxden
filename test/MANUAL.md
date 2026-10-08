@@ -22,6 +22,7 @@ Run against a temporary profile (`npx web-ext run`), with uBO disabled unless no
 - [ ] Page with `<script src=CDN integrity=… crossorigin=anonymous>` still executes (both attrs stripped for all CDN tags — data: redirect breaks CORS and SRI)
 - [ ] Page with `<script type=module src=CDN integrity=…>` loads from network with integrity intact (module bypass; relative imports inside resolve)
 - [ ] Images gain `decoding="async"` (view source); served JS with Chrome sniffs logs a triage hint
+- [ ] `<a ping>` gone and `<pre>`/`<code>` carry `translate="no"` (view source)
 - [ ] Self-hosted `jquery-3.7.1.min.js` served from cache (background log); modified copy under the same name passes through
 - [ ] Livetest `/firstparty`: exact twin logs "served from shared cache", tampered twin logs "differs … passing through" (`timing` fpHits/fpMismatch)
 - [ ] Large/fast-loading page (throttle network) — attributes stripped across chunk boundaries

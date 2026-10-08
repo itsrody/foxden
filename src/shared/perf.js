@@ -130,6 +130,29 @@ export function addAsyncDecoding(html)
 	});
 }
 
+// Drop hyperlink-auditing beacons: <a ping> POSTs exist only for tracking,
+// nothing renders or navigates from them. (Same raw-chunk caveat as
+// addAsyncDecoding for matches inside inline script text.)
+export function stripPingAttributes(html)
+{
+	return html.replace(/<a\b[^>]*>/gi, m => {
+		if (!/\bping\s*=/i.test(m))
+			return m;
+		return m.replace(/\s+ping\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/i, '');
+	});
+}
+
+// Keep machine translation (a signature Firefox UX) out of code blocks:
+// translate="no" where absent. No rendering effect.
+export function addTranslateNo(html)
+{
+	return html.replace(/<(pre|code)\b[^>]*>/gi, m => {
+		if (/\btranslate\s*=/i.test(m))
+			return m;
+		return m.replace(/\/?>$/, ' translate="no"$&');
+	});
+}
+
 // Narrow Chrome-sniff detector for served JS (triage aid only — never
 // mutates): window.chrome / chrome.webstore / HeadlessChrome references.
 // Skips giant files to bound scan cost.

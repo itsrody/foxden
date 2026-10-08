@@ -913,6 +913,26 @@ describe("urls", function() {
 				expect(findChromeSniff("x".repeat(2000001))).to.equal(null);
 			});
 		});
+		describe("stripPingAttributes", function() {
+			it("drops ping, keeps the link", function() {
+				expect(stripPingAttributes('<a href="https://example.com" ping="https://t.example/p">x</a>'))
+					.to.equal('<a href="https://example.com">x</a>');
+				expect(stripPingAttributes("<a ping='https://t.example/p' href='https://example.com'>x</a>"))
+					.to.equal("<a href='https://example.com'>x</a>");
+				expect(stripPingAttributes('<a href="https://example.com">x</a>'))
+					.to.equal('<a href="https://example.com">x</a>');
+				expect(stripPingAttributes('<abbr title="ping pong">x</abbr>')).to.equal('<abbr title="ping pong">x</abbr>');
+			});
+		});
+		describe("addTranslateNo", function() {
+			it("marks pre/code without translate", function() {
+				expect(addTranslateNo('<pre>code()</pre>')).to.equal('<pre translate="no">code()</pre>');
+				expect(addTranslateNo('<code class="js">x</code>')).to.equal('<code class="js" translate="no">x</code>');
+				const kept = '<pre translate="yes">x</pre>';
+				expect(addTranslateNo(kept)).to.equal(kept);
+				expect(addTranslateNo('<p>text</p>')).to.equal('<p>text</p>');
+			});
+		});
 		describe("modulebypass", function() {
 			it("detects module script tags only", function() {
 				expect(isModuleTag('<script type="module" src="https://cdn.jsdelivr.net/npm/x@1.0/x.js">')).to.equal(true);

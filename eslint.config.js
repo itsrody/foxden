@@ -83,6 +83,7 @@ export default [
 				isModuleTag: 'readonly', noteModuleBypass: 'readonly',
 				isModuleBypassed: 'readonly', clearModuleBypass: 'readonly',
 				addAsyncDecoding: 'readonly', findChromeSniff: 'readonly',
+				stripPingAttributes: 'readonly', addTranslateNo: 'readonly',
 			},
 		},
 		rules: {

@@ -7,7 +7,7 @@ import { logStyle, cdnDomainsRE } from './shared/constants.js';
 import { allowDataUriInCsp } from './shared/csp.js';
 import { isTabDomainBlacklisted } from './stats.js';
 import { getUID } from './shared/urlkey.js';
-import { extractTagSrc, hasCdnMarker, hasExternalRef, stripResourceHints, addAsyncDecoding } from './shared/perf.js';
+import { extractTagSrc, hasCdnMarker, hasExternalRef, stripResourceHints, addAsyncDecoding, stripPingAttributes, addTranslateNo } from './shared/perf.js';
 import { isModuleTag, noteModuleBypass } from './shared/modulebypass.js';
 import { vendorKeyForBasename } from './vendor.js';
 
@@ -44,9 +44,13 @@ function makeTransformer(req)
 	// encode, so the second+ copies are dropped entirely.
 	const seenUids = new Set();
 	return str => {
-		// Async image decoding everywhere (cheap substring gate first).
+		// Invisible touches, each behind a cheap substring gate.
 		if (/<img/i.test(str))
 			str = addAsyncDecoding(str);
+		if (/<a\b/i.test(str))
+			str = stripPingAttributes(str);
+		if (/<(?:pre|code)\b/i.test(str))
+			str = addTranslateNo(str);
 		// Fast paths: the CDN walk needs a CDN marker; the first-party walk
 		// (module bypass record + vendor integrity strip) needs any external
 		// ref. Inline-only chunks skip both; meta-charset always runs.
