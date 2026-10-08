@@ -375,6 +375,39 @@ describe("perf", function() {
 			expect(vendorFileForKey("jquery js 3.7.x", "3.7.1", {})).to.equal(null);
 		});
 	});
+	describe("first-party basenames", function() {
+		const map = new Map([
+			["jquery-3.7.1.js", { uid: "jquery js 3.7.x", file: "jquery/jquery-3.7.1.min.js", version: "3.7.1" }],
+		]);
+		it("normalizes min infix", function() {
+			expect(normalizeVendorBasename("jquery-3.7.1.min.js")).to.equal("jquery-3.7.1.js");
+			expect(normalizeVendorBasename("JQUERY-3.7.1.MIN.JS")).to.equal("jquery-3.7.1.js");
+		});
+		it("matches min and full spellings to the pinned file", function() {
+			expect(vendorKeyForBasename("jquery-3.7.1.min.js", map).uid).to.equal("jquery js 3.7.x");
+			expect(vendorKeyForBasename("jquery-3.7.1.js", map).uid).to.equal("jquery js 3.7.x");
+			expect(vendorKeyForBasename("app.js", map)).to.equal(null);
+			expect(vendorKeyForBasename("jquery-3.7.2.min.js", map)).to.equal(null);
+		});
+	});
+	describe("sha256Hex", function() {
+		it("hashes bytes deterministically", async function() {
+			const a = await sha256Hex(new TextEncoder().encode("abc").buffer);
+			const b = await sha256Hex(new TextEncoder().encode("abc").buffer);
+			const c = await sha256Hex(new TextEncoder().encode("abd").buffer);
+			expect(a).to.equal(b);
+			expect(a).to.not.equal(c);
+			expect(a).to.match(/^[0-9a-f]{64}$/);
+		});
+	});
+	describe("hasExternalRef", function() {
+		it("true for external script/link refs", function() {
+			expect(hasExternalRef('<script src="https://example.com/a.js">')).to.equal(true);
+			expect(hasExternalRef('<link href="/local.css" rel="stylesheet">')).to.equal(true);
+			expect(hasExternalRef('<script>var a=1</script>')).to.equal(false);
+			expect(hasExternalRef('<p>text</p>')).to.equal(false);
+		});
+	});
 });
 describe("urls", function() {
 	describe("version, name, ext", function() {

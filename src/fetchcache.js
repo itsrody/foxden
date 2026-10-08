@@ -7,6 +7,7 @@ import { logStyle } from './shared/constants.js';
 import { isNewerPointVersion, canonicalFetchUrl } from './shared/urlkey.js';
 import { cacheGet, cachePut, entryFromResponse } from './cache.js';
 import { isStaleUnversioned, preferMinSibling } from './shared/perf.js';
+import { sha256Hex } from './vendor.js';
 
 export { UNVERSIONED_REVALIDATE_MS } from './shared/perf.js';
 
@@ -106,6 +107,59 @@ export async function loadOrFetchLocal(storKey, versi, fileUrl)
 	await cachePut(storKey, newEntry);
 	hotSet(storKey, newEntry);
 	return newEntry;
+}
+
+// First-party hash verification: a self-hosted copy is served from the shared
+// cache entry only when its bytes equal the pinned vendor file (SHA-256).
+// Customized builds fail closed into a permanent per-URL pass-through.
+// Versioned filenames are web-cache immutable by convention, so a verified
+// entry is treated like any other versioned entry afterwards.
+const fpNegative = new Set();
+const FP_NEG_MAX = 1000;
+
+export function clearFpNegative()
+{
+	fpNegative.clear();
+}
+
+export async function loadVerifiedFirstParty(storKey, versi, requestUrl, vendorFileUrl)
+{
+	if (fpNegative.has(requestUrl))
+		return null;
+	const hot = hotGet(storKey, versi);
+	if (hot)
+		return hot;
+	const known = await cacheGet(storKey);
+	if (known && !isNewerPointVersion(versi, known.v) && !isStaleUnversioned(known))
+	{
+		hotSet(storKey, known);
+		return known;
+	}
+	const init = /** @type {RequestInit & {referer?: string}} */ ({
+		"referer": "no-referrer",
+		"redirect": "follow",
+		"credentials": "omit",
+		"signal": AbortSignal.timeout(FETCH_TIMEOUT_MS),
+	});
+	const [siteResp, pkgResp] = await Promise.all([
+		fetch(requestUrl, init),
+		fetch(vendorFileUrl, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) }),
+	]);
+	if (!siteResp.ok || !pkgResp.ok)
+		return null; // transient: retry next time, never memoize failures
+	const [siteBuf, pkgBuf] = await Promise.all([siteResp.arrayBuffer(), pkgResp.arrayBuffer()]);
+	if (await sha256Hex(siteBuf) !== await sha256Hex(pkgBuf))
+	{
+		console.log(`%cFoxDen: first-party ${requestUrl} differs from vendor bundle, passing through`, logStyle);
+		if (fpNegative.size >= FP_NEG_MAX)
+			fpNegative.clear();
+		fpNegative.add(requestUrl);
+		return null;
+	}
+	const entry = await entryFromResponse(new Response(pkgBuf, { headers: pkgResp.headers }), requestUrl, versi);
+	await cachePut(storKey, entry);
+	hotSet(storKey, entry);
+	return entry;
 }
 
 export async function loadOrFetch(storKey, versi, requestUrl)

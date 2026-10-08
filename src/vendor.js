@@ -12,6 +12,29 @@ import { primeHotCache } from './fetchcache.js';
 
 // storKey -> { file, version }
 let vendorLibs = new Map();
+// normalized basename -> { uid, file, version }: first-party self-hosted
+// copies (any host/path) resolve to the pinned file for hash verification.
+let vendorBasenames = new Map();
+
+export function normalizeVendorBasename(filename)
+{
+	return filename.toLowerCase().replace(/(?:\.min|-min|minified)(?=\.[a-z0-9]+$)/, "");
+}
+
+function rebuildBasenames()
+{
+	vendorBasenames = new Map();
+	for (const [uid, { file, version }] of vendorLibs)
+	{
+		const base = normalizeVendorBasename(file.split("/").pop());
+		if (vendorBasenames.has(base))
+		{
+			console.warn(`%cFoxDen: vendor basename collision on ${base}, keeping first`, logStyle);
+			continue;
+		}
+		vendorBasenames.set(base, { uid, file, version });
+	}
+}
 
 export async function loadVendorManifest()
 {
@@ -22,6 +45,7 @@ export async function loadVendorManifest()
 			throw new Error("HTTP " + resp.status);
 		const manifest = await resp.json();
 		vendorLibs = new Map(Object.entries(manifest.libs || {}));
+		rebuildBasenames();
 		console.log(`%cFoxDen: ${vendorLibs.size} bundled vendor libraries`, logStyle);
 	}
 	catch (err)
@@ -47,6 +71,40 @@ export function getVendorFile(storKey, requestVersion)
 {
 	const file = vendorFileForKey(storKey, requestVersion, vendorLibs);
 	return file ? browser.runtime.getURL("resources/vendor/" + file) : null;
+}
+
+// First-party lookup: any URL whose normalized basename matches a pinned
+// file is a candidate for hash-verified serving (version comes along).
+export function vendorKeyForBasename(basename, libs)
+{
+	const map = libs instanceof Map ? libs : vendorBasenames;
+	const hit = map.get(normalizeVendorBasename(basename));
+	return hit || null;
+}
+
+export function getVendorByBasename(reqUrl)
+{
+	let basename;
+	try
+	{
+		basename = new URL(reqUrl).pathname.split("/").pop();
+	}
+	catch
+	{
+		return null;
+	}
+	if (!basename)
+		return null;
+	const hit = vendorKeyForBasename(basename);
+	if (!hit)
+		return null;
+	return { ...hit, fileUrl: browser.runtime.getURL("resources/vendor/" + hit.file) };
+}
+
+export async function sha256Hex(buf)
+{
+	const digest = await crypto.subtle.digest("SHA-256", buf);
+	return [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
 // Best-effort startup preload: read packaged files into the hot cache so

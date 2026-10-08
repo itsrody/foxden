@@ -110,6 +110,13 @@ export function selectEvictableKeys(globStats, nowMs, pressure, weekMs)
 	});
 }
 
+// Cheap gate for first-party tag work: the chunk references an external
+// script or stylesheet at all (CDN or same-origin).
+export function hasExternalRef(str)
+{
+	return /<(link|script)[^>]+\b(?:src|href)\s*=/i.test(str);
+}
+
 // Add decoding="async" to <img> tags lacking a decoding attribute: moves
 // image decode off the main thread. No load-event or layout impact.
 // (Runs on raw chunks, so an <img> string inside inline <script> text gets it

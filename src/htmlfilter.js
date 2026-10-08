@@ -7,8 +7,9 @@ import { logStyle, cdnDomainsRE } from './shared/constants.js';
 import { allowDataUriInCsp } from './shared/csp.js';
 import { isTabDomainBlacklisted } from './stats.js';
 import { getUID } from './shared/urlkey.js';
-import { extractTagSrc, hasCdnMarker, stripResourceHints, addAsyncDecoding } from './shared/perf.js';
+import { extractTagSrc, hasCdnMarker, hasExternalRef, stripResourceHints, addAsyncDecoding } from './shared/perf.js';
 import { isModuleTag, noteModuleBypass } from './shared/modulebypass.js';
+import { vendorKeyForBasename } from './vendor.js';
 
 const MAX_PENDING_TAG = 4096;
 const asciiDecoder = new TextDecoder('ASCII');//windows-1252 / iso-8859-1
@@ -43,43 +44,48 @@ function makeTransformer(req)
 	// encode, so the second+ copies are dropped entirely.
 	const seenUids = new Set();
 	return str => {
-		// Async image decoding everywhere (cheap substring gate first);
-		// CDN tag walks below stay behind the marker gate.
+		// Async image decoding everywhere (cheap substring gate first).
 		if (/<img/i.test(str))
 			str = addAsyncDecoding(str);
-		// Fast path: chunks without any CDN marker skip both tag walks; the
-		// meta-charset fix below still runs unconditionally.
-		if (hasCdnMarker(str))
-			str = stripResourceHints(str)
-				.replace(/<(link|script)[^>]+>/ig, m => {
-			if (!cdnDomainsRE.test(m))
-				return m;
+		// Fast paths: the CDN walk needs a CDN marker; the first-party walk
+		// (module bypass record + vendor integrity strip) needs any external
+		// ref. Inline-only chunks skip both; meta-charset always runs.
+		const cdn = hasCdnMarker(str);
+		if (cdn)
+			str = stripResourceHints(str);
+		if (cdn || hasExternalRef(str))
+			str = str.replace(/<(link|script)[^>]+>/ig, m => {
 			const src = extractTagSrc(m);
+			let abs = null;
 			if (src)
 			{
-				try
+				try { abs = new URL(src, req.url); } catch { abs = null; }
+			}
+			if (abs && isModuleTag(m))
+			{
+				// Module scripts bypass everywhere (CDN + first-party):
+				// data: breaks their relative imports, integrity stays valid.
+				noteModuleBypass(req.tabId, getUID(abs).uid);
+				const fp = vendorKeyForBasename(abs.pathname.split("/").pop());
+				if (fp)
+					noteModuleBypass(req.tabId, fp.uid);
+			}
+			if (!cdnDomainsRE.test(m))
+				return firstPartyTag(m, abs);
+			if (abs)
+			{
+				const { uid } = getUID(abs);
+				if (isModuleTag(m))
 				{
-					const { uid } = getUID(new URL(src, req.url));
-					// Module scripts bypass the data: redirect (relative imports
-					// inside them would break), so their integrity attributes
-					// must stay intact for SRI to validate the network bytes.
-					if (isModuleTag(m))
-					{
-						noteModuleBypass(req.tabId, uid);
-						seenUids.add(uid);
-						return m;
-					}
-					if (seenUids.has(uid))
-					{
-						console.log(`%cFoxDen: dropping duplicate CDN tag ${src}, id=${req.requestId}`, logStyle);
-						return "<!--FoxDen dupe-->";
-					}
 					seenUids.add(uid);
+					return m;
 				}
-				catch
+				if (seenUids.has(uid))
 				{
-					// unresolvable URL: fall through to integrity strip
+					console.log(`%cFoxDen: dropping duplicate CDN tag ${src}, id=${req.requestId}`, logStyle);
+					return "<!--FoxDen dupe-->";
 				}
+				seenUids.add(uid);
 			}
 			console.log(`%cFoxDen: adjusting integrity|crossorigin attributes on ${m}, id=${req.requestId}`, logStyle);
 			// data: URL redirects fail both CORS (no CORS mode on opaque origins) and
@@ -91,6 +97,21 @@ function makeTransformer(req)
 		});
 		return str.replace(/(<meta\s+)(http-equiv=["']?Content-Type["']?\s+content=["']?text\/html;\s*charset=|charset=["']?)([a-z0-9_-]+)/gi, "$1$2utf-8");
 	};
+}
+
+// Same-origin tags: strip SRI only for versioned vendor-basename matches,
+// which the redirect may serve from cache after hash verification. (On hash
+// mismatch the tag loads network-unverified — accepted: SRI on self-hosted
+// versioned top-lib filenames is rare, and verbatim copies stay correct.)
+function firstPartyTag(m, abs)
+{
+	if (!abs)
+		return m;
+	if (!vendorKeyForBasename(abs.pathname.split("/").pop()))
+		return m;
+	let out = m.replace(/\s+(crossorigin)(="[^"]*"|='[^']*'|=[^"'`=>\s]+|)/ig, '');
+	out = out.replace(/\s+(integrity)(="[^"]*"|='[^']*'|=[^"'`=>\s]+|)/ig, '');
+	return out;
 }
 
 function sniffCharset(firstChunk)

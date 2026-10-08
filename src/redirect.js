@@ -5,10 +5,10 @@
 import { logStyle, cdnDomainsRE } from './shared/constants.js';
 import { getUID } from './shared/urlkey.js';
 import { entryToDataUri } from './cache.js';
-import { loadOrFetch, loadOrFetchLocal, warmCache } from './fetchcache.js';
+import { loadOrFetch, loadOrFetchLocal, loadVerifiedFirstParty, warmCache } from './fetchcache.js';
 import { addStats, addTabStats, setEntrySize, isTabDomainBlacklisted } from './stats.js';
 import { handleGoogleFontsCss } from './fontcss.js';
-import { getVendorFile } from './vendor.js';
+import { getVendorFile, getVendorByBasename } from './vendor.js';
 import { absolutizeCssUrls } from './htmlfilter.js';
 import { shouldCancelSourcemap, shouldBypassLargeEntry, extractNestedCdnUrls, findChromeSniff } from './shared/perf.js';
 import { isModuleBypassed } from './shared/modulebypass.js';
@@ -59,8 +59,9 @@ export async function redirectRequestCDN(req, getSettings)
 {
 	const t0 = performance.now();
 	beginRequest(req.requestId, req.timeStamp);
-	// 1) Drop sourcemap/debug requests under CDNs: pure overhead, never rendered.
-	if (shouldCancelSourcemap(req.url))
+	// 1) Drop sourcemap/debug requests under CDNs (first-party maps belong to
+	// site developers' devtools — never touch those).
+	if (shouldCancelSourcemap(req.url) && cdnDomainsRE.test(req.url))
 	{
 		console.log(`%cFoxDen: blocking sourcemap ${req.url}`, logStyle);
 		return { cancel: true };
@@ -74,6 +75,11 @@ export async function redirectRequestCDN(req, getSettings)
 	}
 	if (url.hostname == "fonts.googleapis.com")
 		return handleGoogleFontsCss(url, req, settings);
+
+	// Same-origin (or off-list) hosts: only versioned vendor-basename matches
+	// qualify, and only after hash verification. Everything else is a µs miss.
+	if (!cdnDomainsRE.test(req.url))
+		return redirectFirstParty(req, url);
 
 	const { uid: storKey, version: versi } = getUID(url);
 	// Module scripts recorded by the HTML scan load from the network so
@@ -148,6 +154,62 @@ export async function redirectRequestCDN(req, getSettings)
 	timeStage('encode', t2);
 
 	// 3) Warm nested CDN deps in background so follow-on requests hit cache.
+	if (isCss && typeof entry.data === "string")
+		warmNestedCss(entry.data, req.url);
+
+	return { redirectUrl };
+}
+
+// First-party path: self-hosted copies of bundled top-N libs, served from
+// the shared cache entry only after SHA-256 verification against the pinned
+// file. Customized builds fail closed into a per-URL pass-through.
+async function redirectFirstParty(req, url)
+{
+	const t0 = performance.now();
+	const hit = getVendorByBasename(req.url);
+	if (!hit)
+		return;
+	if (isModuleBypassed(req.tabId, hit.uid))
+	{
+		console.log(`%cFoxDen: passing first-party module through to network ${req.url}`, logStyle);
+		return;
+	}
+	timeStage('lookup', t0);
+	addStats(hit.uid);
+	const tabId = req.tabId;
+	const tabKeys = [hit.uid];
+	queueMicrotask(() => addTabStats(tabId, tabKeys));
+
+	let entry;
+	const t1 = performance.now();
+	try
+	{
+		entry = await loadVerifiedFirstParty(hit.uid, hit.version, req.url, hit.fileUrl);
+	}
+	catch (err)
+	{
+		console.warn(`%cFoxDen: first-party verify error for ${req.url}: ${err}`, logStyle);
+		return;
+	}
+	timeStage('cache', t1);
+	if (!entry)
+		return;
+	setEntrySize(hit.uid, entry.size);
+	noteServedBytes(entry.size);
+
+	if (shouldBypassLargeEntry(entry.size))
+		return;
+
+	const isCss = entry.contentType && entry.contentType.startsWith("text/css");
+	if (!isCss)
+		maybeNoteChromeSniff(hit.uid, entry);
+	const memoKey = isCss
+		? `fp|${hit.uid}|${entry.v}|${entry.size}|${url.href}`
+		: `${hit.uid}|${entry.v}|${entry.size}`;
+	const t2 = performance.now();
+	const redirectUrl = entryToDataUri(entry, isCss ? data => finalizeCss(url, data) : null, memoKey);
+	timeStage('encode', t2);
+
 	if (isCss && typeof entry.data === "string")
 		warmNestedCss(entry.data, req.url);
 

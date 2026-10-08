@@ -162,7 +162,7 @@ browser.webRequest.onBeforeRequest.addListener((req) => {
 browser.webRequest.onBeforeRequest.addListener(async (req) => {
 	await ready;
 	return redirectRequestCDN(req, getSettings);
-}, { 'types': ['script', 'stylesheet'], 'urls': cdnDomains.map(host => '*://' + host + '*') }, ['blocking']); // no 'font': Firefox blocks webRequest redirects to data: in font loads (CORS on SEC_REQUIRE_CORS_DATA_INHERITS, Bugzilla 1645683, open since 2020); Google Fonts files are instead embedded as data: URIs inside the CSS by fontcss.js
+}, { 'types': ['script', 'stylesheet'], 'urls': ['*://*/*'] }, ['blocking']); // CDN hosts take the fetch-once path; same-origin requests only match versioned vendor basenames after hash verification (µs miss otherwise). No 'font': Firefox blocks webRequest redirects to data: in font loads (CORS on SEC_REQUIRE_CORS_DATA_INHERITS, Bugzilla 1645683, open since 2020); Google Fonts files are instead embedded as data: URIs inside the CSS by fontcss.js
 browser.webRequest.onHeadersReceived.addListener((req) => onHeadersReceived(req, getSettings), { 'types': ['main_frame', 'sub_frame'], 'urls': ['*://*/*'] }, ['blocking', 'responseHeaders']);
 // Pure observers (no 'blocking'): resolve end-to-end latency for redirected
 // and fallback loads alike, without ever delaying the channel.
