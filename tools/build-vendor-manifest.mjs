@@ -73,6 +73,32 @@ const VENDOR = [
 		'https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.8.3/angular.min.js',
 		'https://ajax.googleapis.com/ajax/libs/angularjs/1.8.3/angular.min.js',
 	] },
+	// Tier F — firefoxification parity libs
+	{ file: 'webrtc-adapter/adapter-9.0.1.min.js', version: '9.0.1', sources: [
+		'https://cdnjs.cloudflare.com/ajax/libs/webrtc-adapter/9.0.1/adapter.min.js',
+		'https://cdn.jsdelivr.net/npm/webrtc-adapter@9.0.1/out/adapter.js',
+	] },
+	{ file: 'hls/hls-1.6.5.min.js', version: '1.6.5', sources: [
+		'https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.6.5/hls.min.js',
+		'https://cdn.jsdelivr.net/npm/hls.js@1.6.5/dist/hls.min.js',
+	] },
+	{ file: 'plyr/plyr-3.8.3.min.js', version: '3.8.3', sources: [
+		'https://cdnjs.cloudflare.com/ajax/libs/plyr/3.8.3/plyr.min.js',
+		'https://cdn.jsdelivr.net/npm/plyr@3.8.3/dist/plyr.min.js',
+	] },
+	// Tier G — tiny + ubiquitous
+	{ file: 'alpinejs/alpine-3.15.0.min.js', version: '3.15.0', sources: [
+		'https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.15.0/cdn.min.js',
+		'https://unpkg.com/alpinejs@3.15.0/dist/cdn.min.js',
+	] },
+	{ file: 'htmx/htmx-2.0.4.min.js', version: '2.0.4', sources: [
+		'https://cdnjs.cloudflare.com/ajax/libs/htmx/2.0.4/htmx.min.js',
+		'https://cdn.jsdelivr.net/npm/htmx.org@2.0.4/dist/htmx.min.js',
+	] },
+	{ file: 'socket.io/socket.io-4.8.1.min.js', version: '4.8.1', sources: [
+		'https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.min.js',
+		'https://cdn.jsdelivr.net/npm/socket.io-client@4.8.1/dist/socket.io.min.js',
+	] },
 ];
 
 const libs = {};

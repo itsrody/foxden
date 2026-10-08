@@ -76,6 +76,46 @@
 		"angular js 1.8.x": {
 			"file": "angular/angular-1.8.3.min.js",
 			"version": "1.8.3"
+		},
+		"adapter js 9.0.x": {
+			"file": "webrtc-adapter/adapter-9.0.1.min.js",
+			"version": "9.0.1"
+		},
+		"webrtc/adapter/out/adapter js 9.0.x": {
+			"file": "webrtc-adapter/adapter-9.0.1.min.js",
+			"version": "9.0.1"
+		},
+		"hls js 1.6.x": {
+			"file": "hls/hls-1.6.5.min.js",
+			"version": "1.6.5"
+		},
+		"plyr js 3.8.x": {
+			"file": "plyr/plyr-3.8.3.min.js",
+			"version": "3.8.3"
+		},
+		"cdn js 3.15.x": {
+			"file": "alpinejs/alpine-3.15.0.min.js",
+			"version": "3.15.0"
+		},
+		"alpinejs/cdn js 3.15.x": {
+			"file": "alpinejs/alpine-3.15.0.min.js",
+			"version": "3.15.0"
+		},
+		"htmx js 2.0.x": {
+			"file": "htmx/htmx-2.0.4.min.js",
+			"version": "2.0.4"
+		},
+		"htmx/org/htmx js 2.0.x": {
+			"file": "htmx/htmx-2.0.4.min.js",
+			"version": "2.0.4"
+		},
+		"socket/io js 4.8.x": {
+			"file": "socket.io/socket.io-4.8.1.min.js",
+			"version": "4.8.1"
+		},
+		"socket/io/client/socket/io js 4.8.x": {
+			"file": "socket.io/socket.io-4.8.1.min.js",
+			"version": "4.8.1"
 		}
 	}
 }
