@@ -10,6 +10,7 @@ import { getUID } from './shared/urlkey.js';
 import { loadOrFetch } from './fetchcache.js';
 import { addStats, addTabStats } from './stats.js';
 import { replaceFontsGstaticURLs, collectGstaticFontUrls, GSTATIC_FONT_URL_RE } from './fonts.js';
+import { addStandardFallbacks, ensureFontDisplaySwap } from './shared/cssfix.js';
 
 const FETCH_TIMEOUT_MS = 8000;
 const inflight = new Map();
@@ -143,7 +144,7 @@ export async function handleGoogleFontsCss(url, req, settings)
 	console.log(`%cJSLibCache: serving CSS for these font families from googlefonts: ${families.join(", ")}`, logStyle);
 	const cssParts = await Promise.all(families.map((family, i) => getFamilyCss(family, familyParams[i] || family, display)));
 	const rewritten = replaceFontsGstaticURLs(cssParts.join("\n"), settings.blockUnknownGoogleFonts);
-	const css = await embedGstaticFonts(rewritten, req.tabId);
+	const css = ensureFontDisplaySwap(addStandardFallbacks(await embedGstaticFonts(rewritten, req.tabId)));
 	const dataURI = 'data:text/css;charset=utf-8,' + encodeURIComponent('/*JSLC*/' + css);
 	return { redirectUrl: dataURI };
 }

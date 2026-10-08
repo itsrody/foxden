@@ -8,8 +8,9 @@ import * as vendor from '../src/vendor.js';
 import * as cache from '../src/cache.js';
 import * as stats from '../src/stats.js';
 import * as timing from '../src/shared/timing.js';
+import * as cssfix from '../src/shared/cssfix.js';
 
-Object.assign(window, urlkey, mime, googlefonts, csp, fonts, perf, vendor, cache, stats, timing);
+Object.assign(window, urlkey, mime, googlefonts, csp, fonts, perf, vendor, cache, stats, timing, cssfix);
 window.urls = {};
 
 mocha.setup('bdd');

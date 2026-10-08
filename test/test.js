@@ -721,6 +721,35 @@ describe("urls", function() {
 				expect(decodeURIComponent(other)).to.contain("https://b.test/f.woff2");
 			});
 		});
+		describe("cssfix", function() {
+			it("adds missing standard fallbacks, keeps existing", function() {
+				const out = addStandardFallbacks(".a{-webkit-appearance:none}.b{appearance:button;-webkit-appearance:button}");
+				expect(out).to.contain(";appearance:none;/*JSLC*/");
+				expect(out).to.contain(".b{appearance:button;-webkit-appearance:button}");
+			});
+			it("maps mask/line-clamp/clip", function() {
+				const out = addStandardFallbacks(".a{-webkit-mask-image:url(x.png);-webkit-line-clamp:3;-webkit-background-clip:text}");
+				expect(out).to.contain("mask-image:url(x.png)");
+				expect(out).to.contain("line-clamp:3");
+				expect(out).to.contain("background-clip:text");
+			});
+			it("is idempotent", function() {
+				const once = addStandardFallbacks(".a{-webkit-appearance:none}");
+				expect(addStandardFallbacks(once)).to.equal(once);
+			});
+			it("leaves non-webkit CSS alone", function() {
+				const css = ".a{color:red;margin:0}";
+				expect(addStandardFallbacks(css)).to.equal(css);
+			});
+		});
+		describe("font-display", function() {
+			it("inserts swap only when missing", function() {
+				expect(ensureFontDisplaySwap("@font-face{font-family:x;src:url(a.woff2)}"))
+					.to.equal("@font-face{font-display:swap;/*JSLC*/font-family:x;src:url(a.woff2)}");
+				const kept = "@font-face{font-display:block;font-family:x}";
+				expect(ensureFontDisplaySwap(kept)).to.equal(kept);
+			});
+		});
 	});
 	describe("not null", function() {
 		describe("url keys", function() {

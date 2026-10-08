@@ -11,12 +11,20 @@ import { handleGoogleFontsCss } from './fontcss.js';
 import { getVendorFile } from './vendor.js';
 import { absolutizeCssUrls } from './htmlfilter.js';
 import { shouldCancelSourcemap, shouldBypassLargeEntry, extractNestedCdnUrls } from './shared/perf.js';
+import { addStandardFallbacks, ensureFontDisplaySwap } from './shared/cssfix.js';
 import { timeStage } from './shared/timing.js';
 
 function replaceFontsOtherURLs(url, css)
 {
 	console.log(`%cJSLibCache: making CSS url()s absolute ${url}`, logStyle);
 	return absolutizeCssUrls(url, css);
+}
+
+// Final CSS shaping for served stylesheets: absolutize, then additive
+// firefoxification (standard fallbacks + font-display:swap).
+function finalizeCss(baseUrl, css)
+{
+	return ensureFontDisplaySwap(addStandardFallbacks(replaceFontsOtherURLs(baseUrl, css)));
 }
 
 // Shared by the main CDN listener (script/stylesheet) and the sourcemap
@@ -66,7 +74,7 @@ export async function redirectRequestCDN(req, getSettings)
 			console.log(`%cJSLibCache: ${storKey} served from vendor bundle`, logStyle);
 			const isCss = entry.contentType && entry.contentType.startsWith("text/css");
 			const base = new URL(vendorUrl);
-			return { redirectUrl: entryToDataUri(entry, isCss ? data => absolutizeCssUrls(base, data) : null, `vendor|${storKey}|${entry.v}|${entry.size}`) };
+			return { redirectUrl: entryToDataUri(entry, isCss ? data => finalizeCss(base, data) : null, `vendor|${storKey}|${entry.v}|${entry.size}`) };
 		}
 		catch (err)
 		{
@@ -103,7 +111,7 @@ export async function redirectRequestCDN(req, getSettings)
 		? `css|${storKey}|${entry.v}|${entry.size}|${url.href}`
 		: `${storKey}|${entry.v}|${entry.size}`;
 	const t2 = performance.now();
-	const redirectUrl = entryToDataUri(entry, isCss ? data => replaceFontsOtherURLs(url, data) : null, memoKey);
+	const redirectUrl = entryToDataUri(entry, isCss ? data => finalizeCss(url, data) : null, memoKey);
 	timeStage('encode', t2);
 
 	// 3) Warm nested CDN deps in background so follow-on requests hit cache.
