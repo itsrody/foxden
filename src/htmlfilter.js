@@ -8,6 +8,7 @@ import { allowDataUriInCsp } from './shared/csp.js';
 import { isTabDomainBlacklisted } from './stats.js';
 import { getUID } from './shared/urlkey.js';
 import { extractTagSrc, hasCdnMarker, stripResourceHints } from './shared/perf.js';
+import { isModuleTag, noteModuleBypass } from './shared/modulebypass.js';
 
 const MAX_PENDING_TAG = 4096;
 const asciiDecoder = new TextDecoder('ASCII');//windows-1252 / iso-8859-1
@@ -55,6 +56,15 @@ function makeTransformer(req)
 				try
 				{
 					const { uid } = getUID(new URL(src, req.url));
+					// Module scripts bypass the data: redirect (relative imports
+					// inside them would break), so their integrity attributes
+					// must stay intact for SRI to validate the network bytes.
+					if (isModuleTag(m))
+					{
+						noteModuleBypass(req.tabId, uid);
+						seenUids.add(uid);
+						return m;
+					}
 					if (seenUids.has(uid))
 					{
 						console.log(`%cJSLibCache: dropping duplicate CDN tag ${src}, id=${req.requestId}`, logStyle);

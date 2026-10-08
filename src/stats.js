@@ -5,6 +5,7 @@
 
 import { logStyle } from './shared/constants.js';
 import { statsPutMany, statsDelete, statsLoad, cacheClear } from './cache.js';
+import { clearModuleBypass } from './shared/modulebypass.js';
 
 const SESSION_KEY = 'sessionState';
 const FLUSH_ALARM = 'jslc-flush';
@@ -127,6 +128,7 @@ export function onTabBeforeNavigate(details)
 	if (details.frameId == 0) //main page, not inner iframe
 	{
 		tabStats[details.tabId] = {};
+		clearModuleBypass(details.tabId);
 		scheduleSessionFlush();
 	}
 }

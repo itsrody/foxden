@@ -11,6 +11,7 @@ import { handleGoogleFontsCss } from './fontcss.js';
 import { getVendorFile } from './vendor.js';
 import { absolutizeCssUrls } from './htmlfilter.js';
 import { shouldCancelSourcemap, shouldBypassLargeEntry, extractNestedCdnUrls } from './shared/perf.js';
+import { isModuleBypassed } from './shared/modulebypass.js';
 import { addStandardFallbacks, ensureFontDisplaySwap } from './shared/cssfix.js';
 import { timeStage } from './shared/timing.js';
 
@@ -54,6 +55,13 @@ export async function redirectRequestCDN(req, getSettings)
 		return handleGoogleFontsCss(url, req, settings);
 
 	const { uid: storKey, version: versi } = getUID(url);
+	// Module scripts recorded by the HTML scan load from the network so
+	// their relative imports keep resolving; integrity was left intact.
+	if (isModuleBypassed(req.tabId, storKey))
+	{
+		console.log(`%cJSLibCache: passing module through to network ${req.url}`, logStyle);
+		return;
+	}
 	timeStage('lookup', t0);
 	addStats(storKey);
 	// Badge IPC stays off the blocking path: microtasks run before any later

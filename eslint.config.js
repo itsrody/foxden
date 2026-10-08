@@ -71,6 +71,8 @@ export default [
 				timeStage: 'readonly', getTimingStats: 'readonly', resetTiming: 'readonly',
 				entryToDataUri: 'readonly', clearDataUriMemo: 'readonly',
 				addStandardFallbacks: 'readonly', ensureFontDisplaySwap: 'readonly',
+				isModuleTag: 'readonly', noteModuleBypass: 'readonly',
+				isModuleBypassed: 'readonly', clearModuleBypass: 'readonly',
 			},
 		},
 		rules: {

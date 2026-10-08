@@ -750,6 +750,26 @@ describe("urls", function() {
 				expect(ensureFontDisplaySwap(kept)).to.equal(kept);
 			});
 		});
+		describe("modulebypass", function() {
+			it("detects module script tags only", function() {
+				expect(isModuleTag('<script type="module" src="https://cdn.jsdelivr.net/npm/x@1.0/x.js">')).to.equal(true);
+				expect(isModuleTag("<script type='MODULE' src='https://example.com/a.js'>")).to.equal(true);
+				expect(isModuleTag('<script type=module src=https://example.com/a.js>')).to.equal(true);
+				expect(isModuleTag('<script src="https://example.com/a.js">')).to.equal(false);
+				expect(isModuleTag('<script type="text/javascript" src="https://example.com/a.js">')).to.equal(false);
+				expect(isModuleTag('<link rel="modulepreload" href="https://example.com/a.js">')).to.equal(false);
+			});
+			it("notes, consults and clears per tab", function() {
+				expect(isModuleBypassed(801, "jquery js 3.7.x")).to.equal(false);
+				noteModuleBypass(801, "jquery js 3.7.x");
+				expect(isModuleBypassed(801, "jquery js 3.7.x")).to.equal(true);
+				expect(isModuleBypassed(802, "jquery js 3.7.x")).to.equal(false);
+				noteModuleBypass(-1, "jquery js 3.7.x");
+				expect(isModuleBypassed(-1, "jquery js 3.7.x")).to.equal(false);
+				clearModuleBypass(801);
+				expect(isModuleBypassed(801, "jquery js 3.7.x")).to.equal(false);
+			});
+		});
 	});
 	describe("not null", function() {
 		describe("url keys", function() {
