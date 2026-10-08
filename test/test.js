@@ -823,6 +823,14 @@ describe("urls", function() {
 				cancelRequestTiming("r2");
 				expect(endRequest("r2", 2100)).to.equal(null);
 			});
+			it("counts first-party outcomes", function() {
+				resetTiming();
+				noteFpHit();
+				noteFpMismatch();
+				const s = getTimingStats();
+				expect(s.fpHits).to.equal(1);
+				expect(s.fpMismatch).to.equal(1);
+			});
 		});
 		describe("selectEvictableKeys", function() {
 			const week = 7 * 24 * 3600 * 1000;

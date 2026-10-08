@@ -13,7 +13,7 @@ import { absolutizeCssUrls } from './htmlfilter.js';
 import { shouldCancelSourcemap, shouldBypassLargeEntry, extractNestedCdnUrls, findChromeSniff } from './shared/perf.js';
 import { isModuleBypassed } from './shared/modulebypass.js';
 import { addStandardFallbacks, ensureFontDisplaySwap } from './shared/cssfix.js';
-import { timeStage, beginRequest, noteServedBytes } from './shared/timing.js';
+import { timeStage, beginRequest, noteServedBytes, noteFpHit } from './shared/timing.js';
 
 function replaceFontsOtherURLs(url, css)
 {
@@ -196,6 +196,7 @@ async function redirectFirstParty(req, url)
 		return;
 	setEntrySize(hit.uid, entry.size);
 	noteServedBytes(entry.size);
+	noteFpHit();
 
 	if (shouldBypassLargeEntry(entry.size))
 		return;

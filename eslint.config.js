@@ -75,6 +75,7 @@ export default [
 				noteDuration: 'readonly', beginRequest: 'readonly', endRequest: 'readonly',
 				cancelRequestTiming: 'readonly', noteServedBytes: 'readonly',
 				noteHttpCache: 'readonly', selectEvictableKeys: 'readonly',
+				noteFpHit: 'readonly', noteFpMismatch: 'readonly',
 				entryToDataUri: 'readonly', clearDataUriMemo: 'readonly',
 				normalizeVendorBasename: 'readonly', vendorKeyForBasename: 'readonly',
 				buildBasenameMap: 'readonly', sha256Hex: 'readonly', hasExternalRef: 'readonly',

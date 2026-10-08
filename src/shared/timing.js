@@ -6,6 +6,8 @@
 const stages = new Map();
 let servedBytesTotal = 0;
 let httpCacheHits = 0;
+let fpHits = 0;
+let fpMismatch = 0;
 
 // In-flight webRequest correlation: beginRequest records the channel start
 // (webRequest epoch-ms timestamps), endRequest resolves it on completion.
@@ -64,6 +66,18 @@ export function noteHttpCache()
 	httpCacheHits++;
 }
 
+// First-party routing outcomes: served from cache vs hash-mismatched
+// pass-through. Silent misses (unknown basenames) are intentionally uncounted.
+export function noteFpHit()
+{
+	fpHits++;
+}
+
+export function noteFpMismatch()
+{
+	fpMismatch++;
+}
+
 export function getTimingStats()
 {
 	const out = {};
@@ -71,6 +85,8 @@ export function getTimingStats()
 		out[name] = { count: agg.count, avgMs: agg.count ? agg.total / agg.count : 0, maxMs: agg.max };
 	out.servedBytes = servedBytesTotal;
 	out.httpCacheHits = httpCacheHits;
+	out.fpHits = fpHits;
+	out.fpMismatch = fpMismatch;
 	return out;
 }
 
@@ -79,5 +95,7 @@ export function resetTiming()
 	stages.clear();
 	servedBytesTotal = 0;
 	httpCacheHits = 0;
+	fpHits = 0;
+	fpMismatch = 0;
 	pending.clear();
 }

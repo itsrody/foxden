@@ -8,6 +8,7 @@ import { isNewerPointVersion, canonicalFetchUrl } from './shared/urlkey.js';
 import { cacheGet, cachePut, entryFromResponse } from './cache.js';
 import { isStaleUnversioned, preferMinSibling } from './shared/perf.js';
 import { sha256Hex } from './vendor.js';
+import { noteFpMismatch } from './shared/timing.js';
 
 export { UNVERSIONED_REVALIDATE_MS } from './shared/perf.js';
 
@@ -151,6 +152,7 @@ export async function loadVerifiedFirstParty(storKey, versi, requestUrl, vendorF
 	if (await sha256Hex(siteBuf) !== await sha256Hex(pkgBuf))
 	{
 		console.log(`%cFoxDen: first-party ${requestUrl} differs from vendor bundle, passing through`, logStyle);
+		noteFpMismatch();
 		if (fpNegative.size >= FP_NEG_MAX)
 			fpNegative.clear();
 		fpNegative.add(requestUrl);
