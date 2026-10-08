@@ -79,7 +79,6 @@ npm run build:fonts:fetch [fam…] && npm run build:fonts
 npm run build && npm run lint:ext   # xpi must pass AMO validation
 
 ## Invariants (do not break)
-
 - UID uniqueness: different bytes ⇒ different UID (combine hash, esm query
   variants, build flavors). Memo keys must capture every output-varying input.
 - Never downgrade: cached newer patch wins (`isNewerPointVersion`); vendor
@@ -90,3 +89,17 @@ npm run build && npm run lint:ext   # xpi must pass AMO validation
 - Blocking handlers stay lean: defer IPC (`addTabStats`), memoize encodes,
   6s fetch budget, 2MB data: bypass.
 - Stats rows: `{created, hits, last, size?}` — popup renders all four.
+
+## SpiderMonkey rules (background runs on it too)
+
+- Stable object shapes: every constructor of a shared row type sets the same
+  keys (entries always carry `etag`/`modified`, even null; stats rows always
+  `{created, hits, last, size?}`). Never add/remove fields conditionally.
+- No `eval` / `new Function` / `with` / `arguments` — they force interpreted
+  mode. No `delete` on hot paths (cold cleanup only).
+- Monomorphic returns: one result shape per function (e.g. `getUID` always
+  `{uid, version}`), so call sites stay megamorphism-free.
+- Served page bytes are off-limits for JIT-motivated rewrites: no comment
+  stripping beyond `sourceMappingURL` (licenses), no var/let or scoping
+  transforms, no dead-code elimination. Smaller-source wins come only from
+  prefer-min fetching, never from editing semantics.

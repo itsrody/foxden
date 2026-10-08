@@ -77,6 +77,10 @@ async function getFamilyCss(family, familyParam, display)
 					kind: 'text',
 					data: text,
 					size: text.length,
+					// same shape as entryFromResponse rows (validators unused
+					// for font CSS — keeps one hidden class for entry readers)
+					etag: null,
+					modified: null,
 				});
 				return text;
 			}
