@@ -359,6 +359,41 @@ export function getUID(url)
 	return out;
 }
 
+// Mirror groups with byte-identical content: misses always fetch from the
+// canonical host so connections concentrate (fewer TLS handshakes, better
+// keep-alive reuse) instead of spreading per page URL. Never cross-vendor:
+// only hosts documented as the same CDN backend qualify.
+export function canonicalFetchUrl(urlString)
+{
+	let u;
+	try
+	{
+		u = new URL(urlString);
+	}
+	catch
+	{
+		return urlString;
+	}
+	if (u.hostname == "fastly.jsdelivr.net")
+		u.hostname = "cdn.jsdelivr.net";
+	else if (u.hostname == "ajax.proxy.ustclug.org")
+		u.hostname = "ajax.googleapis.com";
+	else if (u.hostname == "ajax.microsoft.com")
+		u.hostname = "ajax.aspnetcdn.com";
+	else if (u.hostname == "sdn.geekzu.org")
+	{
+		// geekzu prefixes one extra /ajax: /ajax/ajax/libs/… == /ajax/libs/…
+		const m = u.pathname.match(/^\/ajax(\/ajax\/libs\/.*)$/);
+		if (!m)
+			return urlString;
+		u.hostname = "ajax.googleapis.com";
+		u.pathname = m[1];
+	}
+	else
+		return urlString;
+	return u.href;
+}
+
 export function canonicalizeName(name)
 {
 	return name.toLowerCase().replace(/[_\.-]+/g, '/');

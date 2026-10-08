@@ -4,7 +4,7 @@
 // Google Fonts CSS embedder (they must not import each other).
 
 import { logStyle } from './shared/constants.js';
-import { isNewerPointVersion } from './shared/urlkey.js';
+import { isNewerPointVersion, canonicalFetchUrl } from './shared/urlkey.js';
 import { cacheGet, cachePut, entryFromResponse } from './cache.js';
 import { isStaleUnversioned, preferMinSibling } from './shared/perf.js';
 
@@ -127,7 +127,12 @@ export async function loadOrFetch(storKey, versi, requestUrl)
 	if (!inflight.has(storKey))
 	{
 		inflight.set(storKey, (async () => {
-			console.log(`%cFoxDen: ${requestUrl} fetching`, logStyle);
+			// Fetch from the canonical mirror host (same bytes, shared TLS +
+			// keep-alive pool); the UID already abstracts the page's host away.
+			const fetchUrl = canonicalFetchUrl(requestUrl);
+			if (fetchUrl !== requestUrl)
+				console.log(`%cFoxDen: canonicalizing fetch ${requestUrl} → ${fetchUrl}`, logStyle);
+			console.log(`%cFoxDen: ${fetchUrl} fetching`, logStyle);
 			const init = /** @type {RequestInit & {referer?: string}} */ ({
 				"referer": "no-referrer", // *client, no-referrer
 				"redirect": "follow", // manual, follow, error
@@ -136,7 +141,7 @@ export async function loadOrFetch(storKey, versi, requestUrl)
 			});
 			// Prefer the minified sibling on a miss: same release, smaller
 			// bytes for every later hit (min and full share one UID).
-			const minUrl = preferMinSibling(requestUrl);
+			const minUrl = preferMinSibling(fetchUrl);
 			if (minUrl && !knownNoMin.has(minUrl))
 			{
 				try
@@ -157,15 +162,15 @@ export async function loadOrFetch(storKey, versi, requestUrl)
 					// fall through to the requested URL
 				}
 			}
-			const resp = await fetch(requestUrl, init);
+			const resp = await fetch(fetchUrl, init);
 			if (!resp.ok)
 			{
 				const contentType = resp.headers.get('content-type');
-				console.warn(`%cFoxDen: fetching failed: ${requestUrl} ${contentType} ${resp.status}`, logStyle);
+				console.warn(`%cFoxDen: fetching failed: ${fetchUrl} ${contentType} ${resp.status}`, logStyle);
 				inflight.delete(storKey);
 				return null; // do not cache failures
 			}
-			const newEntry = await entryFromResponse(resp, requestUrl, versi);
+			const newEntry = await entryFromResponse(resp, fetchUrl, versi);
 			await cachePut(storKey, newEntry);
 			hotSet(storKey, newEntry);
 			return newEntry;

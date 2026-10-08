@@ -523,6 +523,26 @@ describe("urls", function() {
 				expect(b).to.deep.equal(a);
 			});
 		});
+		describe("canonicalFetchUrl", function() {
+			it("rewrites safe mirrors to canonical hosts", function() {
+				expect(canonicalFetchUrl("https://fastly.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"))
+					.to.equal("https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js");
+				expect(canonicalFetchUrl("https://ajax.microsoft.com/ajax/jQuery/jquery-1.8.0.js"))
+					.to.equal("https://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.8.0.js");
+				expect(canonicalFetchUrl("https://ajax.proxy.ustclug.org/ajax/libs/jquery/3.7.1/jquery.min.js"))
+					.to.equal("https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js");
+			});
+			it("collapses geekzu's extra path segment", function() {
+				expect(canonicalFetchUrl("https://sdn.geekzu.org/ajax/ajax/libs/jquery/3.7.1/jquery.min.js"))
+					.to.equal("https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js");
+			});
+			it("leaves everything else untouched", function() {
+				const u = "https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js";
+				expect(canonicalFetchUrl(u)).to.equal(u);
+				expect(canonicalFetchUrl("https://sdn.geekzu.org/other/path.js")).to.equal("https://sdn.geekzu.org/other/path.js");
+				expect(canonicalFetchUrl("not a url")).to.equal("not a url");
+			});
+		});
 		describe("bootstrapcdn", function() {
 			for (let line of [
 				["/bootstrap/3.3.7/css/bootstrap.min.css", "3.3.7", "bootstrap/css/bootstrap", "css"],

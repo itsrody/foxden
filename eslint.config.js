@@ -59,6 +59,7 @@ export default [
 				getVersionNameExt: 'readonly', getUID: 'readonly', isMimeTextual: 'readonly',
 				canonicalizeVersion: 'readonly', canonicalizeName: 'readonly', isNewerPointVersion: 'readonly',
 				getFamiliesFromGoogleFontCSSURL: 'readonly', versionsMatch: 'readonly',
+				canonicalFetchUrl: 'readonly',
 				allowDataUriInCsp: 'readonly', rewriteGstaticCss: 'readonly',
 				collectGstaticFontUrls: 'readonly',
 				shouldCancelSourcemap: 'readonly', shouldBypassLargeEntry: 'readonly',
