@@ -703,8 +703,42 @@ describe("urls", function() {
 				expect(s.lookup.count).to.equal(2);
 				expect(s.lookup.avgMs).to.be.at.least(0);
 				expect(s.lookup.maxMs).to.be.at.least(s.lookup.avgMs);
+				expect(s.servedBytes).to.equal(0);
+				expect(s.httpCacheHits).to.equal(0);
+				noteServedBytes(100);
+				noteServedBytes(-5);
+				noteHttpCache();
+				const s2 = getTimingStats();
+				expect(s2.servedBytes).to.equal(100);
+				expect(s2.httpCacheHits).to.equal(1);
 				resetTiming();
-				expect(getTimingStats()).to.deep.equal({});
+				expect(getTimingStats().lookup).to.equal(undefined);
+			});
+			it("correlates requests by id across epoch timestamps", function() {
+				resetTiming();
+				beginRequest("r1", 1000);
+				expect(endRequest("r1", 1250)).to.equal(250);
+				expect(endRequest("r1", 1300)).to.equal(null);
+				expect(endRequest("missing", 1300)).to.equal(null);
+				beginRequest("r2", 2000);
+				cancelRequestTiming("r2");
+				expect(endRequest("r2", 2100)).to.equal(null);
+			});
+		});
+		describe("selectEvictableKeys", function() {
+			const week = 7 * 24 * 3600 * 1000;
+			const stats = {
+				"hot js 1.0.x": { last: 1000, hits: 50 },
+				"cold js 1.0.x": { last: 0, hits: 1 },
+			};
+			it("evicts cold entries, keeps hot ones", function() {
+				const out = selectEvictableKeys(stats, week * 4, 0, week);
+				expect(out).to.deep.equal(["cold js 1.0.x"]);
+			});
+			it("pressure tightens the bar", function() {
+				const warm = { "warm js 1.0.x": { last: week * 1, hits: 10 } };
+				expect(selectEvictableKeys(warm, week * 4, 0, week)).to.deep.equal([]);
+				expect(selectEvictableKeys(warm, week * 4, 0.9, week)).to.deep.equal(["warm js 1.0.x"]);
 			});
 		});
 		describe("css memo", function() {

@@ -13,7 +13,7 @@ import { absolutizeCssUrls } from './htmlfilter.js';
 import { shouldCancelSourcemap, shouldBypassLargeEntry, extractNestedCdnUrls, findChromeSniff } from './shared/perf.js';
 import { isModuleBypassed } from './shared/modulebypass.js';
 import { addStandardFallbacks, ensureFontDisplaySwap } from './shared/cssfix.js';
-import { timeStage } from './shared/timing.js';
+import { timeStage, beginRequest, noteServedBytes } from './shared/timing.js';
 
 function replaceFontsOtherURLs(url, css)
 {
@@ -58,6 +58,7 @@ export function shouldCancelSourcemapRequest(req)
 export async function redirectRequestCDN(req, getSettings)
 {
 	const t0 = performance.now();
+	beginRequest(req.requestId, req.timeStamp);
 	// 1) Drop sourcemap/debug requests under CDNs: pure overhead, never rendered.
 	if (shouldCancelSourcemap(req.url))
 	{
@@ -99,6 +100,7 @@ export async function redirectRequestCDN(req, getSettings)
 		{
 			const entry = await loadOrFetchLocal(storKey, versi, vendorUrl);
 			setEntrySize(storKey, entry.size);
+			noteServedBytes(entry.size);
 			console.log(`%cFoxDen: ${storKey} served from vendor bundle`, logStyle);
 			const isCss = entry.contentType && entry.contentType.startsWith("text/css");
 			const base = new URL(vendorUrl);
@@ -125,6 +127,7 @@ export async function redirectRequestCDN(req, getSettings)
 	if (!entry)
 		return;
 	setEntrySize(storKey, entry.size);
+	noteServedBytes(entry.size);
 
 	// 2) Skip giant data: URIs (>2MB): fall through to network + browser cache
 	// instead of paying base64/encodeURIComponent expansion + CSP churn.

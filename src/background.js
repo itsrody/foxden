@@ -10,7 +10,8 @@ import {
 } from './stats.js';
 import { loadFontsManifest } from './fonts.js';
 import { loadVendorManifest, preloadVendor } from './vendor.js';
-import { getTimingStats } from './shared/timing.js';
+import { getTimingStats, endRequest, cancelRequestTiming, noteDuration, noteHttpCache } from './shared/timing.js';
+import { selectEvictableKeys } from './shared/perf.js';
 import { redirectRequestCDN, shouldCancelSourcemapRequest } from './redirect.js';
 import { onHeadersReceived } from './htmlfilter.js';
 
@@ -87,9 +88,21 @@ browser.runtime.onMessage.addListener(async (request) => {
 	else if (request.action === "cleanCache")//from popup.js
 	{
 		const now = Date.now();
-		const weekMs = 7 * 24 * 3600 * 1000;
 		const globStats = getGlobStats();
-		const deletableStorKeys = Object.keys(globStats).filter(storKey => (now - globStats[storKey].last) / (weekMs * globStats[storKey].hits) > 1);
+		// Storage pressure (0..1) tightens eviction before the platform
+		// evicts for us; failures fall back to the gentle heuristic.
+		let pressure = 0;
+		try
+		{
+			const est = await navigator.storage.estimate();
+			pressure = est.quota ? (est.usage || 0) / est.quota : 0;
+		}
+		catch (err)
+		{
+			console.warn(`%cFoxDen: storage estimate failed: ${err}`, logStyle);
+		}
+		const deletableStorKeys = selectEvictableKeys(globStats, now, pressure);
+		console.log(`%cFoxDen: storage pressure ${(pressure * 100).toFixed(1)}%, evicting ${deletableStorKeys.length} entries`, logStyle);
 		console.log(deletableStorKeys);
 		try
 		{
@@ -139,6 +152,20 @@ browser.webRequest.onBeforeRequest.addListener(async (req) => {
 	return redirectRequestCDN(req, getSettings);
 }, { 'types': ['script', 'stylesheet'], 'urls': cdnDomains.map(host => '*://' + host + '*') }, ['blocking']); // no 'font': Firefox blocks webRequest redirects to data: in font loads (CORS on SEC_REQUIRE_CORS_DATA_INHERITS, Bugzilla 1645683, open since 2020); Google Fonts files are instead embedded as data: URIs inside the CSS by fontcss.js
 browser.webRequest.onHeadersReceived.addListener((req) => onHeadersReceived(req, getSettings), { 'types': ['main_frame', 'sub_frame'], 'urls': ['*://*/*'] }, ['blocking', 'responseHeaders']);
+// Pure observers (no 'blocking'): resolve end-to-end latency for redirected
+// and fallback loads alike, without ever delaying the channel.
+const cdnSubresourceFilter = { 'types': ['script', 'stylesheet'], 'urls': cdnDomains.map(host => '*://' + host + '*') };
+browser.webRequest.onCompleted.addListener((details) => {
+	const dt = endRequest(details.requestId, details.timeStamp);
+	if (dt == null)
+		return;
+	noteDuration('e2e', dt);
+	if (details.fromCache)
+		noteHttpCache();
+}, cdnSubresourceFilter);
+browser.webRequest.onErrorOccurred.addListener((details) => {
+	cancelRequestTiming(details.requestId);
+}, cdnSubresourceFilter);
 browser.webNavigation.onBeforeNavigate.addListener(onTabBeforeNavigate);
 
 function tabUpdated(tabId, changeInfo, tabInfo) {

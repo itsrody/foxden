@@ -94,6 +94,22 @@ export function stripResourceHints(html)
 	});
 }
 
+// Cache eviction selection (pure, testable): entries whose age outweighs
+// their usefulness go. Under storage pressure (>70% quota) the bar drops 4x
+// so the cache sheds weight before the platform starts evicting for us.
+export const EVICT_PRESSURE_RATIO = 0.7;
+export const EVICT_WEEK_MS = 7 * 24 * 3600 * 1000;
+
+export function selectEvictableKeys(globStats, nowMs, pressure, weekMs)
+{
+	const span = weekMs || EVICT_WEEK_MS;
+	const factor = pressure > EVICT_PRESSURE_RATIO ? 0.25 : 1;
+	return Object.keys(globStats).filter(storKey => {
+		const stat = globStats[storKey];
+		return (nowMs - stat.last) / (span * stat.hits) > factor;
+	});
+}
+
 // Add decoding="async" to <img> tags lacking a decoding attribute: moves
 // image decode off the main thread. No load-event or layout impact.
 // (Runs on raw chunks, so an <img> string inside inline <script> text gets it
