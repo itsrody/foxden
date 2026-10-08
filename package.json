@@ -12,6 +12,7 @@
 		"typecheck": "tsc",
 		"build": "web-ext build --overwrite-dest --filename jslibcache.xpi",
 		"build:fonts": "node tools/build-fonts-manifest.mjs",
+		"build:fonts:fetch": "node tools/fetch-fonts.mjs",
 		"build:vendor": "node tools/build-vendor-manifest.mjs"
 	},
 	"repository": {
