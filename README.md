@@ -1,7 +1,7 @@
 # FoxDen
 
 > Independent modern fork of [Jaaap/jslibcache](https://gitlab.com/Jaaap/jslibcache) (MPL-2.0), formerly developed under the JSLibCache name.
-> Upstream's last release was `0.0.21` (2024); this fork restarts at `0.1.0` with a new Firefox extension ID (`jslibcache@itsrody.github.io`), so it installs side-by-side and does not claim upstream's AMO listing.
+> Upstream's last release was `0.0.21` (2024); this fork restarts at `0.1.0` with a new Firefox extension ID (`foxden@itsrody.github.io`), so it installs side-by-side and does not claim upstream's AMO listing.
 
 A WebExtension for Firefox / Chrome that enhances privacy by serving requests to popular CDNs from local cache/storage.
 
