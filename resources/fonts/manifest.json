@@ -1,6 +1,30 @@
 {
 	"generatedBy": "tools/build-fonts-manifest.mjs",
 	"families": {
+		"almarai": [
+			"tssoApxBaigK_hnnS-agtn-Wow.woff2",
+			"tssoApxBaigK_hnnS-agtnqWo572.woff2",
+			"tssoApxBaigK_hnnS_antn-Wow.woff2",
+			"tssoApxBaigK_hnnS_antnqWo572.woff2",
+			"tssoApxBaigK_hnnS_qjtn-Wow.woff2",
+			"tssoApxBaigK_hnnS_qjtnqWo572.woff2",
+			"tsstApxBaigK_hnnQ12Fow.woff2",
+			"tsstApxBaigK_hnnQ1iFo0C3.woff2"
+		],
+		"amiri": [
+			"J7aRnpd8CGxBHpUgtLMA7w.woff2",
+			"J7aRnpd8CGxBHpUrtLMA7w.woff2",
+			"J7aRnpd8CGxBHpUutLM.woff2",
+			"J7aanpd8CGxBHpUrjAo9_pJqHwAa.woff2",
+			"J7aanpd8CGxBHpUrjAo9_plqHwAa.woff2",
+			"J7aanpd8CGxBHpUrjAo9_pxqHw.woff2",
+			"J7acnpd8CGxBHp2VkaY6zp5yGw.woff2",
+			"J7acnpd8CGxBHp2VkaY_zp4.woff2",
+			"J7acnpd8CGxBHp2VkaYxzp5yGw.woff2",
+			"J7afnpd8CGxBHpUrhL8Y66NL.woff2",
+			"J7afnpd8CGxBHpUrhLEY6w.woff2",
+			"J7afnpd8CGxBHpUrhLQY66NL.woff2"
+		],
 		"arimo": [
 			"P5sCzZCDf9_T_10c9C1kiK-u.woff2",
 			"P5sCzZCDf9_T_10c9C5kiK-u.woff2",
@@ -19,11 +43,57 @@
 			"P5sMzZCDf9_T_10bxCF8jA.woff2",
 			"P5sMzZCDf9_T_10dxCF8jA.woff2"
 		],
+		"cairo": [
+			"SLXVc1nY6HkvangtZmpQdkhzfH5lkSscQyyS4J0.woff2",
+			"SLXVc1nY6HkvangtZmpQdkhzfH5lkSscRiyS.woff2",
+			"SLXVc1nY6HkvangtZmpQdkhzfH5lkSscSCyS4J0.woff2"
+		],
+		"changa": [
+			"2-cm9JNi2YuVOUckY5y-au8.woff2",
+			"2-cm9JNi2YuVOUckZpy-.woff2",
+			"2-cm9JNi2YuVOUckaJy-au8.woff2"
+		],
 		"dmsans": [
 			"rP2Wp2ywxg089UriCZaSExd86J3t9jz86MvyyKK58VXh.woff2",
 			"rP2Wp2ywxg089UriCZaSExd86J3t9jz86MvyyKy58Q.woff2",
 			"rP2Yp2ywxg089UriI5-g4vlH9VoD8Cmcqbu0-K4.woff2",
 			"rP2Yp2ywxg089UriI5-g4vlH9VoD8Cmcqbu6-K6h9Q.woff2"
+		],
+		"elmessiri": [
+			"K2F0fZBRmr9vQ1pHEey6Mo2AAg.woff2",
+			"K2F0fZBRmr9vQ1pHEey6MoOAAhLz.woff2",
+			"K2F0fZBRmr9vQ1pHEey6MoiAAhLz.woff2",
+			"K2F0fZBRmr9vQ1pHEey6MomAAhLz.woff2"
+		],
+		"ibmplexsansarabic": [
+			"Qw3CZRtWPQCuHme67tEYUIx3Kh0PHR9N6Ys43PWrfQ.woff2",
+			"Qw3CZRtWPQCuHme67tEYUIx3Kh0PHR9N6Ys93PU.woff2",
+			"Qw3CZRtWPQCuHme67tEYUIx3Kh0PHR9N6Ysw3PWrfQ.woff2",
+			"Qw3CZRtWPQCuHme67tEYUIx3Kh0PHR9N6Ysz3PWrfQ.woff2",
+			"Qw3MZRtWPQCuHme67tEYUIx3Kh0PHR9N6YNe7PKzeflA.woff2",
+			"Qw3MZRtWPQCuHme67tEYUIx3Kh0PHR9N6YNe7PezeQ.woff2",
+			"Qw3MZRtWPQCuHme67tEYUIx3Kh0PHR9N6YNe7PmzeflA.woff2",
+			"Qw3MZRtWPQCuHme67tEYUIx3Kh0PHR9N6YNe7PqzeflA.woff2",
+			"Qw3NZRtWPQCuHme67tEYUIx3Kh0PHR9N6YOG-eCRXMR5Kw.woff2",
+			"Qw3NZRtWPQCuHme67tEYUIx3Kh0PHR9N6YOG-eCUXMQ.woff2",
+			"Qw3NZRtWPQCuHme67tEYUIx3Kh0PHR9N6YOG-eCZXMR5Kw.woff2",
+			"Qw3NZRtWPQCuHme67tEYUIx3Kh0PHR9N6YOG-eCaXMR5Kw.woff2",
+			"Qw3NZRtWPQCuHme67tEYUIx3Kh0PHR9N6YOW_uCRXMR5Kw.woff2",
+			"Qw3NZRtWPQCuHme67tEYUIx3Kh0PHR9N6YOW_uCUXMQ.woff2",
+			"Qw3NZRtWPQCuHme67tEYUIx3Kh0PHR9N6YOW_uCZXMR5Kw.woff2",
+			"Qw3NZRtWPQCuHme67tEYUIx3Kh0PHR9N6YOW_uCaXMR5Kw.woff2",
+			"Qw3NZRtWPQCuHme67tEYUIx3Kh0PHR9N6YPO_-CRXMR5Kw.woff2",
+			"Qw3NZRtWPQCuHme67tEYUIx3Kh0PHR9N6YPO_-CUXMQ.woff2",
+			"Qw3NZRtWPQCuHme67tEYUIx3Kh0PHR9N6YPO_-CZXMR5Kw.woff2",
+			"Qw3NZRtWPQCuHme67tEYUIx3Kh0PHR9N6YPO_-CaXMR5Kw.woff2",
+			"Qw3NZRtWPQCuHme67tEYUIx3Kh0PHR9N6YPi-OCRXMR5Kw.woff2",
+			"Qw3NZRtWPQCuHme67tEYUIx3Kh0PHR9N6YPi-OCUXMQ.woff2",
+			"Qw3NZRtWPQCuHme67tEYUIx3Kh0PHR9N6YPi-OCZXMR5Kw.woff2",
+			"Qw3NZRtWPQCuHme67tEYUIx3Kh0PHR9N6YPi-OCaXMR5Kw.woff2",
+			"Qw3NZRtWPQCuHme67tEYUIx3Kh0PHR9N6YPy_eCRXMR5Kw.woff2",
+			"Qw3NZRtWPQCuHme67tEYUIx3Kh0PHR9N6YPy_eCUXMQ.woff2",
+			"Qw3NZRtWPQCuHme67tEYUIx3Kh0PHR9N6YPy_eCZXMR5Kw.woff2",
+			"Qw3NZRtWPQCuHme67tEYUIx3Kh0PHR9N6YPy_eCaXMR5Kw.woff2"
 		],
 		"inter": [
 			"UcC53FwrK3iLTcvneQg7Ca725JhhKnNqk6L0UUMJng.woff2",
@@ -54,6 +124,29 @@
 			"tDbX2o-flEEny0FZhsfKu5WU4xD-CwOnSA.woff2",
 			"tDbX2o-flEEny0FZhsfKu5WU4xD-CwenSHrV.woff2",
 			"tDbX2o-flEEny0FZhsfKu5WU4xD-CwynSHrV.woff2"
+		],
+		"lateef": [
+			"hESw6XVnNCxEvkb8oR2F.woff2",
+			"hESw6XVnNCxEvkb8pB2FVo8.woff2",
+			"hESw6XVnNCxEvkb8rx2FVo8.woff2",
+			"hESz6XVnNCxEvkb0BjuQZ67axnQ.woff2",
+			"hESz6XVnNCxEvkb0BjuQaa7a.woff2",
+			"hESz6XVnNCxEvkb0BjuQbK7axnQ.woff2",
+			"hESz6XVnNCxEvkb0Cj-QZ67axnQ.woff2",
+			"hESz6XVnNCxEvkb0Cj-Qaa7a.woff2",
+			"hESz6XVnNCxEvkb0Cj-QbK7axnQ.woff2",
+			"hESz6XVnNCxEvkb0GjiQZ67axnQ.woff2",
+			"hESz6XVnNCxEvkb0GjiQaa7a.woff2",
+			"hESz6XVnNCxEvkb0GjiQbK7axnQ.woff2",
+			"hESz6XVnNCxEvkb0Uj6QZ67axnQ.woff2",
+			"hESz6XVnNCxEvkb0Uj6Qaa7a.woff2",
+			"hESz6XVnNCxEvkb0Uj6QbK7axnQ.woff2",
+			"hESz6XVnNCxEvkb0bjyQZ67axnQ.woff2",
+			"hESz6XVnNCxEvkb0bjyQaa7a.woff2",
+			"hESz6XVnNCxEvkb0bjyQbK7axnQ.woff2",
+			"hESz6XVnNCxEvkb0fjmQZ67axnQ.woff2",
+			"hESz6XVnNCxEvkb0fjmQaa7a.woff2",
+			"hESz6XVnNCxEvkb0fjmQbK7axnQ.woff2"
 		],
 		"lato": [
 			"S6u-w4BMUTPHjxsIPx-mPCLQ7A.woff2",
@@ -118,6 +211,13 @@
 			"o-0bIpQlx3QUlC5A4PNB6Ryti20_6n1iPHjc5aPdu2ui.woff2",
 			"o-0bIpQlx3QUlC5A4PNB6Ryti20_6n1iPHjc5a_du2ui.woff2",
 			"o-0bIpQlx3QUlC5A4PNB6Ryti20_6n1iPHjc5ardu2ui.woff2"
+		],
+		"notosansarabic": [
+			"nwpCtLGrOAZMl5nJ_wfgRg3DrWFZWsnVBJ_sS6tlqHHFlj41v4o.woff2",
+			"nwpCtLGrOAZMl5nJ_wfgRg3DrWFZWsnVBJ_sS6tlqHHFlj47v4r4xA.woff2",
+			"nwpCtLGrOAZMl5nJ_wfgRg3DrWFZWsnVBJ_sS6tlqHHFlj4wv4r4xA.woff2",
+			"nwpCtLGrOAZMl5nJ_wfgRg3DrWFZWsnVBJ_sS6tlqHHFlj5Jv4r4xA.woff2",
+			"nwpCtLGrOAZMl5nJ_wfgRg3DrWFZWsnVBJ_sS6tlqHHFlj5bv4r4xA.woff2"
 		],
 		"nunitosans": [
 			"pe0RMImSLYBIv1o4X1M8cce4OdVisMz5nZRqy6cmmmU3t2FQWEAEOvV9wNvrwlNstMKW3Y6K5WMwd-1aLY50.woff2",
@@ -273,6 +373,12 @@
 			"1Ptug8zYS_SKggPNyCIIT5lu.woff2",
 			"1Ptug8zYS_SKggPNyCMIT5lu.woff2",
 			"1Ptug8zYS_SKggPNyCkIT5lu.woff2"
+		],
+		"reemkufi": [
+			"2sDcZGJLip7W2J7v7wQzZ2W5O7w.woff2",
+			"2sDcZGJLip7W2J7v7wQzZmW5O7w.woff2",
+			"2sDcZGJLip7W2J7v7wQzaGW5.woff2",
+			"2sDcZGJLip7W2J7v7wQzbWW5O7w.woff2"
 		],
 		"roboto": [
 			"KFO5CnqEu92Fr1Mu53ZEC9_Vu3r1gIhOszmkAnkaWzU.woff2",
@@ -438,6 +544,22 @@
 			"6xKydSBYKcSV-LCoeQqfX1RYOo3iu4nwmRduz8A.woff2",
 			"6xKydSBYKcSV-LCoeQqfX1RYOo3iu4nwmhduz8A.woff2",
 			"6xKydSBYKcSV-LCoeQqfX1RYOo3iu4nwmxduz8A.woff2"
+		],
+		"tajawal": [
+			"Iura6YBj_oCad4k1nzGBCw.woff2",
+			"Iura6YBj_oCad4k1nzSBC45I.woff2",
+			"Iurf6YBj_oCad4k1l4qkHrFpiQ.woff2",
+			"Iurf6YBj_oCad4k1l4qkHrRpiYlJ.woff2",
+			"Iurf6YBj_oCad4k1l5anHrFpiQ.woff2",
+			"Iurf6YBj_oCad4k1l5anHrRpiYlJ.woff2",
+			"Iurf6YBj_oCad4k1l5qjHrFpiQ.woff2",
+			"Iurf6YBj_oCad4k1l5qjHrRpiYlJ.woff2",
+			"Iurf6YBj_oCad4k1l7KmHrFpiQ.woff2",
+			"Iurf6YBj_oCad4k1l7KmHrRpiYlJ.woff2",
+			"Iurf6YBj_oCad4k1l8KiHrFpiQ.woff2",
+			"Iurf6YBj_oCad4k1l8KiHrRpiYlJ.woff2",
+			"Iurf6YBj_oCad4k1l_6gHrFpiQ.woff2",
+			"Iurf6YBj_oCad4k1l_6gHrRpiYlJ.woff2"
 		],
 		"ubuntu": [
 			"4iCp6KVjbNBYlgoKejYHtFyBN4Ffgg.woff2",

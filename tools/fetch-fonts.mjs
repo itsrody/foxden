@@ -13,7 +13,9 @@ import path from 'node:path';
 const rootDir = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const fontsDir = path.join(rootDir, 'resources', 'fonts');
 
-// gstatic path family -> css2 family param
+// gstatic path family -> css2 family param [+ custom axes].
+// Custom axes (third segment) pin families whose static set differs from the
+// default 9-weight grid (missing 100/500, no italics, …).
 const ALL_FAMILIES = [
 	'inter:Inter',
 	'arimo:Arimo',
@@ -44,6 +46,17 @@ const ALL_FAMILIES = [
 	'sourcesanspro:Source Sans Pro',
 	'youtubesans:YouTube Sans',
 	'ytsans:YT Sans',
+	// most-used Arabic families (arabic+latin subsets stay small)
+	'cairo:Cairo:wght@200;300;400;600;700;800;900',
+	'tajawal:Tajawal:wght@200;300;400;500;700;800;900',
+	'almarai:Almarai:wght@300;400;700;800',
+	'amiri:Amiri:ital,wght@0,400;0,700;1,400;1,700',
+	'notosansarabic:Noto Sans Arabic:wght@100;200;300;400;500;600;700;800;900',
+	'ibmplexsansarabic:IBM Plex Sans Arabic:wght@100;200;300;400;500;600;700',
+	'reemkufi:Reem Kufi:wght@400;500;600;700',
+	'elmessiri:El Messiri:wght@400;500;600;700',
+	'lateef:Lateef:wght@200;300;400;500;600;700;800',
+	'changa:Changa:wght@200;300;400;500;600;700;800',
 ];
 
 const only = new Set(process.argv.slice(2).map(a => a.toLowerCase()));
@@ -77,9 +90,10 @@ let totalFiles = 0;
 const failed = [];
 for (const spec of FAMILIES)
 {
-	const [dir, param] = spec.split(':');
+	const [dir, param, customAxes] = spec.split(':');
 	let css = null;
-	for (const axes of [fullAxes, uprightAxes, null])
+	const attempts = customAxes ? [customAxes, null] : [fullAxes, uprightAxes, null];
+	for (const axes of attempts)
 	{
 		try
 		{
