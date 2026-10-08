@@ -197,6 +197,7 @@ async function redirectFirstParty(req, url)
 	setEntrySize(hit.uid, entry.size);
 	noteServedBytes(entry.size);
 	noteFpHit();
+	console.log(`%cFoxDen: first-party ${req.url} served from shared cache (${hit.uid})`, logStyle);
 
 	if (shouldBypassLargeEntry(entry.size))
 		return;

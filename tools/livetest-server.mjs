@@ -1,6 +1,11 @@
 // Local test page server: exercises CSP patch, SRI/crossorigin stripping,
 // CDN script redirect, Google Fonts CSS + bundled fonts, Report-Only patching.
 import http from 'node:http';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const vendorDir = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'resources', 'vendor');
 
 const jquerySri = 'sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=';
 
@@ -59,6 +64,57 @@ const server = http.createServer((req, res) => {
 	{
 		res.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8' });
 		res.end(checkJs);
+		return;
+	}
+	if (req.url.startsWith('/vendor/'))
+	{
+		// Self-hosted copies of pinned vendor files (first-party routing
+		// proof): exact bytes verify and serve from cache; /vendor/alt/*
+		// serves a tampered twin (same basename, different hash) that must
+		// fail closed into a network pass-through.
+		const sub = decodeURIComponent(req.url.split('?')[0].slice('/vendor/'.length));
+		const tampered = sub.startsWith('alt/');
+		const rel = tampered ? sub.slice('alt/'.length) : sub;
+		if (rel.includes('..') || !/\.(js|css)$/.test(rel))
+		{
+			res.writeHead(404);
+			res.end();
+			return;
+		}
+		let buf;
+		try
+		{
+			buf = readFileSync(path.join(vendorDir, rel));
+		}
+		catch
+		{
+			res.writeHead(404);
+			res.end();
+			return;
+		}
+		if (tampered)
+			buf = Buffer.from(buf.toString('utf8').replace('jQuery', 'jQuEry'));
+		res.writeHead(200, { 'Content-Type': rel.endsWith('.css') ? 'text/css; charset=utf-8' : 'text/javascript; charset=utf-8' });
+		res.end(buf);
+		return;
+	}
+	if (req.url.startsWith('/firstparty'))
+	{
+		res.writeHead(200, {
+			'Content-Type': 'text/html; charset=utf-8',
+			// allows 'self' but NOT data: — our CSP patch must add data: or
+			// the verified first-party serve breaks here
+			'Content-Security-Policy': "script-src 'self'",
+		});
+		res.end(`<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<title>foxden livetest firstparty</title>
+<script src="/vendor/jquery/jquery-3.7.1.min.js"></script>
+<script src="/vendor/alt/jquery/jquery-3.7.1.min.js"></script>
+</head><body>
+<p>first-party routing proof (see background console + timing fpHits/fpMismatch)</p>
+<script src="/check.js"></script>
+</body></html>`);
 		return;
 	}
 	if (req.url.startsWith('/unknownfont'))

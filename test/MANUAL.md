@@ -23,6 +23,7 @@ Run against a temporary profile (`npx web-ext run`), with uBO disabled unless no
 - [ ] Page with `<script type=module src=CDN integrity=…>` loads from network with integrity intact (module bypass; relative imports inside resolve)
 - [ ] Images gain `decoding="async"` (view source); served JS with Chrome sniffs logs a triage hint
 - [ ] Self-hosted `jquery-3.7.1.min.js` served from cache (background log); modified copy under the same name passes through
+- [ ] Livetest `/firstparty`: exact twin logs "served from shared cache", tampered twin logs "differs … passing through" (`timing` fpHits/fpMismatch)
 - [ ] Large/fast-loading page (throttle network) — attributes stripped across chunk boundaries
 - [ ] Non-UTF-8 page (charset=gb2312 meta) does not throw in filter
 - [ ] CSP response header gains `data:` in `script-src`/`style-src` (check Security panel); Report-Only header also patched
