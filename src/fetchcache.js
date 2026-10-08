@@ -140,6 +140,7 @@ export async function loadVerifiedFirstParty(storKey, versi, requestUrl, vendorF
 		"referer": "no-referrer",
 		"redirect": "follow",
 		"credentials": "omit",
+		"headers": { "Accept-Language": "en-US,en;q=0.9" },
 		"signal": AbortSignal.timeout(FETCH_TIMEOUT_MS),
 	});
 	const [siteResp, pkgResp] = await Promise.all([
@@ -197,17 +198,22 @@ export async function loadOrFetch(storKey, versi, requestUrl)
 				"referer": "no-referrer", // *client, no-referrer
 				"redirect": "follow", // manual, follow, error
 				"credentials": "omit", // include, *omit, same-origin
+				// Normalized: library bytes never vary by language, so the
+				// browser's full locale list is pure fingerprint surface.
+				"headers": { "Accept-Language": "en-US,en;q=0.9" },
 				"signal": AbortSignal.timeout(FETCH_TIMEOUT_MS),
 			});
 			// Conditional revalidation: unchanged bytes come back as 304 with
 			// no body — touch the date, keep serving the stored entry.
+			// (Validators merge with, never replace, the normalized headers.)
 			if (entry && (entry.etag || entry.modified))
 			{
-				init.headers = {};
+				const cond = {};
 				if (entry.etag)
-					init.headers["If-None-Match"] = entry.etag;
+					cond["If-None-Match"] = entry.etag;
 				if (entry.modified)
-					init.headers["If-Modified-Since"] = entry.modified;
+					cond["If-Modified-Since"] = entry.modified;
+				init.headers = { "Accept-Language": "en-US,en;q=0.9", ...cond };
 			}
 			// Prefer the minified sibling on a miss: same release, smaller
 			// bytes for every later hit (min and full share one UID).

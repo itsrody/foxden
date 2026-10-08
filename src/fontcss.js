@@ -33,6 +33,7 @@ async function fetchFamilyCss(familyParam, display)
 		"referer": "no-referrer",
 		"redirect": "error",
 		"credentials": "omit",
+		"headers": { "Accept-Language": "en-US,en;q=0.9" },
 		"signal": AbortSignal.timeout(FETCH_TIMEOUT_MS),
 	});
 	const resp = await fetch(url, init);
