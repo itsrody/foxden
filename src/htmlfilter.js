@@ -7,7 +7,7 @@ import { logStyle, cdnDomainsRE } from './shared/constants.js';
 import { allowDataUriInCsp } from './shared/csp.js';
 import { isTabDomainBlacklisted } from './stats.js';
 import { getUID } from './shared/urlkey.js';
-import { extractTagSrc, hasCdnMarker, stripResourceHints } from './shared/perf.js';
+import { extractTagSrc, hasCdnMarker, stripResourceHints, addAsyncDecoding } from './shared/perf.js';
 import { isModuleTag, noteModuleBypass } from './shared/modulebypass.js';
 
 const MAX_PENDING_TAG = 4096;
@@ -43,6 +43,10 @@ function makeTransformer(req)
 	// encode, so the second+ copies are dropped entirely.
 	const seenUids = new Set();
 	return str => {
+		// Async image decoding everywhere (cheap substring gate first);
+		// CDN tag walks below stay behind the marker gate.
+		if (/<img/i.test(str))
+			str = addAsyncDecoding(str);
 		// Fast path: chunks without any CDN marker skip both tag walks; the
 		// meta-charset fix below still runs unconditionally.
 		if (hasCdnMarker(str))

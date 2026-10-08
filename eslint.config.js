@@ -73,6 +73,7 @@ export default [
 				addStandardFallbacks: 'readonly', ensureFontDisplaySwap: 'readonly',
 				isModuleTag: 'readonly', noteModuleBypass: 'readonly',
 				isModuleBypassed: 'readonly', clearModuleBypass: 'readonly',
+				addAsyncDecoding: 'readonly', findChromeSniff: 'readonly',
 			},
 		},
 		rules: {

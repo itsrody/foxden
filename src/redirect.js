@@ -10,7 +10,7 @@ import { addStats, addTabStats, setEntrySize, isTabDomainBlacklisted } from './s
 import { handleGoogleFontsCss } from './fontcss.js';
 import { getVendorFile } from './vendor.js';
 import { absolutizeCssUrls } from './htmlfilter.js';
-import { shouldCancelSourcemap, shouldBypassLargeEntry, extractNestedCdnUrls } from './shared/perf.js';
+import { shouldCancelSourcemap, shouldBypassLargeEntry, extractNestedCdnUrls, findChromeSniff } from './shared/perf.js';
 import { isModuleBypassed } from './shared/modulebypass.js';
 import { addStandardFallbacks, ensureFontDisplaySwap } from './shared/cssfix.js';
 import { timeStage } from './shared/timing.js';
@@ -26,6 +26,26 @@ function replaceFontsOtherURLs(url, css)
 function finalizeCss(baseUrl, css)
 {
 	return ensureFontDisplaySwap(addStandardFallbacks(replaceFontsOtherURLs(baseUrl, css)));
+}
+
+// Compat triage, once per unique entry: flag Chrome-only sniffs in served
+// JS so real compat reports name the lib. Never mutates the bytes.
+const sniffSeen = new Set();
+const SNIFF_SEEN_MAX = 1000;
+
+function maybeNoteChromeSniff(storKey, entry)
+{
+	if (entry.kind !== 'text')
+		return;
+	const key = `${storKey}|${entry.v}|${entry.size}`;
+	if (sniffSeen.has(key))
+		return;
+	if (sniffSeen.size >= SNIFF_SEEN_MAX)
+		sniffSeen.clear();
+	sniffSeen.add(key);
+	const sniff = findChromeSniff(entry.data);
+	if (sniff)
+		console.log(`%cJSLibCache: ${storKey} references ${sniff} — possible Chrome-only code path`, logStyle);
 }
 
 // Shared by the main CDN listener (script/stylesheet) and the sourcemap
@@ -115,6 +135,8 @@ export async function redirectRequestCDN(req, getSettings)
 	}
 
 	const isCss = entry.contentType && entry.contentType.startsWith("text/css");
+	if (!isCss)
+		maybeNoteChromeSniff(storKey, entry);
 	const memoKey = isCss
 		? `css|${storKey}|${entry.v}|${entry.size}|${url.href}`
 		: `${storKey}|${entry.v}|${entry.size}`;

@@ -94,6 +94,31 @@ export function stripResourceHints(html)
 	});
 }
 
+// Add decoding="async" to <img> tags lacking a decoding attribute: moves
+// image decode off the main thread. No load-event or layout impact.
+// (Runs on raw chunks, so an <img> string inside inline <script> text gets it
+// too — equivalent to the author having written it.)
+export function addAsyncDecoding(html)
+{
+	return html.replace(/<img\b[^>]*>/gi, m => {
+		if (/\bdecoding\s*=/i.test(m))
+			return m;
+		return m.replace(/\/?>$/, ' decoding="async"$&');
+	});
+}
+
+// Narrow Chrome-sniff detector for served JS (triage aid only — never
+// mutates): window.chrome / chrome.webstore / HeadlessChrome references.
+// Skips giant files to bound scan cost.
+const CHROME_SNIFF_RE = /window\.chrome\b|chrome\.webstore\b|HeadlessChrome/;
+export function findChromeSniff(text)
+{
+	if (typeof text !== "string" || text.length > 2000000)
+		return null;
+	const m = text.match(CHROME_SNIFF_RE);
+	return m ? m[0] : null;
+}
+
 // Extract the src/href URL from a <script>/<link> tag. Returns null when the
 // tag has no external reference (inline script, preload without href, ...).
 export function extractTagSrc(tag)

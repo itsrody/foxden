@@ -750,6 +750,28 @@ describe("urls", function() {
 				expect(ensureFontDisplaySwap(kept)).to.equal(kept);
 			});
 		});
+		describe("addAsyncDecoding", function() {
+			it("adds decoding where missing, keeps the rest", function() {
+				expect(addAsyncDecoding('<img src="a.png">')).to.equal('<img src="a.png" decoding="async">');
+				expect(addAsyncDecoding('<img src="a.png"/>')).to.equal('<img src="a.png" decoding="async"/>');
+				expect(addAsyncDecoding('<IMG SRC="a.png">')).to.equal('<IMG SRC="a.png" decoding="async">');
+				const kept = '<img src="a.png" decoding="sync">';
+				expect(addAsyncDecoding(kept)).to.equal(kept);
+				expect(addAsyncDecoding('<p>no images</p>')).to.equal('<p>no images</p>');
+			});
+		});
+		describe("findChromeSniff", function() {
+			it("flags Chrome-only references", function() {
+				expect(findChromeSniff("if(window.chrome){x()}")).to.equal("window.chrome");
+				expect(findChromeSniff("u='chrome.webstore';")).to.equal("chrome.webstore");
+				expect(findChromeSniff("isHeadlessChrome")).to.equal("HeadlessChrome");
+			});
+			it("null for clean, non-string and giant inputs", function() {
+				expect(findChromeSniff("var jquery = 1;")).to.equal(null);
+				expect(findChromeSniff(null)).to.equal(null);
+				expect(findChromeSniff("x".repeat(2000001))).to.equal(null);
+			});
+		});
 		describe("modulebypass", function() {
 			it("detects module script tags only", function() {
 				expect(isModuleTag('<script type="module" src="https://cdn.jsdelivr.net/npm/x@1.0/x.js">')).to.equal(true);
