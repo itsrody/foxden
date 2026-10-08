@@ -6,7 +6,7 @@ import { getDefaultSettings, loadSettings } from './shared/settings.js';
 import { migrateLegacyStorage, cacheSummary, cacheDelete } from './cache.js';
 import {
 	hydrateStats, initStatsAlarms, onTabBeforeNavigate, setTabDomain,
-	dropStatsKeys, resetStats, getGlobStats, getSessStats, getTabStats, flushSession,
+	dropStatsKeys, dropTabState, resetStats, getGlobStats, getSessStats, getTabStats, flushSession,
 } from './stats.js';
 import { loadFontsManifest } from './fonts.js';
 import { loadVendorManifest, preloadVendor } from './vendor.js';
@@ -87,35 +87,7 @@ browser.runtime.onMessage.addListener(async (request) => {
 	}
 	else if (request.action === "cleanCache")//from popup.js
 	{
-		const now = Date.now();
-		const globStats = getGlobStats();
-		// Storage pressure (0..1) tightens eviction before the platform
-		// evicts for us; failures fall back to the gentle heuristic.
-		let pressure = 0;
-		try
-		{
-			const est = await navigator.storage.estimate();
-			pressure = est.quota ? (est.usage || 0) / est.quota : 0;
-		}
-		catch (err)
-		{
-			console.warn(`%cFoxDen: storage estimate failed: ${err}`, logStyle);
-		}
-		const deletableStorKeys = selectEvictableKeys(globStats, now, pressure);
-		console.log(`%cFoxDen: storage pressure ${(pressure * 100).toFixed(1)}%, evicting ${deletableStorKeys.length} entries`, logStyle);
-		console.log(deletableStorKeys);
-		try
-		{
-			await cacheDelete(deletableStorKeys);
-			await dropStatsKeys(deletableStorKeys);
-			console.log("%cFoxDen: cache cleaned", logStyle);
-			return {"success": true};
-		}
-		catch (msg)
-		{
-			console.warn("%cFoxDen: error cleaning cache: " + msg, logStyle);
-			return {"success": false};
-		}
+		return cleanCacheOnce();
 	}
 	else if (request.action === "clearCache")//from popup.js
 	{
@@ -136,6 +108,46 @@ browser.runtime.onMessage.addListener(async (request) => {
 
 // init
 initStatsAlarms();
+
+async function cleanCacheOnce()
+{
+	await ready;
+	const now = Date.now();
+	const globStats = getGlobStats();
+	// Storage pressure (0..1) tightens eviction before the platform
+	// evicts for us; failures fall back to the gentle heuristic.
+	let pressure = 0;
+	try
+	{
+		const est = await navigator.storage.estimate();
+		pressure = est.quota ? (est.usage || 0) / est.quota : 0;
+	}
+	catch (err)
+	{
+		console.warn(`%cFoxDen: storage estimate failed: ${err}`, logStyle);
+	}
+	const deletableStorKeys = selectEvictableKeys(globStats, now, pressure);
+	console.log(`%cFoxDen: storage pressure ${(pressure * 100).toFixed(1)}%, evicting ${deletableStorKeys.length} entries`, logStyle);
+	console.log(deletableStorKeys);
+	try
+	{
+		await cacheDelete(deletableStorKeys);
+		await dropStatsKeys(deletableStorKeys);
+		console.log("%cFoxDen: cache cleaned", logStyle);
+		return {"success": true};
+	}
+	catch (msg)
+	{
+		console.warn("%cFoxDen: error cleaning cache: " + msg, logStyle);
+		return {"success": false};
+	}
+}
+
+// Idle hygiene: same cleanup the button runs, when nobody is waiting on it.
+browser.idle.onStateChanged.addListener((state) => {
+	if (state === "idle")
+		void cleanCacheOnce();
+});
 
 browser.browserAction.setBadgeBackgroundColor({ color: "green" });
 
@@ -182,3 +194,4 @@ function tabUpdated(tabId, changeInfo, tabInfo) {
 	}
 }
 browser.tabs.onUpdated.addListener(tabUpdated);
+browser.tabs.onRemoved.addListener((tabId) => dropTabState(tabId));

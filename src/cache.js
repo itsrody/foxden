@@ -228,13 +228,16 @@ export async function entryFromResponse(resp, url, versi)
 	const contentType = resp.headers.get('content-type') || 'application/octet-stream';
 	const textual = isMimeTextual(contentType);
 	const now = Date.now();
+	// Validators for conditional revalidation (304 keeps bytes, touches date).
+	const etag = resp.headers.get('etag');
+	const modified = resp.headers.get('last-modified');
 	if (textual)
 	{
 		const data = stripSourceMapComment(await resp.text());
-		return { created: now, url, v: versi, contentType, kind: 'text', data, size: data.length };
+		return { created: now, url, v: versi, contentType, kind: 'text', data, size: data.length, etag, modified };
 	}
 	const buf = await resp.arrayBuffer();
-	return { created: now, url, v: versi, contentType, kind: 'bytes', data: buf, size: buf.byteLength };
+	return { created: now, url, v: versi, contentType, kind: 'bytes', data: buf, size: buf.byteLength, etag, modified };
 }
 
 // data: URL for a cache entry; CSS gets relative url()s absolutized.

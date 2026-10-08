@@ -16,6 +16,7 @@
 		"*://*/*",
 		"storage",
 		"alarms",
+		"idle",
 		"publicSuffix",
 		"unlimitedStorage",
 		"webRequest",

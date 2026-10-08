@@ -39,6 +39,7 @@ Run against a temporary profile (`npx web-ext run`), with uBO disabled unless no
 
 ## Cache management
 - [ ] Cleanup Cache removes only stale entries (age/hit formula), stats updated
+- [ ] Idle 60s+ triggers the same cleanup automatically (background log)
 - [ ] Purge Cache empties cache, popup table resets
 - [ ] `storage.session` stats survive background console close; cleared on browser restart
 

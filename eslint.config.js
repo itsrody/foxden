@@ -69,6 +69,8 @@ export default [
 				stripSourceMapComment: 'readonly', stripResourceHints: 'readonly',
 				hasCdnMarker: 'readonly', isTabDomainBlacklisted: 'readonly',
 				setTabDomain: 'readonly', registrableDomain: 'readonly',
+				dropTabState: 'readonly', getTabDomain: 'readonly',
+				entryFromResponse: 'readonly',
 				timeStage: 'readonly', getTimingStats: 'readonly', resetTiming: 'readonly',
 				noteDuration: 'readonly', beginRequest: 'readonly', endRequest: 'readonly',
 				cancelRequestTiming: 'readonly', noteServedBytes: 'readonly',

@@ -712,6 +712,30 @@ describe("urls", function() {
 				expect(isTabDomainBlacklisted(905, ["evil.com"])).to.equal(covered);
 				expect(isTabDomainBlacklisted(905, ["sub.evil.com"])).to.equal(true);
 			});
+			it("dropTabState forgets the tab", function() {
+				setTabDomain(906, "evil.com");
+				expect(isTabDomainBlacklisted(906, ["evil.com"])).to.equal(true);
+				dropTabState(906);
+				expect(getTabDomain(906)).to.equal(undefined);
+				expect(isTabDomainBlacklisted(906, ["evil.com"])).to.equal(false);
+			});
+		});
+		describe("entry validators", function() {
+			it("persists etag/last-modified", async function() {
+				const resp = new Response("var a=1;", { headers: {
+					"content-type": "text/javascript",
+					"etag": '"abc123"',
+					"last-modified": "Wed, 01 Jan 2025 00:00:00 GMT",
+				} });
+				const entry = await entryFromResponse(resp, "https://example.com/a.js", "1.0.0");
+				expect(entry.etag).to.equal('"abc123"');
+				expect(entry.modified).to.equal("Wed, 01 Jan 2025 00:00:00 GMT");
+			});
+			it("absent without headers", async function() {
+				const resp = new Response("var a=1;", { headers: { "content-type": "text/javascript" } });
+				const entry = await entryFromResponse(resp, "https://example.com/a.js", "1.0.0");
+				expect(entry.etag).to.equal(null);
+			});
 		});
 		describe("timing", function() {
 			it("aggregates count/avg/max and resets", function() {

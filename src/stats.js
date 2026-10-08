@@ -139,6 +139,18 @@ export function setTabDomain(tabId, hostname)
 	scheduleSessionFlush();
 }
 
+// Drop all per-tab state on close: tab IDs get recycled, so stale domains,
+// badge counts and module bypasses must not leak into the next tab.
+export function dropTabState(tabId)
+{
+	delete tabStats[tabId];
+	delete tabStats["" + tabId];
+	delete tabDomains[tabId];
+	delete tabDomains["" + tabId];
+	clearModuleBypass(tabId);
+	scheduleSessionFlush();
+}
+
 export function isTabDomainBlacklisted(tabId, domainBlacklist)
 {
 	if (!domainBlacklist.length)

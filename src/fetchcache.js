@@ -74,6 +74,10 @@ export async function warmCache(storKey, versi, requestUrl)
 {
 	try
 	{
+		// Speculation yields to metered links (no-op where unsupported).
+		const nav = /** @type {*} */ (typeof navigator !== "undefined" ? navigator : null);
+		if (nav && nav.connection && nav.connection.saveData)
+			return;
 		await loadOrFetch(storKey, versi, requestUrl);
 	}
 	catch
@@ -139,6 +143,16 @@ export async function loadOrFetch(storKey, versi, requestUrl)
 				"credentials": "omit", // include, *omit, same-origin
 				"signal": AbortSignal.timeout(FETCH_TIMEOUT_MS),
 			});
+			// Conditional revalidation: unchanged bytes come back as 304 with
+			// no body — touch the date, keep serving the stored entry.
+			if (entry && (entry.etag || entry.modified))
+			{
+				init.headers = {};
+				if (entry.etag)
+					init.headers["If-None-Match"] = entry.etag;
+				if (entry.modified)
+					init.headers["If-Modified-Since"] = entry.modified;
+			}
 			// Prefer the minified sibling on a miss: same release, smaller
 			// bytes for every later hit (min and full share one UID).
 			const minUrl = preferMinSibling(fetchUrl);
@@ -163,6 +177,14 @@ export async function loadOrFetch(storKey, versi, requestUrl)
 				}
 			}
 			const resp = await fetch(fetchUrl, init);
+			if (resp.status === 304 && entry)
+			{
+				console.log(`%cFoxDen: ${storKey} revalidated (304), keeping ${entry.size}B`, logStyle);
+				entry.created = Date.now();
+				await cachePut(storKey, entry);
+				hotSet(storKey, entry);
+				return entry;
+			}
 			if (!resp.ok)
 			{
 				const contentType = resp.headers.get('content-type');
