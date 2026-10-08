@@ -400,6 +400,28 @@ describe("perf", function() {
 			expect(a).to.match(/^[0-9a-f]{64}$/);
 		});
 	});
+	describe("buildBasenameMap", function() {
+		it("shares one entry across alias UIDs silently", function() {
+			let warned = 0;
+			const map = buildBasenameMap(new Map([
+				["htmx js 2.0.x", { file: "htmx/htmx-2.0.4.min.js", version: "2.0.4" }],
+				["htmx/org/htmx js 2.0.x", { file: "htmx/htmx-2.0.4.min.js", version: "2.0.4" }],
+			]), () => warned++);
+			expect(map.size).to.equal(1);
+			expect(map.get("htmx-2.0.4.js").uid).to.equal("htmx js 2.0.x");
+			expect(warned).to.equal(0);
+		});
+		it("warns only on genuinely different files", function() {
+			const notes = [];
+			const map = buildBasenameMap(new Map([
+				["a js 1.0.x", { file: "a/a-1.0.0.min.js", version: "1.0.0" }],
+				["b js 1.0.x", { file: "b/a-1.0.0.min.js", version: "1.0.0" }],
+			]), (base, kept, dropped) => notes.push([base, kept, dropped]));
+			expect(map.size).to.equal(1);
+			expect(map.get("a-1.0.0.js").file).to.equal("a/a-1.0.0.min.js");
+			expect(notes.length).to.equal(1);
+		});
+	});
 	describe("hasExternalRef", function() {
 		it("true for external script/link refs", function() {
 			expect(hasExternalRef('<script src="https://example.com/a.js">')).to.equal(true);

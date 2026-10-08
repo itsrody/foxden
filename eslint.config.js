@@ -77,7 +77,7 @@ export default [
 				noteHttpCache: 'readonly', selectEvictableKeys: 'readonly',
 				entryToDataUri: 'readonly', clearDataUriMemo: 'readonly',
 				normalizeVendorBasename: 'readonly', vendorKeyForBasename: 'readonly',
-				sha256Hex: 'readonly', hasExternalRef: 'readonly',
+				buildBasenameMap: 'readonly', sha256Hex: 'readonly', hasExternalRef: 'readonly',
 				addStandardFallbacks: 'readonly', ensureFontDisplaySwap: 'readonly',
 				isModuleTag: 'readonly', noteModuleBypass: 'readonly',
 				isModuleBypassed: 'readonly', clearModuleBypass: 'readonly',

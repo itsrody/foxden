@@ -21,19 +21,27 @@ export function normalizeVendorBasename(filename)
 	return filename.toLowerCase().replace(/(?:\.min|-min|minified)(?=\.[a-z0-9]+$)/, "");
 }
 
-function rebuildBasenames()
+export function buildBasenameMap(libs, onCollision)
 {
-	vendorBasenames = new Map();
-	for (const [uid, { file, version }] of vendorLibs)
+	const notify = onCollision || ((base, kept, dropped) =>
+		console.warn(`%cFoxDen: vendor basename collision on ${base}, keeping ${kept} over ${dropped}`, logStyle));
+	const map = new Map();
+	for (const [uid, entry] of libs)
 	{
+		const { file, version } = entry;
 		const base = normalizeVendorBasename(file.split("/").pop());
-		if (vendorBasenames.has(base))
+		const prev = map.get(base);
+		if (prev)
 		{
-			console.warn(`%cFoxDen: vendor basename collision on ${base}, keeping first`, logStyle);
+			// Alias UID keys for one file share the entry silently; only
+			// genuinely different files collide (first wins).
+			if (prev.file !== file)
+				notify(base, prev.file, file);
 			continue;
 		}
-		vendorBasenames.set(base, { uid, file, version });
+		map.set(base, { uid, file, version });
 	}
+	return map;
 }
 
 export async function loadVendorManifest()
@@ -45,7 +53,7 @@ export async function loadVendorManifest()
 			throw new Error("HTTP " + resp.status);
 		const manifest = await resp.json();
 		vendorLibs = new Map(Object.entries(manifest.libs || {}));
-		rebuildBasenames();
+		vendorBasenames = buildBasenameMap(vendorLibs);
 		console.log(`%cFoxDen: ${vendorLibs.size} bundled vendor libraries`, logStyle);
 	}
 	catch (err)
