@@ -39,7 +39,7 @@ export async function hydrateStats()
 	}
 	catch (err)
 	{
-		console.warn(`%cJSLibCache: storage.session unavailable: ${err}`, logStyle);
+		console.warn(`%cFoxDen: storage.session unavailable: ${err}`, logStyle);
 	}
 }
 
@@ -59,7 +59,7 @@ export async function flushSession()
 	}
 	catch (err)
 	{
-		console.warn(`%cJSLibCache: storage.session flush failed: ${err}`, logStyle);
+		console.warn(`%cFoxDen: storage.session flush failed: ${err}`, logStyle);
 	}
 }
 
@@ -79,7 +79,7 @@ export async function flushStats()
 	}
 	catch (err)
 	{
-		console.warn(`%cJSLibCache: stats flush failed: ${err}`, logStyle);
+		console.warn(`%cFoxDen: stats flush failed: ${err}`, logStyle);
 		for (const key of Object.keys(toWrite))
 			dirtyStats.add(key);
 	}
@@ -198,7 +198,7 @@ export async function dropStatsKeys(keys)
 	}
 	catch (err)
 	{
-		console.warn(`%cJSLibCache: stats delete failed: ${err}`, logStyle);
+		console.warn(`%cFoxDen: stats delete failed: ${err}`, logStyle);
 	}
 	scheduleSessionFlush();
 }
@@ -214,7 +214,7 @@ export async function resetStats()
 	}
 	catch (err)
 	{
-		console.warn(`%cJSLibCache: cache clear failed: ${err}`, logStyle);
+		console.warn(`%cFoxDen: cache clear failed: ${err}`, logStyle);
 	}
 	scheduleSessionFlush();
 }

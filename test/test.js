@@ -639,11 +639,11 @@ describe("urls", function() {
 		describe("stripResourceHints", function() {
 			it("drops CDN preconnect/dns-prefetch/preload", function() {
 				expect(stripResourceHints('<link rel="preconnect" href="https://cdnjs.cloudflare.com">'))
-					.to.equal("<!--JSLC hint-->");
+					.to.equal("<!--FoxDen hint-->");
 				expect(stripResourceHints('<link rel=dns-prefetch href=https://cdn.jsdelivr.net>'))
-					.to.equal("<!--JSLC hint-->");
+					.to.equal("<!--FoxDen hint-->");
 				expect(stripResourceHints('<link rel="preload" as="font" href="https://fonts.gstatic.com/s/x.woff2">'))
-					.to.equal("<!--JSLC hint-->");
+					.to.equal("<!--FoxDen hint-->");
 			});
 			it("keeps stylesheets, icons and first-party hints", function() {
 				const css = '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/x/1.0/x.css">';
@@ -724,7 +724,7 @@ describe("urls", function() {
 		describe("cssfix", function() {
 			it("adds missing standard fallbacks, keeps existing", function() {
 				const out = addStandardFallbacks(".a{-webkit-appearance:none}.b{appearance:button;-webkit-appearance:button}");
-				expect(out).to.contain(";appearance:none;/*JSLC*/");
+				expect(out).to.contain(";appearance:none;/*FoxDen*/");
 				expect(out).to.contain(".b{appearance:button;-webkit-appearance:button}");
 			});
 			it("maps mask/line-clamp/clip", function() {
@@ -745,7 +745,7 @@ describe("urls", function() {
 		describe("font-display", function() {
 			it("inserts swap only when missing", function() {
 				expect(ensureFontDisplaySwap("@font-face{font-family:x;src:url(a.woff2)}"))
-					.to.equal("@font-face{font-display:swap;/*JSLC*/font-family:x;src:url(a.woff2)}");
+					.to.equal("@font-face{font-display:swap;/*FoxDen*/font-family:x;src:url(a.woff2)}");
 				const kept = "@font-face{font-display:block;font-family:x}";
 				expect(ensureFontDisplaySwap(kept)).to.equal(kept);
 			});

@@ -32,6 +32,6 @@ jobs:
       - run: npm run build
       - uses: actions/upload-artifact@v4
         with:
-          name: jslibcache.xpi
-          path: web-ext-artifacts/jslibcache.xpi
+          name: foxden.xpi
+          path: web-ext-artifacts/foxden.xpi
           retention-days: 7

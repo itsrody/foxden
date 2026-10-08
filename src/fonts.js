@@ -32,13 +32,13 @@ export async function loadFontsManifest()
 			knownFonts = Object.keys(families || {});
 			knownFontFiles = new Map(Object.entries(families || {}));
 		}
-		console.log(`%cJSLibCache: ${knownFonts.length} bundled font families`, logStyle);
+		console.log(`%cFoxDen: ${knownFonts.length} bundled font families`, logStyle);
 	}
 	catch (err)
 	{
 		knownFonts = [];
 		knownFontFiles = new Map();
-		console.warn(`%cJSLibCache: fonts manifest unavailable (${err}), bundled font rewriting disabled`, logStyle);
+		console.warn(`%cFoxDen: fonts manifest unavailable (${err}), bundled font rewriting disabled`, logStyle);
 	}
 }
 

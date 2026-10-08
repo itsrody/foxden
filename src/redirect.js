@@ -17,7 +17,7 @@ import { timeStage } from './shared/timing.js';
 
 function replaceFontsOtherURLs(url, css)
 {
-	console.log(`%cJSLibCache: making CSS url()s absolute ${url}`, logStyle);
+	console.log(`%cFoxDen: making CSS url()s absolute ${url}`, logStyle);
 	return absolutizeCssUrls(url, css);
 }
 
@@ -45,7 +45,7 @@ function maybeNoteChromeSniff(storKey, entry)
 	sniffSeen.add(key);
 	const sniff = findChromeSniff(entry.data);
 	if (sniff)
-		console.log(`%cJSLibCache: ${storKey} references ${sniff} — possible Chrome-only code path`, logStyle);
+		console.log(`%cFoxDen: ${storKey} references ${sniff} — possible Chrome-only code path`, logStyle);
 }
 
 // Shared by the main CDN listener (script/stylesheet) and the sourcemap
@@ -61,14 +61,14 @@ export async function redirectRequestCDN(req, getSettings)
 	// 1) Drop sourcemap/debug requests under CDNs: pure overhead, never rendered.
 	if (shouldCancelSourcemap(req.url))
 	{
-		console.log(`%cJSLibCache: blocking sourcemap ${req.url}`, logStyle);
+		console.log(`%cFoxDen: blocking sourcemap ${req.url}`, logStyle);
 		return { cancel: true };
 	}
 	const settings = getSettings();
 	const url = new URL(req.url);
 	if (isTabDomainBlacklisted(req.tabId, settings.domainBlacklist))
 	{
-		console.log(`%cJSLibCache: stopping because domain is blacklisted`, logStyle);
+		console.log(`%cFoxDen: stopping because domain is blacklisted`, logStyle);
 		return;
 	}
 	if (url.hostname == "fonts.googleapis.com")
@@ -79,7 +79,7 @@ export async function redirectRequestCDN(req, getSettings)
 	// their relative imports keep resolving; integrity was left intact.
 	if (isModuleBypassed(req.tabId, storKey))
 	{
-		console.log(`%cJSLibCache: passing module through to network ${req.url}`, logStyle);
+		console.log(`%cFoxDen: passing module through to network ${req.url}`, logStyle);
 		return;
 	}
 	timeStage('lookup', t0);
@@ -99,14 +99,14 @@ export async function redirectRequestCDN(req, getSettings)
 		{
 			const entry = await loadOrFetchLocal(storKey, versi, vendorUrl);
 			setEntrySize(storKey, entry.size);
-			console.log(`%cJSLibCache: ${storKey} served from vendor bundle`, logStyle);
+			console.log(`%cFoxDen: ${storKey} served from vendor bundle`, logStyle);
 			const isCss = entry.contentType && entry.contentType.startsWith("text/css");
 			const base = new URL(vendorUrl);
 			return { redirectUrl: entryToDataUri(entry, isCss ? data => finalizeCss(base, data) : null, `vendor|${storKey}|${entry.v}|${entry.size}`) };
 		}
 		catch (err)
 		{
-			console.warn(`%cJSLibCache: vendor bundle failed for ${storKey}: ${err}`, logStyle);
+			console.warn(`%cFoxDen: vendor bundle failed for ${storKey}: ${err}`, logStyle);
 		}
 	}
 
@@ -118,7 +118,7 @@ export async function redirectRequestCDN(req, getSettings)
 	}
 	catch (err)
 	{
-		console.warn(`%cJSLibCache: fetch error for ${req.url}: ${err}`, logStyle);
+		console.warn(`%cFoxDen: fetch error for ${req.url}: ${err}`, logStyle);
 		return;
 	}
 	timeStage('cache', t1);
@@ -130,7 +130,7 @@ export async function redirectRequestCDN(req, getSettings)
 	// instead of paying base64/encodeURIComponent expansion + CSP churn.
 	if (shouldBypassLargeEntry(entry.size))
 	{
-		console.log(`%cJSLibCache: bypassing large entry ${storKey} (${entry.size}B)`, logStyle);
+		console.log(`%cFoxDen: bypassing large entry ${storKey} (${entry.size}B)`, logStyle);
 		return;
 	}
 

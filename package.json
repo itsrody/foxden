@@ -1,5 +1,5 @@
 {
-	"name": "jslibcache",
+	"name": "foxden",
 	"version": "0.1.0",
 	"description": "A WebExtension that serves popular CDN libraries from local cache",
 	"directories": {
@@ -10,23 +10,23 @@
 		"lint:ext": "web-ext lint --source-dir . --ignore-files \"test/**\" \"resources/**\" \"node_modules/**\"",
 		"lint:src": "eslint .",
 		"typecheck": "tsc",
-		"build": "web-ext build --overwrite-dest --filename jslibcache.xpi",
+		"build": "web-ext build --overwrite-dest --filename foxden.xpi",
 		"build:fonts": "node tools/build-fonts-manifest.mjs",
 		"build:fonts:fetch": "node tools/fetch-fonts.mjs",
 		"build:vendor": "node tools/build-vendor-manifest.mjs"
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/itsrody/jslibcache.git"
+		"url": "git+https://github.com/itsrody/foxden.git"
 	},
 	"keywords": [],
 	"author": "itsrody",
 	"license": "MPL-2.0",
 	"type": "module",
 	"bugs": {
-		"url": "https://github.com/itsrody/jslibcache/issues"
+		"url": "https://github.com/itsrody/foxden/issues"
 	},
-	"homepage": "https://github.com/itsrody/jslibcache#readme",
+	"homepage": "https://github.com/itsrody/foxden#readme",
 	"devDependencies": {
 		"chai": "^6.3.0",
 		"eslint": "^10.12.0",

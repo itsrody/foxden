@@ -36,7 +36,7 @@ export function addStandardFallbacks(css)
 		{
 			const value = ruleNeedsFallback(out, webkitProp, stdProp);
 			if (value !== null && value !== "")
-				out += `;${stdProp}:${value};/*JSLC*/`;
+				out += `;${stdProp}:${value};/*FoxDen*/`;
 		}
 		return out;
 	}).join("}");
@@ -47,6 +47,6 @@ export function ensureFontDisplaySwap(css)
 	return css.replace(/@font-face\s*\{([^}]*)\}/gi, (block, decls) => {
 		if (/font-display\s*:/i.test(decls))
 			return block;
-		return block.replace("{", "{font-display:swap;/*JSLC*/");
+		return block.replace("{", "{font-display:swap;/*FoxDen*/");
 	});
 }

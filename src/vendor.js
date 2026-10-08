@@ -22,12 +22,12 @@ export async function loadVendorManifest()
 			throw new Error("HTTP " + resp.status);
 		const manifest = await resp.json();
 		vendorLibs = new Map(Object.entries(manifest.libs || {}));
-		console.log(`%cJSLibCache: ${vendorLibs.size} bundled vendor libraries`, logStyle);
+		console.log(`%cFoxDen: ${vendorLibs.size} bundled vendor libraries`, logStyle);
 	}
 	catch (err)
 	{
 		vendorLibs = new Map();
-		console.warn(`%cJSLibCache: vendor manifest unavailable (${err}), bundled libs disabled`, logStyle);
+		console.warn(`%cFoxDen: vendor manifest unavailable (${err}), bundled libs disabled`, logStyle);
 	}
 }
 
@@ -71,5 +71,5 @@ export async function preloadVendor()
 			// best-effort: per-request path covers misses
 		}
 	}));
-	console.log(`%cJSLibCache: preloaded ${n} vendor libraries into hot cache`, logStyle);
+	console.log(`%cFoxDen: preloaded ${n} vendor libraries into hot cache`, logStyle);
 }

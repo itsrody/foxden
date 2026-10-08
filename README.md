@@ -1,6 +1,6 @@
-# JSLibCache (modern fork)
+# FoxDen
 
-> Independent modern fork of [Jaaap/jslibcache](https://gitlab.com/Jaaap/jslibcache) (MPL-2.0).
+> Independent modern fork of [Jaaap/jslibcache](https://gitlab.com/Jaaap/jslibcache) (MPL-2.0), formerly developed under the JSLibCache name.
 > Upstream's last release was `0.0.21` (2024); this fork restarts at `0.1.0` with a new Firefox extension ID (`jslibcache@itsrody.github.io`), so it installs side-by-side and does not claim upstream's AMO listing.
 
 A WebExtension for Firefox / Chrome that enhances privacy by serving requests to popular CDNs from local cache/storage.
@@ -10,8 +10,8 @@ It is similar to [Decentraleyes](https://git.synz.io/Synzvato/decentraleyes/) / 
 It serves Javascript libraries, CSS files and Fonts that a website tries to load from popular CDNs like ajax.googleapis.com.
 ![Screenshot](screenshot.png)
 
-## Difference between JSLibCache and Decentraleyes / LocalCDN
-JSLibCache fetches resources from CDNs dynamically, once. So if a website you visit requests
+## Difference between FoxDen and Decentraleyes / LocalCDN
+FoxDen fetches resources from CDNs dynamically, once. So if a website you visit requests
 https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js
 and that lib is not yet in the local cache, it is fetched from the CDN and put into local storage for subsequent requests.
 
@@ -23,7 +23,7 @@ For this fork, build from source:
 npm ci
 npm run build
 ```
-then load `web-ext-artifacts/jslibcache.xpi` in Firefox, or load the repo as an unpacked extension in Chrome.
+then load `web-ext-artifacts/foxden.xpi` in Firefox, or load the repo as an unpacked extension in Chrome.
 
 ## What's new in this fork (0.1.0)
 - ES modules split: `background.js` (424 lines) → `src/` modules

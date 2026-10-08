@@ -44,4 +44,4 @@ Run against a temporary profile (`npx web-ext run`), with uBO disabled unless no
 
 ## Packaging
 - [ ] `npm run lint:ext` → 0 errors 0 warnings
-- [ ] `npm run build` → `web-ext-artifacts/jslibcache.xpi` installs and passes AMO validation
+- [ ] `npm run build` → `web-ext-artifacts/foxden.xpi` installs and passes AMO validation

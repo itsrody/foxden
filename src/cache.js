@@ -159,7 +159,7 @@ export async function migrateLegacyStorage()
 
 	if (legacyKeys.length)
 	{
-		console.log(`%cJSLibCache: migrating ${legacyKeys.length} legacy cache entries to IndexedDB`, logStyle);
+		console.log(`%cFoxDen: migrating ${legacyKeys.length} legacy cache entries to IndexedDB`, logStyle);
 		const db = await openDB();
 		const tx = db.transaction(ENTRIES, 'readwrite');
 		const store = tx.objectStore(ENTRIES);
@@ -261,7 +261,7 @@ export function entryToDataUri(entry, cssAbsolutizer, memoKey)
 		if (entry.contentType && entry.contentType.startsWith('text/css') && cssAbsolutizer)
 			data = cssAbsolutizer(data);
 		const mime = (entry.contentType || 'text/plain').replace(/;.*$/, '');
-		out = 'data:' + mime + ';charset=utf-8,' + encodeURIComponent('/*JSLC*/' + data);
+		out = 'data:' + mime + ';charset=utf-8,' + encodeURIComponent('/*FoxDen*/' + data);
 	}
 	if (memoKey)
 	{

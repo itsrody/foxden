@@ -71,8 +71,8 @@ function makeTransformer(req)
 					}
 					if (seenUids.has(uid))
 					{
-						console.log(`%cJSLibCache: dropping duplicate CDN tag ${src}, id=${req.requestId}`, logStyle);
-						return "<!--JSLC dupe-->";
+						console.log(`%cFoxDen: dropping duplicate CDN tag ${src}, id=${req.requestId}`, logStyle);
+						return "<!--FoxDen dupe-->";
 					}
 					seenUids.add(uid);
 				}
@@ -81,7 +81,7 @@ function makeTransformer(req)
 					// unresolvable URL: fall through to integrity strip
 				}
 			}
-			console.log(`%cJSLibCache: adjusting integrity|crossorigin attributes on ${m}, id=${req.requestId}`, logStyle);
+			console.log(`%cFoxDen: adjusting integrity|crossorigin attributes on ${m}, id=${req.requestId}`, logStyle);
 			// data: URL redirects fail both CORS (no CORS mode on opaque origins) and
 			// SRI (final URL is cross-origin), so crossorigin and integrity must both
 			// go for all redirected CDN tags — CSS and scripts alike.
@@ -120,7 +120,7 @@ function installHtmlFilter(req, charset)
 				if (!resolvedCharset) //content-type has no charset declared: sniff from the head
 				{
 					resolvedCharset = sniffCharset(evt.data);
-					console.log(`%cJSLibCache: No charset in headers, decoding HTML head with ${resolvedCharset || 'utf-8'}, id=${req.requestId}`, logStyle);
+					console.log(`%cFoxDen: No charset in headers, decoding HTML head with ${resolvedCharset || 'utf-8'}, id=${req.requestId}`, logStyle);
 				}
 				try
 				{
@@ -128,10 +128,10 @@ function installHtmlFilter(req, charset)
 				}
 				catch (err)
 				{
-					console.warn(`%cJSLibCache: unsupported charset "${resolvedCharset}", falling back to utf-8, id=${req.requestId}`, logStyle);
+					console.warn(`%cFoxDen: unsupported charset "${resolvedCharset}", falling back to utf-8, id=${req.requestId}`, logStyle);
 					filter.decoder = new TextDecoder('utf-8');
 				}
-				console.log(`%cJSLibCache: charset ${filter.decoder.encoding}, id=${req.requestId}`, logStyle);
+				console.log(`%cFoxDen: charset ${filter.decoder.encoding}, id=${req.requestId}`, logStyle);
 			}
 			const str = pending + filter.decoder.decode(evt.data, { stream: true });
 			const [out, tail] = splitTrailingTag(str);
@@ -141,7 +141,7 @@ function installHtmlFilter(req, charset)
 		}
 		catch (err)
 		{
-			console.error(`%cJSLibCache: filter ondata error, id=${req.requestId}`, logStyle, err);
+			console.error(`%cFoxDen: filter ondata error, id=${req.requestId}`, logStyle, err);
 			try { filter.close(); } catch (e) {}
 		}
 	};
@@ -157,13 +157,13 @@ function installHtmlFilter(req, charset)
 		}
 		catch (err)
 		{
-			console.error(`%cJSLibCache: filter onstop error, id=${req.requestId}`, logStyle, err);
+			console.error(`%cFoxDen: filter onstop error, id=${req.requestId}`, logStyle, err);
 			try { filter.close(); } catch (e) {}
 		}
 	};
 
 	filter.onerror = evt => {
-		console.error(`%cJSLibCache: filter error, id=${req.requestId}`, logStyle, evt, filter.error);
+		console.error(`%cFoxDen: filter error, id=${req.requestId}`, logStyle, evt, filter.error);
 		try { filter.close(); } catch (e) {}
 	};
 }
@@ -173,7 +173,7 @@ export function onHeadersReceived(req, getSettings)
 	const settings = getSettings();
 	if (req.tabId >= 0 && isTabDomainBlacklisted(req.tabId, settings.domainBlacklist))
 	{
-		console.log(`%cJSLibCache: stopping because domain is blacklisted`, logStyle);
+		console.log(`%cFoxDen: stopping because domain is blacklisted`, logStyle);
 		return;
 	}
 	if (req.statusCode != 200)
@@ -190,7 +190,7 @@ export function onHeadersReceived(req, getSettings)
 			const { changed, value } = allowDataUriInCsp(header.value);
 			if (changed && settings.allowModifyHeaders)
 			{
-				console.log(`%cJSLibCache: adding data: to CSP header (${header.name}) ${req.url}`, logStyle);
+				console.log(`%cFoxDen: adding data: to CSP header (${header.name}) ${req.url}`, logStyle);
 				header.value = value;
 				hasCspChange = true;
 			}
@@ -210,11 +210,11 @@ export function onHeadersReceived(req, getSettings)
 			if (charset && charset != "utf-8")
 			{
 				hasCTChange = true;
-				console.log(`%cJSLibCache: changing ContentType from "${headerCT.value}" to "text/html;charset=utf-8", id=${req.requestId}`, logStyle);
+				console.log(`%cFoxDen: changing ContentType from "${headerCT.value}" to "text/html;charset=utf-8", id=${req.requestId}`, logStyle);
 				headerCT.value = 'text/html;charset=utf-8';
 				charset = 'utf-8';
 			}
-			console.log(`%cJSLibCache: checking integrity|crossorigin attributes in ${req.url} html, id=${req.requestId}`, logStyle);
+			console.log(`%cFoxDen: checking integrity|crossorigin attributes in ${req.url} html, id=${req.requestId}`, logStyle);
 			installHtmlFilter(req, charset || undefined);
 		}
 	}

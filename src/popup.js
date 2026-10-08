@@ -6,7 +6,7 @@ let settings = getDefaultSettings();
 function onSettingChange(evt)
 {
 	evt.preventDefault();
-	console.log("JSLibCache.popup: onSettingChange");
+	console.log("FoxDen.popup: onSettingChange");
 	let input = /** @type {HTMLInputElement | HTMLTextAreaElement} */ (evt.target);
 	if (input.tagName == "INPUT")
 		settings[input.id] = /** @type {HTMLInputElement} */ (input).checked;
@@ -14,9 +14,9 @@ function onSettingChange(evt)
 		settings[input.id] = /** @type {HTMLTextAreaElement} */ (input).value.split(/\s*\n\s*/).filter(Boolean);
 	saveSettings(settings).then(
 		//Success
-		() => console.log("JSLibCache.popup: Settings saved", settings, JSON.stringify(settings)),
+		() => console.log("FoxDen.popup: Settings saved", settings, JSON.stringify(settings)),
 		//Error
-		msg => console.warn("JSLibCache.popup: Error saving settings to browser.storage.sync: " + msg)
+		msg => console.warn("FoxDen.popup: Error saving settings to browser.storage.sync: " + msg)
 	);
 }
 function clearStatsTable()
@@ -53,7 +53,7 @@ async function initSettings()
 	try
 	{
 		settings = await loadSettings();
-		console.log("JSLibCache.popup: settings retrieved", settings);
+		console.log("FoxDen.popup: settings retrieved", settings);
 		for (let id in settings)
 		{
 			let input = document.getElementById(id);
@@ -65,12 +65,12 @@ async function initSettings()
 					/** @type {HTMLTextAreaElement} */ (input).value = settings[id].join("\n");
 			}
 			else
-				console.warn("JSLibCache.popup: unable to find setting with id " + id);
+				console.warn("FoxDen.popup: unable to find setting with id " + id);
 		}
 	}
 	catch (msg)
 	{
-		console.warn("JSLibCache.popup: Error getting settings from browser.storage.sync: " + msg);
+		console.warn("FoxDen.popup: Error getting settings from browser.storage.sync: " + msg);
 	}
 }
 
@@ -146,7 +146,7 @@ function getStats()
 				document.querySelector('#ublockrules').textContent = result.cdnDomains.map(host => `* ${host} * noop`).join("\n");
 			}
 			if (result.timing)
-				console.log("JSLibCache.popup: redirect stage timing (count/avg/max ms)", result.timing);
+				console.log("FoxDen.popup: redirect stage timing (count/avg/max ms)", result.timing);
 		}
 	});
 }

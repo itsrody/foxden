@@ -6,7 +6,7 @@ const jquerySri = 'sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=';
 
 const page = () => `<!DOCTYPE html>
 <html><head><meta charset="utf-8">
-<title>jslibcache livetest</title>
+<title>foxden livetest</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto&display=swap">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="${jquerySri}" crossorigin="anonymous"></script>
@@ -18,7 +18,7 @@ const page = () => `<!DOCTYPE html>
 
 const fontPage = (familyHref, sample, familyCss) => `<!DOCTYPE html>
 <html><head><meta charset="utf-8">
-<title>jslibcache livetest font</title>
+<title>foxden livetest font</title>
 <link rel="stylesheet" href="${familyHref}">
 </head><body>
 <p style="font-family: ${familyCss}">${sample}</p>

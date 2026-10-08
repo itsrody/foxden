@@ -90,7 +90,7 @@ export function stripResourceHints(html)
 			return m;
 		if (!/(preconnect|dns-prefetch|preload|prefetch|modulepreload)/.test(rv))
 			return m;
-		return "<!--JSLC hint-->";
+		return "<!--FoxDen hint-->";
 	});
 }
 

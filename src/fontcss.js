@@ -50,7 +50,7 @@ async function fetchFamilyCssWithFallback(familyParam, display)
 	catch (err)
 	{
 		// axis specs can be rejected (e.g. legacy /css values); retry with the default full axis set
-		console.warn(`%cJSLibCache: faithful fetch failed (${err}), using default axes for ${familyParam}`, logStyle);
+		console.warn(`%cFoxDen: faithful fetch failed (${err}), using default axes for ${familyParam}`, logStyle);
 		const fallback = familyParam.split(':')[0] +
 			':ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900';
 		return fetchFamilyCss(fallback, display);
@@ -82,7 +82,7 @@ async function getFamilyCss(family, familyParam, display)
 			}
 			catch (err)
 			{
-				console.warn(`%cJSLibCache: fetching failed for font family ${family}: ${err}`, logStyle);
+				console.warn(`%cFoxDen: fetching failed for font family ${family}: ${err}`, logStyle);
 				return "/* ERRGF001 */"; // not cached: transient failures must not poison the cache
 			}
 		})().finally(() => inflight.delete(storKey)));
@@ -101,7 +101,7 @@ async function embedGstaticFonts(css, tabId)
 	const fontUrls = collectGstaticFontUrls(css);
 	if (fontUrls.length === 0)
 		return css;
-	console.log(`%cJSLibCache: embedding ${fontUrls.length} gstatic font file(s) as data: URIs`, logStyle);
+	console.log(`%cFoxDen: embedding ${fontUrls.length} gstatic font file(s) as data: URIs`, logStyle);
 	const statsKeys = [];
 	for (const fontUrl of fontUrls)
 	{
@@ -123,7 +123,7 @@ async function embedGstaticFonts(css, tabId)
 		}
 		catch (err)
 		{
-			console.warn(`%cJSLibCache: font embedding failed for ${fontUrl}: ${err}`, logStyle);
+			console.warn(`%cFoxDen: font embedding failed for ${fontUrl}: ${err}`, logStyle);
 		}
 	}));
 	if (embedded.size === 0)
@@ -141,10 +141,10 @@ export async function handleGoogleFontsCss(url, req, settings)
 	const storKeys = families.map(familyCacheKey);
 	storKeys.forEach(storKey => addStats(storKey));
 	queueMicrotask(() => addTabStats(req.tabId, storKeys));
-	console.log(`%cJSLibCache: serving CSS for these font families from googlefonts: ${families.join(", ")}`, logStyle);
+	console.log(`%cFoxDen: serving CSS for these font families from googlefonts: ${families.join(", ")}`, logStyle);
 	const cssParts = await Promise.all(families.map((family, i) => getFamilyCss(family, familyParams[i] || family, display)));
 	const rewritten = replaceFontsGstaticURLs(cssParts.join("\n"), settings.blockUnknownGoogleFonts);
 	const css = ensureFontDisplaySwap(addStandardFallbacks(await embedGstaticFonts(rewritten, req.tabId)));
-	const dataURI = 'data:text/css;charset=utf-8,' + encodeURIComponent('/*JSLC*/' + css);
+	const dataURI = 'data:text/css;charset=utf-8,' + encodeURIComponent('/*FoxDen*/' + css);
 	return { redirectUrl: dataURI };
 }

@@ -1,5 +1,5 @@
 'use strict';
-// JSLibCache background — entry point, wires listeners and lifecycle.
+// FoxDen background — entry point, wires listeners and lifecycle.
 
 import { logStyle, cdnDomains } from './shared/constants.js';
 import { getDefaultSettings, loadSettings } from './shared/settings.js';
@@ -25,14 +25,14 @@ async function reloadSettings()
 	}
 	catch (err)
 	{
-		console.warn(`%cJSLibCache: error loading settings: ${err}`, logStyle);
+		console.warn(`%cFoxDen: error loading settings: ${err}`, logStyle);
 	}
 }
 browser.storage.onChanged.addListener((changes, area) => { if (area == "sync") reloadSettings(); });
 
 function blockRequest(req)
 {
-	console.log(`%cJSLibCache: blocking CSP report to ${req.url}`, logStyle);
+	console.log(`%cFoxDen: blocking CSP report to ${req.url}`, logStyle);
 	return { cancel: true };
 }
 
@@ -44,11 +44,11 @@ const ready = (async () => {
 	{
 		const { migrated, hadLegacy } = await migrateLegacyStorage();
 		if (hadLegacy)
-			console.log(`%cJSLibCache: migrated ${migrated} legacy entries to IndexedDB`, logStyle);
+			console.log(`%cFoxDen: migrated ${migrated} legacy entries to IndexedDB`, logStyle);
 	}
 	catch (err)
 	{
-		console.error(`%cJSLibCache: legacy migration failed`, logStyle, err);
+		console.error(`%cFoxDen: legacy migration failed`, logStyle, err);
 	}
 	await hydrateStats();
 	await loadFontsManifest();
@@ -57,11 +57,11 @@ const ready = (async () => {
 	try
 	{
 		const { count } = await cacheSummary();
-		console.log(`%cJSLibCache: cache has ${count} files`, logStyle);
+		console.log(`%cFoxDen: cache has ${count} files`, logStyle);
 	}
 	catch (err)
 	{
-		console.warn(`%cJSLibCache: cache summary failed: ${err}`, logStyle);
+		console.warn(`%cFoxDen: cache summary failed: ${err}`, logStyle);
 	}
 })();
 
@@ -95,12 +95,12 @@ browser.runtime.onMessage.addListener(async (request) => {
 		{
 			await cacheDelete(deletableStorKeys);
 			await dropStatsKeys(deletableStorKeys);
-			console.log("%cJSLibCache: cache cleaned", logStyle);
+			console.log("%cFoxDen: cache cleaned", logStyle);
 			return {"success": true};
 		}
 		catch (msg)
 		{
-			console.warn("%cJSLibCache: error cleaning cache: " + msg, logStyle);
+			console.warn("%cFoxDen: error cleaning cache: " + msg, logStyle);
 			return {"success": false};
 		}
 	}
@@ -110,12 +110,12 @@ browser.runtime.onMessage.addListener(async (request) => {
 		{
 			await resetStats();
 			await flushSession();
-			console.log("%cJSLibCache: cache cleared", logStyle);
+			console.log("%cFoxDen: cache cleared", logStyle);
 			return {"success": true};
 		}
 		catch (msg)
 		{
-			console.warn("%cJSLibCache: error clearing cache: " + msg, logStyle);
+			console.warn("%cFoxDen: error clearing cache: " + msg, logStyle);
 			return {"success": false};
 		}
 	}
@@ -130,7 +130,7 @@ browser.webRequest.onBeforeRequest.addListener(blockRequest, { 'types': ['csp_re
 browser.webRequest.onBeforeRequest.addListener((req) => {
 	if (shouldCancelSourcemapRequest(req))
 	{
-		console.log(`%cJSLibCache: blocking sourcemap ${req.url}`, logStyle);
+		console.log(`%cFoxDen: blocking sourcemap ${req.url}`, logStyle);
 		return { cancel: true };
 	}
 }, { 'types': ['xmlhttprequest', 'other'], 'urls': cdnDomains.map(host => '*://' + host + '*') }, ['blocking']);

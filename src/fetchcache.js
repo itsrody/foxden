@@ -109,25 +109,25 @@ export async function loadOrFetch(storKey, versi, requestUrl)
 	const hot = hotGet(storKey, versi);
 	if (hot)
 	{
-		console.log(`%cJSLibCache: ${storKey} retrieved from hot cache`, logStyle);
+		console.log(`%cFoxDen: ${storKey} retrieved from hot cache`, logStyle);
 		return hot;
 	}
 	let entry = await cacheGet(storKey);
 	if (entry && !isNewerPointVersion(versi, entry.v) && !isStaleUnversioned(entry))
 	{
-		console.log(`%cJSLibCache: ${storKey} retrieved from local storage`, logStyle);
+		console.log(`%cFoxDen: ${storKey} retrieved from local storage`, logStyle);
 		hotSet(storKey, entry);
 		return entry;
 	}
 	if (entry && isStaleUnversioned(entry))
-		console.log(`%cJSLibCache: revalidating stale unversioned ${storKey}`, logStyle);
+		console.log(`%cFoxDen: revalidating stale unversioned ${storKey}`, logStyle);
 	if (entry)
-		console.log(`%cJSLibCache: upgrading ${storKey} from ${entry.v} to ${versi}`, logStyle);
+		console.log(`%cFoxDen: upgrading ${storKey} from ${entry.v} to ${versi}`, logStyle);
 
 	if (!inflight.has(storKey))
 	{
 		inflight.set(storKey, (async () => {
-			console.log(`%cJSLibCache: ${requestUrl} fetching`, logStyle);
+			console.log(`%cFoxDen: ${requestUrl} fetching`, logStyle);
 			const init = /** @type {RequestInit & {referer?: string}} */ ({
 				"referer": "no-referrer", // *client, no-referrer
 				"redirect": "follow", // manual, follow, error
@@ -144,7 +144,7 @@ export async function loadOrFetch(storKey, versi, requestUrl)
 					const minResp = await fetch(minUrl, init);
 					if (minResp.ok)
 					{
-						console.log(`%cJSLibCache: storing minified bytes for ${storKey}`, logStyle);
+						console.log(`%cFoxDen: storing minified bytes for ${storKey}`, logStyle);
 						const minEntry = await entryFromResponse(minResp, minUrl, versi);
 						await cachePut(storKey, minEntry);
 						hotSet(storKey, minEntry);
@@ -161,7 +161,7 @@ export async function loadOrFetch(storKey, versi, requestUrl)
 			if (!resp.ok)
 			{
 				const contentType = resp.headers.get('content-type');
-				console.warn(`%cJSLibCache: fetching failed: ${requestUrl} ${contentType} ${resp.status}`, logStyle);
+				console.warn(`%cFoxDen: fetching failed: ${requestUrl} ${contentType} ${resp.status}`, logStyle);
 				inflight.delete(storKey);
 				return null; // do not cache failures
 			}
